@@ -1,7 +1,7 @@
 # Cahier des charges — LBT (lebontruc.fr / .com)
 ### Devenir un concurrent sérieux de LeBonCoin (LBC) en 24-36 mois
 
-*Document vivant — dernière mise à jour : 2026-07-28. Porté par Nicolas Therond (PDG RETRO+), en phase de conception avec Claude. Pas encore d'équipe technique affectée.*
+*Document vivant — dernière mise à jour : 2026-07-29. Porté par Nicolas Therond (PDG RETRO+), en phase de conception avec Claude. Pas encore d'équipe technique affectée.*
 
 ---
 
@@ -115,11 +115,11 @@ Coût mensuel de la couche image **au palier S3**, selon l'architecture :
 | Compute web/API | 0,002 | ~10 000 requêtes/annonce, Workers 0,30 $/M req + 0,02 $/M ms CPU |
 | Base de données | 0,012 | Postgres managé ~300 €/mois à S3 |
 | Moteur de recherche | 0,002 | Meilisearch auto-hébergé, ~50 €/mois (50k docs = charge triviale) |
-| Modération automatique (10 images + texte) | **0,018** | 11 opérations × 0,002 $ (Sightengine, tarif d'overage) |
+| Modération automatique (10 images + texte) | ~~0,018~~ → **0,003** | ~~11 opérations × 0,002 $ (Sightengine)~~ — **révisé le 2026-07-29, cf. §7.1** : cascade auto-hébergée (25 €/mois) + VLM sélectif (53 €/mois) |
 | Emails transactionnels | 0,006 | 8 emails × 0,00075 € (Brevo, 15 €/20 000) |
-| **Sous-total technique** | **~0,041 €** | |
+| **Sous-total technique** | ~~**~0,041 €**~~ → **~0,026 €** | |
 
-**Tout le socle technique d'une annonce coûte 4 centimes**, dont près de la moitié en modération automatique d'images — de loin le premier poste variable "technique".
+**Tout le socle technique d'une annonce coûte 4 centimes**, dont près de la moitié en modération automatique d'images — de loin le premier poste variable "technique". **Mise à jour du 2026-07-29 (§7.1) :** l'architecture de modération retenue ramène ce poste de 0,018 à ~0,003 €/annonce, et le sous-total technique à **~0,026 €**. Le coût marginal total par annonce passe de 0,19 € à **~0,175 €**, dont ~85 % d'humain — la conclusion du Résultat n°3 est renforcée, pas modifiée.
 
 #### Résultat n°3 — le coût marginal réel est humain
 
@@ -184,6 +184,8 @@ Parité d'ergonomie avec LBC = prérequis silencieux, pas un argument de vente. 
 - Messagerie intégrée acheteur-vendeur (ne pas exposer les coordonnées perso par défaut — argument confiance)
 - Fiche "vitrine pro" pour les garages (comme l'E-Vitrine LBC, mais moins chère)
 - Système d'avis/réputation vendeur — argument de confiance différenciant sur l'auto (LBC n'a pas de système de notation robuste)
+- **Floutage automatique de la plaque d'immatriculation au dépôt (arbitré le 2026-07-29, cf. §7.1)** : obligation de fait côté RGPD (position CNIL), protection du vendeur contre la « doublette » et l'annonce clone, **coût marginal nul** puisque le détecteur est déjà dans la chaîne de modération. **LBC ne le propose pas nativement** (les vendeurs passent par des applis tierces ou floutent à la main) → différenciateur produit gratuit, à afficher explicitement dans le parcours de dépôt.
+- Signalement au dépôt des photos déjà vues ailleurs sur LBT (déduplication pHash) — protection acheteur contre l'annonce clone
 - Notifications (nouvelle réponse, baisse de prix sur une recherche sauvegardée, etc.)
 - Version mobile web irréprochable dès le MVP (la majorité du trafic annonces est mobile) ; appli native à évaluer en phase 2
 
@@ -196,12 +198,100 @@ Parité d'ergonomie avec LBC = prérequis silencieux, pas un argument de vente. 
 - Architecture : application web scalable, recherche full-text + filtres géographiques performants dès le départ (le moteur de recherche est le cœur du produit d'un site d'annonces)
 - Hébergement : prévoir une infra capable de monter en charge sans refonte (auto-scaling) — plusieurs skills installés couvrent Cloudflare (Workers, D1, R2, Images) et Vercel/Next.js, pertinents pour un déploiement rapide et scalable sans lourdeur DevOps initiale
 - **Images (arbitré le 2026-07-28, cf. §5.1)** : pré-générer les variantes (master 2048px, 1200px, vignette) **au moment du dépôt**, les stocker en object storage à egress nul (R2) et les servir derrière le CDN. Ne PAS utiliser un service facturé à la livraison ou à la transformation à la volée : l'écart est de ~40× au palier national, et cette architecture rend le coût insensible au trafic — condition d'un modèle gratuit côté particuliers.
-- **Modération automatique = premier poste de coût variable technique** (~0,018 €/annonce, soit ~45 % du coût technique d'une annonce, cf. §5.1) : c'est le seul poste infra qui mérite une optimisation sérieuse (comparaison API commerciale vs modèle auto-hébergé).
+- **Modération automatique — arbitré le 2026-07-29 (cf. §7.1)** : cascade auto-hébergée sur CPU (pHash/dedup, NSFW ViT, détection + floutage de plaques, OCR ciblé — ~25 €/mois, **sans GPU**) + appel à un modèle vision-langage **uniquement sur l'image de couverture et les images signalées** (~53 €/mois). ~0,003 €/annonce contre 0,018 € avec une API commerciale. Les API de modération du marché ne couvrent quasiment aucun de nos risques réels (photo volée, plaque, texte incrusté) — elles ne peuvent pas être le socle.
 - Modération de contenu : outillage (automatique + humain) pour détecter annonces frauduleuses/interdites dès le lancement — obligation légale, pas une option (voir §8)
 - Paiement : si LBT propose un jour un paiement sécurisé/livraison (comme LBC depuis 2018 avec Adyen), prévoir l'intégration d'un prestataire de paiement agréé — hors MVP, à anticiper dans l'architecture
 - SEO technique : indexation des annonces, pages géolocalisées, temps de chargement — condition de la stratégie d'acquisition gratuite (§9)
 
 **Gap identifié :** aucun des 341 skills installés ne couvre spécifiquement "stratégie de liquidité marketplace / anti-fraude" — ce savoir-faire vit dans ce document, pas dans un skill générique.
+
+### 7.1 Modération automatique des images — comparatif chiffré (établi le 2026-07-29)
+
+*Action §17 n°11. Hypothèse de volume : palier S3 du §5.1 = 25 000 annonces/mois × 10 photos = **250 000 images/mois** + 25 000 textes. Conversion 1 USD = 0,92 EUR. Sources en annexe.*
+
+#### Résultat n°1 — les API de modération commerciales ne couvrent quasiment aucun de nos risques réels
+
+C'est la conclusion qui reconfigure toute l'action. Les API de modération du marché (Sightengine, Hive, AWS Rekognition, Azure Content Safety, Google Vision SafeSearch) sont conçues pour les réseaux sociaux et l'UGC grand public : **nudité, violence, armes, drogues, gore, contenu haineux, détection d'images générées par IA**. Or sur une verticale automobile, la nudité n'est pas le risque : elle est marginale.
+
+Les risques réels d'une annonce auto, et leur couverture par ces API :
+
+| Risque réel LBT | Couvert par une API de modération commerciale ? |
+|---|---|
+| **Photo volée / réutilisée** depuis une autre annonce (LBC, LaCentrale, un site étranger) — signature n°1 de l'arnaque à l'acompte | **Non.** Nécessite du **hachage perceptuel** (pHash/dHash/PDQ) contre notre propre base + éventuellement une recherche d'image inversée. Aucune API de modération ne le fait. |
+| **Plaque d'immatriculation visible** — la CNIL indique qu'« en principe, un particulier ne peut pas publier sur internet la photographie d'un véhicule sans flouter sa plaque » (donnée personnelle au sens de l'art. 4-2 RGPD) | **Non.** Nécessite un détecteur de plaques + floutage. |
+| **Visage / personne identifiable / n° de rue** en arrière-plan (RGPD) | Partiellement (détection de visages chez AWS/Azure), pas le floutage. |
+| **Numéro de téléphone, e-mail, URL incrustés dans l'image** pour contourner la messagerie de la plateforme | **Non** pour la plupart ; nécessite de l'OCR (facturé en supplément chez Google/AWS). |
+| **Photo d'écran / photo d'une autre annonce** (capture d'écran recadrée) | **Non.** |
+| **Incohérence photo ↔ annonce** (une Clio annoncée, une Golf photographiée ; véhicule accidenté non déclaré) | **Non.** Nécessite un modèle vision-langage. |
+| **Filigrane d'un concurrent** sur la photo | **Non.** |
+| Nudité / violence / armes | **Oui** — c'est leur cœur de métier, et c'est notre risque le plus faible. |
+
+→ **Le choix n'est donc pas « quelle API de modération ». Il faut construire une chaîne de traitement dont l'essentiel n'est pas achetable sur étagère.** Une API commerciale reste utile en filet de sécurité (contenu manifestement interdit sur une plateforme grand public), mais elle ne peut pas être le socle.
+
+#### Résultat n°2 — comparatif des coûts au palier S3 (250 000 images/mois)
+
+| Option | Tarif unitaire | Coût mensuel S3 | Ce qu'elle détecte |
+|---|---|---|---|
+| **Hive** (visual moderation) | 3,00 $/1 000 images | **~690 €** | NSFW, violence, armes, IA-généré. Pas de liste de prix publique (devis commercial). |
+| **Sightengine** (retenu comme hypothèse en §5.1) | plan Pro 399 $/mois (200 k opérations) + 0,0015 $/op au-delà | **~470 €** (511 $) | NSFW, armes, offensif, IA-généré, OCR. 1 modèle sur 1 image = 1 opération → les coûts se cumulent par modèle activé. |
+| **Google Cloud Vision** — SafeSearch | 1,50 $/1 000 unités (source officielle) | **~345 €** ; **+345 €** si l'on ajoute l'OCR (`Text Detection`, même tarif) | NSFW uniquement, sauf ajout d'autres features. |
+| **AWS Rekognition** — Content Moderation | 0,001 $/image (1er million), 0,0008 $ au-delà | **~230 €** ; ×2 si l'on ajoute `DetectText` | NSFW/violence + détection de visages. ⚠️ Amazon a **arrêté le *Batch* Image Content Moderation pour les nouveaux clients au 30/04/2026** — l'API synchrone reste, mais à vérifier avant tout engagement. |
+| **Azure AI Content Safety** — Image | 0,75 $/1 000 images | **~172 €** | NSFW, violence, automutilation, haine. Prix de référence : le tarif réel dépend de la région/devise (calculateur Azure). |
+| **Cloudflare Workers AI** | 0,011 $/1 000 neurones | **non chiffrable de façon fiable** — le nombre de neurones par classification d'image n'a **pas pu être confirmé** sur la doc officielle (403 sur `developers.cloudflare.com` depuis l'environnement d'exécution). Les agrégateurs donnent des chiffres contradictoires (500 à 8 300 classifications pour 10 000 neurones/jour offerts), soit une fourchette de **3 à 55 €/mois** — écart trop large pour décider. | Classifieurs génériques + modèles vision-langage. |
+| **Modèle vision-langage à l'appel — Claude Haiku 4.5** (1 $/MTok entrée, 5 $/MTok sortie) | ~1 190 tokens d'entrée pour une image redimensionnée en 768×768 (≈ (768×768)/750 = 786 tokens) + prompt ≈ 400, sortie ≈ 80 → **~0,0016 $/image** | **~300 €** si passé sur les 250 k images | **Tout le raisonnement sémantique** : cohérence photo↔annonce, photo d'écran, filigrane, texte incrusté, état du véhicule. C'est la seule option qui traite les risques du Résultat n°1 côté « compréhension ». |
+| **Stack auto-hébergée sur CPU** (voir Résultat n°3) | 1 serveur dédié 4 vCPU (Hetzner CCX23, déjà sourcé en §5.1) | **~25 €** | pHash/dedup, NSFW, détection + floutage de plaques, OCR. |
+
+Deux précisions sur le modèle vision-langage, qui changent son dimensionnement :
+- **Le cache de prompt ne sert à rien ici** : le préfixe minimum cacheable sur Haiku 4.5 est de 4 096 tokens, or notre prompt de modération fait ~400 tokens. Padder le prompt pour déclencher le cache coûterait plus cher que l'économie.
+- **L'API Batch (−50 %) n'est pas utilisable au dépôt** : la plupart des lots aboutissent en moins d'une heure, avec un maximum de 24 h — incompatible avec une modération à la publication (cible < 1 minute). Elle reste pertinente pour un **repasse nocturne d'audit** sur les annonces déjà publiées, à moitié prix.
+
+#### Résultat n°3 — la stack auto-hébergée tient sur un seul serveur CPU à 25 €/mois, sans GPU
+
+Les quatre traitements que les API ne fournissent pas sont tous réalisables avec des modèles ouverts, et — c'est le point non évident — **aucun ne nécessite de GPU au palier national** :
+
+| Étage | Outil / modèle | Coût CPU estimé à 250 k images/mois |
+|---|---|---|
+| Déduplication / photo volée | `pHash` (GPLv3) ou `imagehash` (Python), ou **PDQ** (Meta, open-sourcé en 2019, empreinte 256 bits) — DCT sur image 32×32, robuste au recadrage léger, à la recompression JPEG et aux filigranes | quelques millisecondes/image, négligeable |
+| Classification NSFW | `Falconsai/nsfw_image_detection` — ViT-base 224px, 98,04 % de justesse annoncée sur son jeu d'évaluation, Apache-2.0 ; exporté en ONNX INT8 | ~6 ms/image (p50, benchmark tiers sur Ryzen 7 5800H, INT8 vs 24,8 ms FP32) → **~25 min de CPU/mois** |
+| Détection + floutage de plaques | YOLOv11 fine-tuné plaques (ex. `morsetechlab/yolov11-license-plate-detection`, entraîné sur 10 125 images Roboflow) + OpenCV pour le floutage | ~50 ms/image → **~3,5 h de CPU/mois** |
+| OCR (téléphone/e-mail/URL incrustés) | PaddleOCR ou Tesseract, appliqué uniquement aux zones de texte détectées | ~0,3 s/image → **~21 h de CPU/mois** |
+
+Total : **~25 h de CPU/mois**, alors qu'un seul cœur en fournit ~720 h. Un serveur 4 vCPU dédiés à 24,49 €/mois absorbe l'ensemble avec une marge de plus de 100×. **Un GPU (Scaleway L4 à 0,79 €/h ≈ 577 €/mois en continu, ou Hetzner GEX131 à 889 €/mois) n'est justifié que pour auto-héberger un modèle vision-langage — ce qui coûterait 7 à 20× plus cher que les ~50 €/mois de l'appel API équivalent. À ne pas faire.**
+
+#### Résultat n°4 — architecture recommandée : cascade auto-hébergée + VLM sélectif
+
+Au lieu de payer un modèle sur chacune des 250 000 images, on filtre en cascade et on ne paie que ce qui a besoin de compréhension sémantique :
+
+| Étage | Sur quoi | Coût S3 |
+|---|---|---|
+| **0. Empreintes** — pHash de chaque image, comparaison à la base ; contrôle EXIF, dimensions, ratio de compression | 250 000 images | ~0 € |
+| **1. Sécurité + conformité auto-hébergées** — NSFW (ViT), détection de plaques → **floutage automatique**, détection de visages, OCR ciblé | 250 000 images | inclus dans les 25 €/mois du serveur |
+| **2. Compréhension sémantique (VLM à l'appel)** — cohérence photo ↔ marque/modèle/état déclarés, photo d'écran, filigrane concurrent, incohérence de lot | **1 image de couverture par annonce (25 000) + les images signalées par l'étage 1 (hyp. 5 % des 225 000 restantes = 11 250)** = 36 250 appels | 36 250 × 0,0016 $ ≈ 58 $ ≈ **~53 €** |
+| **3. Revue humaine** | uniquement ce qui reste incertain — voir action §17 n°12 | §5.1 (0,058 €/annonce à 20 % de revue) |
+
+**Coût technique total de la modération au palier S3 : ~78 €/mois, soit ~0,0031 €/annonce.**
+
+#### Conséquences sur le modèle de coûts du §5.1
+
+| Poste | §5.1 (2026-07-28) | Révisé (2026-07-29) |
+|---|---|---|
+| Modération automatique | 0,018 €/annonce (Sightengine, 11 opérations) | **0,003 €/annonce** |
+| **Sous-total technique par annonce** | 0,041 € | **~0,026 €** |
+| Coût marginal total par annonce (avec l'humain) | 0,19 € | **~0,175 €** |
+
+L'économie absolue est modeste (~390 €/mois au palier national) et ne change **aucune** conclusion du §5.1 : le coût marginal reste humain à ~85 %, et le prix pro reste non contraint par les coûts. **La vraie valeur de cette architecture n'est pas le prix, c'est la couverture** : elle traite la photo volée, la plaque et le texte incrusté — les trois risques qu'aucune API commerciale ne couvre et qui sont, eux, existentiels pour la réputation d'une plateforme auto naissante.
+
+#### Un différenciateur produit tombé de cette analyse
+
+La détection de plaques étant déjà dans la chaîne pour raison légale, **le floutage automatique des plaques au dépôt ne coûte rien de plus — et LBC ne le propose pas nativement.** Les vendeurs LBC doivent passer par des applications tierces (Plakach, Redacted, FacePixelizer…) ou flouter à la main. Or laisser une plaque visible avec la marque, le modèle et l'année expose le vendeur à la **« doublette »** (usurpation de plaque) et donne à un fraudeur tout le nécessaire pour fabriquer une annonce clone. **« LBT floute votre plaque automatiquement »** est un argument de confiance concret, gratuit, immédiatement compréhensible, et opposable à LBC. À intégrer au §6 et à l'argumentaire du §9.
+
+#### Limites et incertitudes assumées
+
+- Les débits CPU (6 ms pour le ViT, 50 ms pour YOLOv11, 0,3 s pour l'OCR) sont des **ordres de grandeur issus de benchmarks tiers sur d'autres matériels**, pas des mesures sur notre stack. Même en se trompant d'un facteur 10, la conclusion « un serveur CPU suffit » tient (250 h/mois sur 720 disponibles). À mesurer au pilote.
+- L'hypothèse de **5 % d'images signalées** à l'étage 1 (qui pilote le coût du VLM) n'est pas sourcée. À 20 % de signalement, l'étage 2 passerait à ~110 €/mois — sans remettre en cause l'architecture.
+- Le calcul de tokens image de Haiku 4.5 (≈ (largeur × hauteur)/750) est un ordre de grandeur ; le tarif 1 $/5 $ par million de tokens est en revanche ferme.
+- **Les taux de faux positifs et faux négatifs des modèles ouverts retenus n'ont pas été évalués sur des photos de véhicules françaises.** C'est le paramètre le plus décisif et il ne peut être obtenu que par mesure : un modèle de plaques qui rate 10 % des plaques crée une exposition RGPD, un modèle NSFW qui déclenche à tort sur des photos d'intérieur de véhicule crée du travail humain. → nouvelle action §17 n°16.
+- Tarifs Hive, Sightengine (paliers Growth/Pro) et Azure issus d'agrégateurs tiers ; seuls **Google Cloud Vision** (page officielle) et les tarifs Claude sont confirmés à la source. Les pages Cloudflare, AWS Rekognition et Sightengine renvoient un 403 depuis l'environnement d'exécution.
 
 ---
 
@@ -213,6 +303,12 @@ Parité d'ergonomie avec LBC = prérequis silencieux, pas un argument de vente. 
 - Identification des vendeurs professionnels (obligation légale en France depuis 2023 pour les places de marché en ligne)
 - Obligations fiscales de déclaration (type DAC7) si LBT facilite des transactions entre particuliers au-delà de certains seuils
 - CGU/CGV adaptées, notamment sur la responsabilité en cas de fraude entre utilisateurs
+
+**Découvertes du 2026-07-29** (en marge de l'action n°11 ; le traitement complet reste l'action §17 n°3) :
+- **Plaques d'immatriculation = données personnelles.** La CNIL indique qu'« en principe, un particulier ne peut pas publier sur internet la photographie d'un véhicule sans flouter sa plaque d'immatriculation », la plaque permettant d'identifier indirectement le propriétaire (art. 4-2 RGPD). Les seules exceptions relèvent d'une mission d'intérêt public (avis de recherche). **Conséquence pour LBT : le floutage automatique au dépôt n'est pas une option produit, c'est une mesure de conformité** — et il est intégré à l'architecture de modération (§7.1) pour un coût marginal nul.
+- **DSA (règlement 2022/2065, pleinement applicable depuis le 17/02/2024), sanctions jusqu'à 6 % du CA mondial, ARCOM comme autorité en France.** Deux blocs à distinguer :
+  - **Applicable à LBT dès le premier jour** (Section 2, services d'hébergement) : mécanisme de **notification et action** permettant à toute personne de signaler un contenu illicite (art. 16), et **motivation** de chaque décision de modération communiquée à l'utilisateur concerné (art. 17). → contrainte d'architecture directe : l'outillage de modération doit produire et conserver une décision motivée par action, pas seulement supprimer.
+  - **Probablement non applicable au démarrage** : l'**art. 19 exclut les micro et petites entreprises** des obligations de la Section 3 (dont le rapport de transparence annuel et la transmission des décisions à la base de données de transparence de la Commission, art. 24 — à l'exception de l'art. 24(3)) ; l'**art. 29** exclut de même les micro/petites entreprises des obligations Section 4 propres aux places de marché (traçabilité des vendeurs professionnels). **L'exclusion se prolonge 12 mois après la perte du statut** — donc le passage de seuil est une échéance à anticiper, pas une surprise. → nouvelle action §17 n°17.
 
 **Action :** prévoir un point avec un juriste (ou Fabien s'il a la compétence) avant le lancement public, pas après.
 
@@ -252,7 +348,8 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 | Risque | Mitigation |
 |---|---|
 | Effet de réseau de LBC trop fort même sur un segment niche | Rester strictement local/vertical au démarrage, ne pas viser le national trop tôt |
-| Fraude sur l'auto ternit la réputation avant même le lancement | Friction-fee ciblé + modération humaine dès le MVP, pas en rattrapage |
+| Fraude sur l'auto ternit la réputation avant même le lancement | Friction-fee ciblé + modération humaine dès le MVP, pas en rattrapage. **Ajout du 2026-07-29 :** déduplication par hachage perceptuel dès le jour 1 (§7.1) — la photo réutilisée est la signature n°1 de l'annonce frauduleuse et aucune API de modération ne la détecte |
+| Exposition RGPD par les photos elles-mêmes (plaques, visages, adresses) — risque de plainte CNIL indépendant de toute fraude | Floutage automatique des plaques et des visages au dépôt, intégré à la chaîne de modération (§7.1, §8). Le taux de détection du modèle devient un indicateur de conformité, à mesurer avant lancement (action §17 n°16) |
 | Dilution : vouloir couvrir trop de verticales trop vite | Discipline de phasage (§4) — collection seulement après l'auto, pas en parallèle dès le M1 |
 | Aspect juridique sous-estimé | Point juridique avant lancement public (§8), pas après un incident |
 | Absence de ressource technique dédiée | Décision claire sur le déclenchement de l'implication de l'équipe RETRO+ (§11) |
@@ -278,7 +375,7 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 - Moteur de recherche (le cœur produit d'un site d'annonces — évaluer Meilisearch, Typesense, Elasticsearch. **Algolia écarté le 2026-07-28** : facturation à la requête de recherche, donc coût qui croît avec le trafic gratuit des particuliers — modèle économique incompatible avec le nôtre, cf. §5.1)
 - Hébergement et scalabilité
 - **Couche image — arbitré le 2026-07-28** : object storage à egress nul + variantes pré-générées au dépôt + CDN. Cloudflare Images en mode stockage Cloudflare écarté (facturation à la livraison, ~40× plus cher au palier national). Alternatives européennes valables si la souveraineté prime : Scaleway Object Storage (~0,011 €/Go-mois, hébergement France, ISO 27001/HDS) ou Bunny Storage+CDN (0,01 $/Go). Le poste étant à ~0,001 €/annonce, **le choix peut se faire sur la souveraineté plutôt que sur le prix**.
-- Modération de contenu (outillage automatique + humain) — **poste variable n°1**, cf. §5.1 et action §17 n°11
+- **Modération de contenu — arbitré le 2026-07-29 (§7.1)** : cascade auto-hébergée sur CPU (pHash ou PDQ pour la déduplication, `Falconsai/nsfw_image_detection` en ONNX INT8 pour le NSFW, YOLOv11 fine-tuné plaques + OpenCV pour le floutage, PaddleOCR pour le texte incrusté) sur un serveur 4 vCPU à ~25 €/mois, **sans GPU** ; complétée par un appel à Claude Haiku 4.5 (~0,0016 $/image) sur l'image de couverture et les images signalées uniquement. **Écartés** : Hive (~690 €/mois à S3, pas de tarif public), Sightengine (~470 €/mois), Google Vision SafeSearch (~345 €/mois), AWS Rekognition (~230 €/mois — et arrêt du Batch Image Content Moderation aux nouveaux clients au 30/04/2026), Azure Content Safety (~172 €/mois) : tous conçus pour l'UGC social (nudité/violence) et aveugles à nos trois risques réels (photo volée, plaque visible, coordonnées incrustées). **Cloudflare Workers AI : non tranché**, coût par image non confirmable (doc officielle inaccessible depuis l'environnement d'exécution).
 - Paiement/escrow (si applicable, hors MVP)
 
 ## 15. Skills nécessaires au projet — veille & gestion
@@ -288,9 +385,13 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 - **À faire en continu** : identifier les nouveaux besoins au fil du projet (ex. un skill précis sur le moteur de recherche choisi, sur la conformité DAC7, sur un framework retenu), rechercher s'il existe une ressource fiable, l'auditer avant installation (même processus de sécurité que le 2026-07-26 : pas d'installation sans vérification), et tenir cette section à jour avec ce qui a été ajouté et pourquoi.
 - **Veille technologique** : suivre les évolutions techniques pertinentes (moteurs de recherche, frameworks marketplace, outils anti-fraude) pour garder les choix du §14 à jour plutôt que figés une fois pour toutes.
 - **Besoins identifiés le 2026-07-28** (pour une session locale future, l'agent quotidien n'a pas accès au dossier de skills) :
-  - Un skill **modération de contenu automatisée** (comparaison d'API, modèles auto-hébergés, seuils, workflow de revue humaine) — c'est le premier poste de coût variable du projet (§5.1), et aucun skill connu ne le couvre.
+  - ~~Un skill **modération de contenu automatisée**~~ → **partiellement comblé le 2026-07-29 par la §7.1** (comparaison d'API et architecture retenue). Reste utile pour la partie *workflow* (seuils, escalade, revue humaine), qui relève de l'action §17 n°12.
   - Un skill **FinOps / modélisation de coûts cloud** serait utile mais le travail du 2026-07-28 a été fait sans, à la main : priorité basse.
   - Un skill **Meilisearch** (ou sur le moteur finalement retenu) une fois l'action §17 n°2 tranchée.
+- **Besoins identifiés le 2026-07-29** (session locale future) :
+  - **Priorité haute — un skill « inférence vision auto-hébergée »** : export ONNX / quantification INT8, service d'inférence Python (FastAPI + onnxruntime), YOLO fine-tuning et déploiement, OpenCV. C'est la brique technique centrale de l'architecture de modération retenue (§7.1) et rien dans la bibliothèque actuelle ne la couvre.
+  - Un skill **hachage perceptuel / détection de doublons d'images à l'échelle** (pHash, PDQ, index de recherche par distance de Hamming) — c'est la brique anti-fraude n°1 et elle est spécifique.
+  - Un skill **conformité DSA** (notification et action, motivation des décisions, seuils micro/petite entreprise des art. 19 et 29) — à croiser avec l'action §17 n°3.
 
 ## 16. Journal d'avancement quotidien
 
@@ -298,6 +399,8 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 
 - **2026-07-27** — Création du document v1 (positionnement, concurrence, segments, modèle économique, UX, technique, légal, acquisition, roadmap, organisation, risques). Mise en place prévue d'un agent quotidien automatisé pour faire avancer le document en continu.
 - **2026-07-28** — **Action §17 n°1 traitée : modèle de coût d'infrastructure par annonce et par pro** (nouvelle §5.1, tarifs sourcés en annexe). Cinq conclusions : (1) l'architecture image détermine tout — variantes pré-générées + object storage à egress nul = ~40× moins cher que Cloudflare Images au palier national, et coût insensible au trafic ; (2) le socle technique d'une annonce ne coûte que **~0,041 €** ; (3) le coût marginal réel est **~0,19 €/annonce dont ~80 % humain** (modération + support) — le levier de coût est l'automatisation de la modération, pas les serveurs ; (4) un garage pro coûte **~10 €/mois** en variable direct contre **1 780 €/mois facturés par LBC** pour le même périmètre : marge brute ~90 % dès 99 €/mois, le prix pro n'est pas contraint par les coûts ; (5) le vrai arbitrage est le seuil de rentabilité — à 149 €/mois et 15 k€/mois de coûts fixes, il faut **108 garages**, ce qui valide la cohérence de l'objectif M12 (200 garages) du §2. **Décisions techniques dérivées** : Algolia et Cloudflare Images (mode stockage) écartés du §14 ; recommandation de cadrage à 149 €/mois pour l'action n°6. **Découverte annexe** : sources secondaires indiquant que LBC a réduit les photos gratuites à 3 et limiterait les particuliers à 2 annonces auto gratuites/an — à confirmer (nouvelle action n°13), potentiel axe de différenciation à coût nul pour LBT.
+
+- **2026-07-29** — **Action §17 n°11 traitée : modération automatique des images** (nouvelle §7.1, sources en annexe). Le résultat le plus important est un recadrage, pas un prix : **les API de modération commerciales (Hive, Sightengine, AWS Rekognition, Azure, Google Vision) sont conçues pour l'UGC social — nudité, violence, armes — et ne couvrent aucun des trois risques réels d'une annonce auto** : photo volée/réutilisée (arnaque n°1, exige du hachage perceptuel), plaque d'immatriculation visible (obligation RGPD/CNIL, exige un détecteur + floutage), coordonnées incrustées dans l'image (exige de l'OCR). Le choix n'était donc pas « quelle API » mais « quelle chaîne construire ». **Architecture retenue** : cascade auto-hébergée sur **un seul serveur 4 vCPU à ~25 €/mois, sans GPU** (pHash/PDQ + ViT NSFW en ONNX INT8 + YOLOv11 plaques + PaddleOCR ≈ 25 h de CPU/mois sur 720 disponibles au palier national), complétée par un modèle vision-langage (Claude Haiku 4.5, ~0,0016 $/image) appelé **uniquement sur l'image de couverture et les images signalées** (~53 €/mois) pour la compréhension sémantique. **Total ~78 €/mois à 250 k images/mois, soit 0,003 €/annonce contre 0,018 € estimé la veille** ; le sous-total technique du §5.1 passe à ~0,026 €/annonce et le coût marginal total à ~0,175 €, dont ~85 % d'humain — la conclusion du 2026-07-28 est renforcée. **GPU écarté** : auto-héberger un VLM coûterait 577 à 889 €/mois contre ~53 € pour l'API. **Différenciateur produit tombé de l'analyse** : le détecteur de plaques étant déjà présent pour raison légale, **le floutage automatique au dépôt est gratuit — et LBC ne le propose pas nativement** (les vendeurs passent par des applis tierces) ; argument de confiance immédiat, ajouté au §6. **Découvertes juridiques** (§8) : position CNIL sur les plaques ; DSA art. 16-17 (notification/action et motivation des décisions) applicables dès le jour 1 et contraignant l'outillage de modération, tandis que les art. 19 et 29 excluent les micro/petites entreprises des obligations de transparence et de traçabilité des vendeurs pros, avec une prolongation de 12 mois après la perte du statut. **Limite majeure assumée** : les taux de faux positifs/négatifs des modèles ouverts n'ont pas été évalués sur des photos de véhicules françaises — c'est le paramètre le plus décisif et il ne s'obtient que par mesure (nouvelle action n°16).
 
 ## 17. File d'attente des prochaines actions (pour les sessions automatisées)
 
@@ -313,11 +416,16 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 8. [ouvert] Veille concurrentielle LBC — premier point structuré (prix, nouvelles fonctionnalités, communication) (§3)
 9. [ouvert] Détailler le plan de recrutement des 10-20 premiers garages pilotes (script d'approche, argumentaire face à la frustration tarifaire LBC du 27/04/2026) (§9)
 10. [ouvert] Étudier la faisabilité technique et légale du système d'avis/réputation vendeur (différenciateur confiance mentionné en §6)
-11. [ouvert] **Priorité haute** — Comparer les options de modération automatique d'images à 250 k opérations/mois (API commerciales type Sightengine/Hive vs modèle open-source auto-hébergé vs Workers AI) : premier poste de coût variable technique du projet, ~0,018 €/annonce (§7, §14)
+11. [**traité 2026-07-29**] Comparer les options de modération automatique d'images à 250 k opérations/mois → nouvelle §7.1. Conclusion structurante : **les API commerciales ne couvrent aucun de nos trois risques réels** (photo volée, plaque visible, coordonnées incrustées) — elles ne peuvent pas être le socle. Architecture retenue : cascade auto-hébergée sur un serveur CPU à ~25 €/mois (pHash, ViT NSFW, YOLOv11 plaques + floutage, OCR — **sans GPU**) + VLM sélectif à ~53 €/mois. **0,003 €/annonce** au lieu de 0,018 €. Différenciateur produit gratuit identifié : floutage automatique des plaques, absent de LBC (§6). Découvertes juridiques CNIL + DSA reportées en §8.
 12. [ouvert] **Priorité haute** — Définir la politique de modération : taux d'échantillonnage humain, règles d'auto-validation, traitement des signalements, débit cible par modérateur. C'est le driver n°1 du coût marginal (0,058 à 0,29 €/annonce selon le taux de revue humaine) et un sujet de conformité (§8)
 13. [ouvert] Vérifier sur sources officielles LBC les quotas particuliers 2026 : nombre de photos gratuites (3 ?) et nombre d'annonces auto gratuites par an (2 puis ~8 € ?) — impact direct sur l'argumentaire de différenciation (§3)
 14. [ouvert] Modéliser la déflection du support (FAQ, self-service, réponses automatisées) : 2ᵉ poste du coût marginal par annonce (0,092 €, soit ~48 % du total) (§6, §13)
-15. [ouvert] Vérifier les tarifs Sightengine, Meilisearch Cloud et Cloudflare Images sur leurs pages officielles (les chiffres du 2026-07-28 viennent d'agrégateurs tiers ; `developers.cloudflare.com` renvoyait un 403 depuis l'environnement d'exécution) et revalider le taux de change USD/EUR retenu (0,92)
+15. [ouvert] Vérifier les tarifs Sightengine, Meilisearch Cloud et Cloudflare Images sur leurs pages officielles (les chiffres du 2026-07-28 viennent d'agrégateurs tiers ; `developers.cloudflare.com` renvoyait un 403 depuis l'environnement d'exécution) et revalider le taux de change USD/EUR retenu (0,92). **Ajouté le 2026-07-29** : y joindre Cloudflare Workers AI (neurones par classification d'image — non confirmé, fourchette 3 à 55 €/mois au palier S3, écart trop large pour décider), AWS Rekognition (paliers + confirmation du périmètre après l'arrêt du Batch Image Content Moderation aux nouveaux clients le 30/04/2026), Hive et Azure Content Safety
+16. [ouvert] **Priorité haute** — Constituer un jeu de test de 300-500 photos de véhicules réelles (le garage de Nicolas est la source évidente : photos de vitrine, intérieurs, moteurs, plaques sous différents angles, éclairages, états) et **mesurer les taux de faux positifs / faux négatifs** des modèles retenus en §7.1 : détection de plaques (un raté = exposition RGPD), NSFW (un faux positif = travail humain inutile), OCR. C'est le paramètre le plus décisif de l'architecture de modération et il ne s'obtient que par mesure — à faire avant tout développement
+17. [ouvert] Déterminer si LBT relèvera du statut **micro ou petite entreprise** au sens de la recommandation 2003/361/CE (< 50 salariés et CA ou bilan ≤ 10 M€), donc exclue des obligations DSA Section 3 (art. 19) et Section 4 (art. 29), et à quelle échéance du plan le seuil serait franchi — l'exclusion se prolongeant 12 mois après la perte du statut, c'est une date à inscrire dans la roadmap (§8, §10)
+18. [ouvert] Spécifier le **pipeline de dépôt d'annonce** de bout en bout : ordre des étages de la §7.1, latence cible par étage (budget total < 60 s à la publication), comportement en cas d'indisponibilité d'un modèle (publier et re-modérer, ou bloquer ?), file d'attente asynchrone vs synchrone, et journalisation des décisions exigée par le DSA art. 17 (§7, §8)
+19. [ouvert] Concevoir l'**index de déduplication d'images** : quel hachage (pHash 64 bits vs PDQ 256 bits), quel seuil de distance de Hamming, quelle structure d'index à 5 M d'images en base, et quelle politique en cas de correspondance (blocage, signalement, avertissement à l'acheteur) (§7.1)
+20. [ouvert] Évaluer une **recherche d'image inversée externe** (au-delà de notre propre base) pour détecter les photos reprises d'autres plateformes — faisabilité technique, légalité, coût. C'est le seul angle mort restant de l'anti-fraude photo (§7.1)
 
 ---
 
@@ -346,3 +454,25 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 | Brevo (emails transactionnels) | à partir de 15 €/mois pour 20 000 emails → **0,00075 €/email** | [smtpedia — Brevo Pricing 2026](https://smtpedia.com/brevo-pricing/), [Hack'celeration — combien coûte Brevo](https://hackceleration.com/fr/labs/combien-coute-brevo) |
 | Coût chargé d'un modérateur/agent support France | brut moyen ~26 350 €/an + ~40 % de charges ≈ 37 000 €/an ≈ **23 €/h** | [Indeed — salaire modérateur](https://fr.indeed.com/career/mod%C3%A9rateur/salaries), [expert-comptable-tpe — coût réel d'un salarié 2026](https://www.expert-comptable-tpe.fr/articles/cout-reel-travail-employe-smic-declare-en-france/) |
 | Quotas photos/annonces LBC particuliers (**à confirmer**) | 3 photos gratuites ; auto : 2 annonces gratuites/an puis ~8 € | [Annu Moteurs — annonce Leboncoin payante en 2026](https://www.annumoteurs.net/annonce-leboncoin-payante-en-2026-tarifs-limites-et-astuces-cachees/), [assistance.leboncoin.info — pack photos supplémentaires](https://assistance.leboncoin.info/hc/fr/articles/360000388745-Comment-souscrire-au-Pack-Photos-suppl%C3%A9mentaires) |
+
+## Annexe — Sources de la modération automatique §7.1 (recherche web du 2026-07-29)
+
+| Donnée retenue | Valeur | Source | Fiabilité |
+|---|---|---|---|
+| Google Cloud Vision — SafeSearch et Text Detection (OCR) | 1 000 unités/mois gratuites, puis **1,50 $/1 000** (1 001 – 5 M), 0,60 $/1 000 au-delà de 5 M — **par feature** | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) | **Page officielle** |
+| Sightengine | Starter 29 $/mois (10 k opérations) ; Growth 99 $/mois (40 k) + 0,002 $/op ; Pro 399 $/mois (200 k) + 0,0015 $/op. **1 modèle sur 1 image = 1 opération** ; détection IA/deepfake = 5 op, liveness = 10 op | [checkthat.ai — Sightengine Pricing 2026](https://checkthat.ai/brands/sightengine/pricing), [saasworthy](https://www.saasworthy.com/product/sightengine/pricing), [sightengine.com/pricing](https://sightengine.com/pricing) (403 depuis l'environnement d'exécution) | Agrégateurs tiers |
+| AWS Rekognition — Content Moderation (Image APIs) | **0,001 $/image** (1er million/mois), 0,0008 $ au-delà. **Streaming Video Analysis et Batch Image Content Moderation arrêtés pour les nouveaux clients au 30/04/2026** | [aws.amazon.com/rekognition/pricing](https://aws.amazon.com/rekognition/pricing/) (403), [checkthat.ai](https://checkthat.ai/brands/amazon-rekognition/pricing), [astuto.ai](https://www.astuto.ai/blogs/amazon-rekognition-pricing-and-optimization) | Agrégateurs tiers |
+| Azure AI Content Safety — Image | **0,75 $/1 000 images** (standard pay-as-you-go) ; prix réel dépendant de la région/devise via le calculateur Azure | [azure.microsoft.com — Content Safety pricing](https://azure.microsoft.com/en-us/pricing/details/content-safety/) (403), [oreateai](https://www.oreateai.com/blog/demystifying-azure-ai-content-safety-pricing-keeping-your-digital-spaces-clean/84e401553234165a4b26dca410a2e1cd) | Agrégateur tiers |
+| Hive — Visual Moderation | **3,00 $/1 000 images** (0,006 $/scan). Pas de liste de prix publique ni d'offre gratuite : devis commercial | [thehive.ai/models/hive/visual-moderation](https://thehive.ai/models/hive/visual-moderation), [thehive.ai/pricing](https://thehive.ai/pricing) | Agrégateur tiers |
+| Cloudflare Workers AI | 0,011 $/1 000 neurones ; 10 000 neurones/jour offerts. **Nombre de neurones par classification d'image non confirmé** (sources contradictoires : 500 à 8 300 classifications pour 10 k neurones) | [developers.cloudflare.com/workers-ai/platform/pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/) (403), [mecanik.dev](https://mecanik.dev/en/posts/cloudflare-workers-ai-run-ai-models-at-the-edge-in-2026/), [costbench](https://costbench.com/software/llm-api-providers/cloudflare-workers-ai/) | **Non tranché** |
+| Claude Haiku 4.5 — modèle vision-langage | **1,00 $/M tokens en entrée, 5,00 $/M en sortie**. Tokens image ≈ (largeur × hauteur)/750. API Batch : −50 %, lots généralement < 1 h, maximum 24 h. Préfixe minimum cacheable : 4 096 tokens | Documentation Claude API (skill `claude-api`, catalogue de modèles au 2026-06-24) | **Source de référence** |
+| Modèle NSFW auto-hébergé | `Falconsai/nsfw_image_detection` — ViT-base-patch16-224 fine-tuné, 80 000 images d'entraînement, 98,04 % de justesse sur son jeu d'évaluation, 224×224, Apache-2.0 | [huggingface.co/Falconsai/nsfw_image_detection](https://huggingface.co/Falconsai/nsfw_image_detection), [github.com/steelcityamir/safe-content-ai](https://github.com/steelcityamir/safe-content-ai) | Fiche de modèle officielle |
+| Débit CPU d'un transformeur vision quantifié | **6,1 ms/image (p50) en ONNX Runtime INT8** contre 24,8 ms en FP32, AMD Ryzen 7 5800H, batch 1 | [philschmid.de — Accelerate ViT with Quantization using Optimum](https://www.philschmid.de/optimizing-vision-transformer) (403), snippet de recherche | **Ordre de grandeur — à remesurer** |
+| Détection de plaques (open source) | YOLOv11 fine-tuné sur 10 125 images Roboflow ; alternatives YOLOv8 (dashcam_anonymizer, video-privacy-blur) avec floutage OpenCV | [morsetechlab/yolov11-license-plate-detection](https://huggingface.co/morsetechlab/yolov11-license-plate-detection), [varungupta31/dashcam_anonymizer](https://github.com/varungupta31/dashcam_anonymizer), [MengWoods/video-privacy-blur](https://github.com/MengWoods/video-privacy-blur) | Dépôts publics |
+| Hachage perceptuel | `pHash` (GPLv3, DCT sur image 32×32 → empreinte 64 bits, robuste à la recompression JPEG, au redimensionnement et aux petits filigranes ; sensible aux miroirs, recadrages et décalages de couleur) ; `imagehash` (Python, aHash/dHash/wavelet) ; **PDQ** (Meta, open-sourcé en 2019, 256 bits) | [phash.org](http://phash.org/), [Grokipedia — Perceptual hashing](https://grokipedia.com/page/Perceptual_hashing), [PHASER (ScienceDirect)](https://www.sciencedirect.com/science/article/pii/S2666281723001993) | Sources techniques |
+| GPU (au cas où) | Scaleway L4 à partir de **0,79 €/GPU/heure** (~577 €/mois en continu) ; Hetzner GEX131 (RTX PRO 6000 Blackwell Max-Q) **889 €/mois** ; GEX44 (RTX 4000 SFF Ada, 184 €/mois) indisponible en juillet 2026 | [scaleway.com/en/pricing/gpu](https://www.scaleway.com/en/pricing/gpu/), [hetzner.com — serveurs GPU](https://www.hetzner.com/dedicated-rootserver/matrix-gpu/), [gpuhosted — Hetzner GPU Review 2026](https://gpuhosted.com/en/hetzner-gpu-review/) | Pages officielles + agrégateur |
+| Plaque d'immatriculation = donnée personnelle | « En principe, un particulier ne peut pas publier sur internet la photographie d'un véhicule sans flouter sa plaque d'immatriculation » — identification indirecte du propriétaire, art. 4-2 RGPD ; exception pour mission d'intérêt public | [CNIL — CNIL Direct, question 1816](https://www.cnil.fr/fr/cnil-direct/question/1816), [CNIL — Immatriculation et infractions](https://www.cnil.fr/fr/immatriculation-et-infractions), [Le Dall Avocat](https://www.ledall-avocat.fr/droit-prendre-photo-voiture-flouter-plaque/) | **Source officielle CNIL** |
+| LBC ne floute pas les plaques nativement | Les vendeurs recourent à des applications tierces (Plakach — détection et masquage automatiques en ~1 s hors ligne, Redacted, ImageBlur, FacePixelizer) ou floutent à la main. Risque cité : la « doublette » (usurpation de plaque) permettant de fabriquer une annonce clone | [mesplaques.fr](https://www.mesplaques.fr/blog/pourquoi-flouter-plaque-immatriculation/), [keplervo.com](https://www.keplervo.com/fr/blog/pourquoi-masquer-sa-plaque-d-immatriculation-sur-une-annonce), [cartaplac.com](https://www.cartaplac.com/article/plaques-d-immatriculation-pourquoi-les-cacher-sur-les-photos-/741) | Sources secondaires convergentes |
+| DSA — obligations de modération | Pleinement applicable depuis le **17/02/2024** à toutes les plateformes en ligne. Mécanisme de notification et action ; motivation des décisions de modération ; rapport de transparence annuel ; enregistrement à la base de données de transparence de la Commission (art. 24.5). Sanctions jusqu'à **6 % du CA mondial**, ARCOM autorité compétente en France | [ARCOM — DSA : obligations et services concernés](https://www.arcom.fr/espace-professionnel/reglement-sur-les-services-numeriques-ou-dsa-obligations-et-services-concernes), [ARCOM — enregistrement art. 24.5](https://www.arcom.fr/espace-professionnel/reglement-sur-les-services-numeriques-ou-dsa-enregistrement-dune-plateforme-en-ligne-sur-la-base-de-donnees-de-transparence-art-245), [Haas Avocats](https://www.haas-avocats.com/e-commerce-plateformes-les-obligations-juridiques-en-2026/) | **Source officielle (ARCOM)** |
+| DSA — exclusion des micro et petites entreprises | **Art. 19** : la Section 3 (dont art. 24, rapports de transparence) ne s'applique pas aux micro et petites entreprises au sens de la recommandation 2003/361/CE, à l'exception de l'art. 24(3) ; l'exclusion se prolonge **12 mois après la perte du statut**, sauf désignation comme très grande plateforme (art. 33). **Art. 29** : exclusion équivalente pour la Section 4 (places de marché) | [eu-digital-services-act.com — Article 19](https://www.eu-digital-services-act.com/Digital_Services_Act_Article_19.html), [CMS DigitalLaws — Article 19](https://www.cms-digitallaws.com/en/dsa/article-19/), [dsa-library.com — Article 29](https://dsa-library.com/article/29/) | Texte du règlement |
+| Modération LBC (contexte concurrentiel) | Système hybride : algorithmes en analyse instantanée (texte, images, géolocalisation, métadonnées des fichiers) + modérateurs humains sur les publications suspectes. ~600 collaborateurs techniques (data, IA, ingénierie logicielle). Pas de chiffre public sur le nombre de modérateurs ni sur le taux d'automatisation | [Boursorama — comment l'IA révolutionne Leboncoin](https://www.boursorama.com/budget/conso/actualites/comment-l-ia-revolutionne-leboncoin-les-astuces-pour-acheter-plus-vite-et-mieux-0dd2b58cefb0c3aa72c4898622a6c853), [reservoir.live — quand la modération automatique déraille](https://www.reservoir.live/leboncoin-et-lia-quand-la-moderation-automatique-deraille/) | Sources secondaires |
