@@ -43,6 +43,7 @@ Ne pas confondre "concurrent sérieux" et "clone généraliste de LBC" : l'objec
 - **Restriction des photos gratuites (à confirmer sur source officielle)** : plusieurs sources secondaires de 2026 indiquent que LBC est passé de 5 à **3 photos gratuites** pour les particuliers sur la majorité des catégories, les photos supplémentaires (jusqu'à 10 ou 20 selon le pack) étant payantes. Une source mentionne aussi un **quota de 2 annonces auto gratuites par an pour les particuliers, puis ~8 € par publication**. Si confirmé, c'est un point de friction majeur et un axe de différenciation direct pour LBT (photos illimitées ou 10-15 gratuites — le modèle de coût du §5.1 montre que cela ne coûte rien : le stockage image représente 0,001 €/annonce).
 - Forces de LBC : effet de réseau, notoriété, marque préférée des Français sur seconde main et immobilier, 14,5M visiteurs uniques/mois (+15%/an).
 - Faiblesses identifiées : coût pro élevé et en hausse perçue, généraliste donc pas d'expertise/curation sur les niches (collection, vintage), pas de mécanisme de confiance renforcé sur les catégories à risque de fraude (auto, objets de valeur).
+- **Le concurrent pertinent sur l'auto n'est pas seulement LBC (constat du 2026-08-02, §14.2 Résultat n°10)** : **La Centrale a déjà mis en production une recherche en langage naturel** (« j'ai trois enfants et je cherche une voiture spacieuse à moins de 15 000 € dans un rayon de 40 km autour de Marseille ») et revendique une vingtaine de cas d'usage IA en production, dont un assistant de pricing pour les professionnels depuis juin 2025. **Conséquence sur le positionnement : le différenciateur « LBT comprend mieux le français automobile » ne sera pas tenable face à La Centrale**, il ne l'est que face à LBC. L'avantage défendable reste le couple prix pro / garantie contacts (§5.2), pas la sémantique. À intégrer à la veille : suivre La Centrale au moins autant que LBC sur la verticale auto.
 
 **Action de suivi :** mettre en place une veille concurrentielle légère et récurrente (voir §11) plutôt qu'une étude ponctuelle qui périme vite.
 
@@ -342,6 +343,8 @@ Parité d'ergonomie avec LBC = prérequis silencieux, pas un argument de vente. 
 - **Publication immédiate comme engagement produit (arbitré le 2026-07-30, cf. §7.2)** : cible **médiane < 5 min, 95 % < 15 min**, et **publication par défaut** — le blocage avant publication est plafonné à 2 % des dépôts. Corollaire : le parcours doit assumer la modération *après* publication (statut visible de l'annonce, exposé des motifs en langage clair, bouton de réclamation) plutôt qu'une salle d'attente.
 - **Formulaire de signalement public sur chaque annonce (obligation DSA art. 16)** avec accusé de réception et notification de la décision au signaleur — ce n'est pas une fonctionnalité optionnelle du MVP
 - Version mobile web irréprochable dès le MVP (la majorité du trafic annonces est mobile) ; appli native à évaluer en phase 2
+- **Comportement de la recherche — trois exigences arbitrées le 2026-08-02 (§14.2)** : (a) **zéro résultat assumé et explicite** plutôt que des résultats élargis en silence — le moteur sait retirer un mot de la requête pour éviter le zéro-résultat (« clio 3 diesel » → « clio 3 », affichant des essences sans le dire), ce comportement est désactivé (`drop_tokens_threshold=0`) et remplacé par un bouton **« élargir la recherche »** qui annonce ce qu'il abandonne ; le raisonnement n'est pas ergonomique mais financier — un résultat hors critère dégrade le ratio de la garantie contacts du §5.2. (b) **Ordre des facettes déduit du marché** : prix, marque/modèle, **énergie**, **boîte de vitesses**, km/année, carrosserie/places, puis confiance (garantie, première main, transmission) — la boîte automatique n'est plus un critère de niche (54 % des voitures neuves immatriculées en 2025) et **Crit'Air est un attribut affiché, pas un filtre de premier rang** (suppression des ZFE votée le 28/05/2025). (c) Une requête entièrement composée de mots vides (« voiture occasion ») **bascule sur la navigation par facettes** au lieu de renvoyer un zéro résultat.
+- **Compteur de contacts qualifiés visible par le garage** — déjà exigé par la garantie du §5.2 (action §17 n°32) ; à croiser avec la métrique « contacts par vue de fiche » qui sert aussi d'indicateur de pertinence de la recherche (§14.2, Résultat n°11).
 
 ---
 
@@ -690,6 +693,7 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 *À trancher progressivement — ne pas figer avant d'avoir comparé les options. Point de départ : les skills déjà installés couvrent Cloudflare (Workers/D1/R2/Images) et Vercel/Next.js, deux stacks capables de scalabilité rapide sans lourdeur DevOps initiale, mais rien n'est encore choisi.*
 
 - Stack backend/frontend
+- **Schéma d'index et pertinence de la recherche — arbitré le 2026-08-02 (§14.2)** : collection `annonces_auto` de ~40 champs (`range_index` sur prix/km/année, `default_sorting_field: score_popularite`, `max_candidates` porté à 10), `text_match_type=max_weight` avec `query_by_weights=8,6,2,1`, **`enable_typos_for_numerical_tokens=false` et `enable_typos_for_alpha_numerical_tokens=false`** (meilleur mécanisme que le `num_typos` par champ pour protéger 308/208 et A3/A4), **`drop_tokens_threshold=0`** (jamais de résultats élargis en silence), `group_by=vendeur_id` + `group_limit=2` sur les listes triées par fraîcheur, `locale`/`stem` **uniquement** sur la description (le repli des diacritiques est voulu sur marque/modèle), jeu de synonymes automobile français d'environ 130 entrées avec règle d'asymétrie (SUV ⊅ 4x4). **Contrainte dure : 3 champs de tri maximum par requête** — d'où l'impossibilité de coder le plafond de densité publicitaire dans le moteur (§5.2).
 - **Moteur de recherche — arbitré le 2026-07-31 (§14.1) : Typesense, auto-hébergé, un nœud, indexé depuis Postgres.** Départagé non par la performance (au volume de LBT les quatre candidats sont surdimensionnés) mais par deux besoins métier — **boost commercial au moment de la requête** (`_eval()` et curation, absents de Meilisearch qui n'a pas de pinning natif) et **tolérance aux fautes réglable par champ** (indispensable sur les références chiffrées : 308/208/508, A3/A4) — et par la **trajectoire de licence** : Meilisearch a placé sharding et réplication dans une *Enterprise Edition* sous BSL 1.1 interdite en production sans accord commercial, là où Typesense garde le clustering Raft dans l'open source. **Algolia écarté le 2026-07-28** (facturation à la requête, incompatible avec un trafic particulier gratuit). **Elasticsearch/OpenSearch écartés** : coût d'exploitation JVM disproportionné sans admin sys dédié ; leur seul avantage structurel (le percolateur, pour les alertes « nouvelle annonce ») se contourne trivialement à notre volume. **Postgres seul écarté** comme cible, mais reste le repli si le MVP doit sortir plus vite.
 - Hébergement et scalabilité
 - **Couche image — arbitré le 2026-07-28** : object storage à egress nul + variantes pré-générées au dépôt + CDN. Cloudflare Images en mode stockage Cloudflare écarté (facturation à la livraison, ~40× plus cher au palier national). Alternatives européennes valables si la souveraineté prime : Scaleway Object Storage (~0,011 €/Go-mois, hébergement France, ISO 27001/HDS) ou Bunny Storage+CDN (0,01 $/Go). Le poste étant à ~0,001 €/annonce, **le choix peut se faire sur la souveraineté plutôt que sur le prix**.
@@ -798,6 +802,394 @@ Pourquoi cela ne justifie pas Elasticsearch pour autant : à S3, **25 000 nouvel
 - **Tarifs cloud issus d'agrégateurs.** Les prix Hetzner (CX33 6,49 €, CPX31 16,49 €, après la hausse d'avril 2026) et Typesense Cloud (~22-50 $/mois) proviennent de sources tierces : `typesense.org`, `cloud.typesense.org` et `meilisearch.com/docs` renvoient tous un **403** depuis l'environnement d'exécution des sessions automatisées (même limite que les 28, 29 et 30/07). Seul le fichier `LICENSE-EE` de Meilisearch a pu être lu directement, sur `raw.githubusercontent.com`. → à revalider en session locale (action §17 n°15, étendue).
 - **Le percolateur d'Elasticsearch a été écarté sur un raisonnement de volume, pas sur une implémentation.** Si les alertes devenaient un axe produit majeur (ce qui est plausible sur l'auto : « préviens-moi dès qu'un Kangoo diesel < 8 000 € apparaît dans 50 km »), le sujet mérite une conception propre → nouvelle action §17 n°28.
 
+### 14.2 Schéma d'index et pertinence de la recherche auto (établi le 2026-08-02)
+
+*Action §17 n°27. Objet : champs indexés et poids, facettes et tris, tolérance aux fautes par champ, `distinct` par vendeur, tri par défaut, dictionnaire de synonymes automobile français. **Particularité de méthode : contrairement aux sections précédentes, celle-ci est adossée à la documentation officielle Typesense lue intégralement en source primaire** (voir Résultat n°0). Sources en annexe.*
+
+#### Résultat n°0 — les « 403 » qui bloquent 7 actions de la file ne viennent pas des sites, ils viennent de notre propre configuration
+
+C'est le résultat le plus rentable de la journée et il n'a rien à voir avec la recherche.
+
+Depuis le 2026-07-28, quatre sections de ce document concluent par la même phrase : « source inaccessible depuis l'environnement d'exécution (403) ». Sept actions de la §17 sont classées bloquées ou partiellement bloquées pour ce motif (n°8, 13, 15, 21, 25, 33, 34), dont la veille concurrentielle LBC et la vérification des textes DSA sur EUR-Lex. L'interprétation retenue jusqu'ici était que les sites refusaient les requêtes d'un agent automatisé.
+
+**C'est faux.** Le diagnostic exact, obtenu en interrogeant le proxy de l'environnement :
+
+```
+$ curl -sS "$HTTPS_PROXY/__agentproxy/status"
+"recentRelayFailures": [
+  { "kind": "connect_rejected",
+    "detail": "gateway answered 403 to CONNECT (policy denial or upstream failure)",
+    "host": "data.gouv.fr:443" },
+  { ... "host": "www.lacentrale.fr:443" },
+  { ... "host": "public.opendatasoft.com:443" }
+]
+```
+
+Le 403 est émis par **la passerelle réseau de l'environnement d'exécution**, avant que la requête n'atteigne le site. Ce n'est pas un blocage anti-bot : c'est un refus de la politique réseau choisie à la création de l'environnement, qui n'autorise qu'une liste blanche. Vérification par sondage :
+
+| Hôte | Résultat |
+|---|---|
+| `raw.githubusercontent.com`, `api.github.com`, `github.com`, `gitlab.com`, `pypi.org` | **autorisés** |
+| `data.gouv.fr`, `data.ademe.fr`, `public.opendatasoft.com`, `lacentrale.fr`, `typesense.org`, `fr.wikipedia.org`, `carlabelling.ademe.fr` | refusés par la politique (`connect_rejected`) |
+
+**Trois conséquences immédiates :**
+
+1. **Le déblocage coûte un changement de configuration, pas une session locale.** La politique réseau est un paramètre de l'environnement d'exécution Claude Code on the web (documenté sur `code.claude.com/docs/en/claude-code-on-the-web`), modifiable par Nicolas. Élargir la liste blanche — ou passer en accès sortant non restreint — rend faisables en session automatisée les actions n°13 (quotas LBC), n°15 (tarifs Cloudflare/Typesense/Hetzner), n°21 (EUR-Lex et Légifrance), n°25 (rapports de transparence DSA), n°34 (distribution du stock VO). **C'est la nouvelle action n°35, et c'est la moins chère de toute la file.** Réserve honnête : une fois le réseau ouvert, certains sites (`leboncoin.fr` en particulier) opposeront peut-être un vrai blocage anti-bot — mais on ne le sait pas encore, et aujourd'hui on ne l'a jamais testé.
+2. **Les mentions « 403 » des §5.2, §7.1 et §14.1 sont à relire avec cette correction.** Elles n'invalident aucune conclusion, mais elles attribuaient à des tiers une limite qui est la nôtre.
+3. **Le contournement est déjà exploitable sans rien changer.** La documentation technique de la plupart des logiciels libres est versionnée sur GitHub, donc accessible. L'intégralité de la documentation Typesense v30.2 a été lue directement dans son dépôt source (`raw.githubusercontent.com/typesense/typesense-website/master/docs-site/content/30.2/…`) : ~500 Ko de documentation officielle, y compris les valeurs par défaut de chaque paramètre. **Toute cette section est donc sourcée en primaire**, là où le §14.1 de la veille devait s'appuyer sur des agrégateurs. La même méthode s'applique à Postgres, Meilisearch, YOLO, PaddleOCR et la plupart des choix du §14.
+
+#### Résultat n°1 — sur l'automobile, la pertinence n'est pas un problème de scoring de texte, c'est un problème de reconnaissance d'entités
+
+C'est le recadrage central de la section, et il change l'ordre des chantiers.
+
+Les requêtes réelles d'un acheteur auto ne sont pas du langage : ce sont **des listes de valeurs de facettes écrites sans les facettes**. « clio 3 essence », « 3008 gt line 2019 », « utilitaire diesel toulouse », « kangoo 5 places boite auto », « c3 moins de 100000 km ». Décomposons :
+
+| Requête | Marque | Modèle | Génération | Énergie | Boîte | Finition | Année | Lieu | Texte libre restant |
+|---|---|---|---|---|---|---|---|---|---|
+| `clio 3 essence` | Renault (implicite) | Clio | 3 | essence | | | | | **rien** |
+| `3008 gt line 2019` | Peugeot (implicite) | 3008 | | | | GT Line | 2019 | | **rien** |
+| `utilitaire diesel toulouse` | | | | diesel | | | | Toulouse | **rien** (carrosserie=utilitaire) |
+| `kangoo 5 places boite auto` | Renault | Kangoo | | | auto | | | | **rien** (places=5) |
+
+**Dans la majorité des requêtes auto, il ne reste aucun texte libre à scorer.** Le moteur de recherche plein texte est sollicité pour un travail qui n'est pas le sien : il compare des chaînes là où il faudrait appliquer des filtres. D'où trois conséquences de conception, dans cet ordre :
+
+1. **La brique la plus rentable est un normaliseur de requête** : minuscules, retrait des accents, chiffres romains → arabes (`Clio III` → `Clio 3`), reconnaissance marque/modèle/génération sur un référentiel, reconnaissance des codes commerciaux (HDi, dCi, TCe, EDC…), extraction des seuils numériques (« moins de 100000 km », « - de 10000 € »), reconnaissance des communes et départements. Ce qui est reconnu part en `filter_by`, ce qui reste part en `q`. **Cette brique est du code à nous, testable, versionné** — pas une configuration du moteur.
+2. **Typesense sait faire une partie de ce travail nativement, et c'est utile pour la longue traîne** : la curation supporte le **filtrage dynamique**, c'est-à-dire des règles à variables (`"rule": {"query": "{marque} occasion", "match": "contains"}` → `"filter_by": "marque:={marque}"`) avec `remove_matched_tokens: true`, qui retire le token de la requête après l'avoir converti en filtre. Contrainte documentée : **les champs utilisés en filtrage dynamique doivent être déclarés `facet: true`** dans le schéma. À réserver aux cas que le normaliseur ne couvre pas, parce qu'une règle de curation vit dans le moteur — donc hors de git, et perdue à la réindexation si le script d'export n'est pas fait.
+3. **Le référentiel marque/modèle/version est un prérequis, pas un détail.** Piste gratuite et française identifiée : la base **ADEME Car Labelling** (données UTAC d'homologation, mise à jour trimestrielle, contient marque, modèle, dénomination commerciale, n° CNIT, énergie), publiée sur `data.gouv.fr` et `data.ademe.fr`. Elle ne couvre que les véhicules commercialisés neufs et pas les finitions de tout le parc VO, mais elle donne une colonne vertébrale normalisée gratuitement. **Non téléchargée à ce stade** — le domaine est refusé par la politique réseau (Résultat n°0). À croiser avec les données du pilote, qui sont la seule source de vérité sur ce que les gens tapent réellement.
+
+#### Résultat n°2 — le schéma d'index
+
+Collection `annonces_auto`. Le principe directeur : **un champ n'est indexé que si une fonction produit s'appuie dessus**, parce que chaque champ interrogeable coûte de la RAM (index intégralement en mémoire, §14.1) et surtout du bruit de pertinence.
+
+| Champ | Type | `index` | `facet` | `sort` | `query_by` | Notes / justification |
+|---|---|---|---|---|---|---|
+| `id` | string | ✓ | | | | = identifiant Postgres de l'annonce, jamais généré par le moteur |
+| `titre` | string | ✓ | | | **1er** | titre normalisé « Marque Modèle Version Année » ; poids le plus fort |
+| `version` | string | ✓ | ✓ | | **2e** | finition/motorisation brute (« 1.5 BlueHDi 100 S&S Business ») — champ le plus sale, venu des flux pros |
+| `description_courte` | string | ✓ | | | **3e** | description tronquée à ~600 caractères ; `locale: "fr"`, `stem: true` |
+| `marque` | string | ✓ | ✓ | | (via filtre) | `num_typos=0` |
+| `modele` | string | ✓ | ✓ | | (via filtre) | `num_typos=0` |
+| `generation` | string | ✓ | ✓ | | | « 3 », « III », « phase 2 » → normalisé en amont |
+| `carrosserie` | string | ✓ | ✓ | | | citadine / berline / break / SUV / monospace / coupé / cabriolet / utilitaire |
+| `energie` | string | ✓ | ✓ | | | facette de 1er rang (diesel = 44 % du VO, cf. Résultat n°9) |
+| `boite` | string | ✓ | ✓ | | | facette de 1er rang (54 % des VN 2025 en automatique) |
+| `transmission` | string | ✓ | ✓ | | | 2 roues motrices / 4x4 — **distinct de `carrosserie`**, cf. Résultat n°7 |
+| `annee` | int32 | ✓ | ✓ | ✓ | | `range_index: true` |
+| `km` | int32 | ✓ | ✓ | ✓ | | `range_index: true` |
+| `prix` | int32 | ✓ | ✓ | ✓ | | en euros entiers ; `range_index: true` |
+| `prix_precedent` | int32 | ✓ | | | | alimente la notification de baisse de prix (§6) |
+| `baisse_prix` | bool | ✓ | ✓ | | | badge « prix baissé » — filtrable, c'est un motif de tri produit |
+| `puissance_fiscale`, `puissance_din` | int32 | ✓ | ✓ | ✓ | | |
+| `portes`, `places` | int32 | ✓ | ✓ | | | « 7 places » est une requête fréquente en familial |
+| `couleur` | string | ✓ | ✓ | | | |
+| `critair` | int32 | ✓ | ✓ | | | **attribut affiché, pas filtre de 1er rang** (Résultat n°9) |
+| `premiere_main` | bool | ✓ | ✓ | | | |
+| `garantie_mois` | int32 | ✓ | ✓ | | | différenciateur pro |
+| `histovec_verifie` | bool | ✓ | ✓ | | | prépare l'action n°26 ; coût nul si le champ existe dès le départ |
+| `plaque_floutee` | bool | ✓ | | | | badge confiance (§7.1) |
+| `photos_count` | int32 | ✓ | | ✓ | | entre dans `score_popularite` |
+| `vendeur_id` | string | ✓ | ✓ | | | **indispensable au `group_by`** (Résultat n°6) |
+| `vendeur_type` | string | ✓ | ✓ | | | `particulier` / `pro` |
+| `vendeur_nom` | string | ✓ | ✓ | | 4e (poids faible) | permet « garage dupont » comme requête |
+| `palier` | string | ✓ | ✓ | | | palier d'abonnement (§5.2) — sert au `_eval` |
+| `boost_actif` | bool | ✓ | ✓ | | | remontée en tête achetée, fenêtre 48 h (§5.2) |
+| `boost_expire_at` | int64 | ✓ | | ✓ | | timestamp Unix ; permet de faire décroître le boost |
+| `vitrine` | bool | ✓ | ✓ | | | vitrine mise en avant incluse aux paliers hauts |
+| `code_postal` | string | ✓ | ✓ | | | |
+| `departement`, `region` | string | ✓ | ✓ | | | **indispensables aux pages SEO géolocalisées** (§9) |
+| `location` | geopoint | ✓ | | ✓ | | `[lat, lng]` du code postal, pas de l'adresse exacte (RGPD) |
+| `date_mise_en_ligne` | int64 | ✓ | | ✓ | | première publication — **jamais modifiée** |
+| `date_mise_en_avant` | int64 | ✓ | | ✓ | | date de tri « fraîcheur » — cf. Résultat n°6, anti-abus de rafraîchissement |
+| `date_maj` | int64 | ✓ | | ✓ | | |
+| `score_popularite` | int32 | ✓ | | ✓ | | **`default_sorting_field`** — cf. ci-dessous |
+| `score_qualite` | int32 | ✓ | | ✓ | | complétude de la fiche ; sert aussi à la revue ciblée de modération (§7.2) |
+
+**Trois choix de schéma qui ne sont pas évidents :**
+
+- **`range_index: true` sur `prix`, `km`, `annee`.** Option documentée (« index optimisé pour le filtrage par intervalle », défaut `false`). Ce sont exactement nos trois filtres à intervalle systématiques ; l'oublier est une dette silencieuse.
+- **`default_sorting_field: score_popularite`.** Ce champ ne sert pas qu'au tri par défaut : la documentation précise qu'il départage les **variantes de préfixe et de fautes de frappe**, Typesense ne retenant par défaut que les **4 meilleures** (`max_candidates`, défaut 4). Sans `default_sorting_field`, « top » = les variantes ayant le plus d'annonces ; avec, = les plus populaires. Concrètement : la frappe « cli » doit proposer « clio » et pas un modèle rare. Corollaire : **porter `max_candidates` de 4 à ~10 sur la barre de recherche** — au volume de LBT le coût est nul (§14.1) et 4 candidats est trop peu pour un catalogue de modèles.
+- **`score_popularite` doit être un entier calculé côté Postgres et réindexé par lot** (vues, contacts, complétude, fraîcheur), jamais recalculé à la requête. Il n'a pas besoin d'être frais à la minute.
+
+#### Résultat n°3 — poids des champs et mode d'agrégation : `max_weight`, pas le défaut
+
+Typesense calcule un score de correspondance **par champ** (fréquence des tokens, distance d'édition, proximité des tokens, ordre des champs dans `query_by`, poids de `query_by_weights`), puis les agrège en un score par document selon `text_match_type` :
+
+| Mode | Mécanique | Effet sur l'auto |
+|---|---|---|
+| `max_score` (défaut) | le **meilleur** score de champ représente le document ; les poids ne servent qu'à départager les égalités | une description bavarde qui répète « clio » dix fois peut battre une vraie Clio dont le titre matche une seule fois |
+| **`max_weight`** | le score du **champ le plus lourd** représente le document | une correspondance dans `titre`/`version` prime sur une correspondance dans `description` — **c'est ce qu'on veut** |
+| `sum_score` | somme pondérée de tous les champs | favorise les annonces verbeuses |
+
+**Réglage retenu pour la barre de recherche :**
+
+```
+query_by         = titre,version,description_courte,vendeur_nom
+query_by_weights = 8,6,2,1
+text_match_type  = max_weight
+prioritize_token_position     = true      # défaut false
+prioritize_num_matching_fields = false    # défaut true
+prioritize_exact_match         = true     # défaut true, à conserver
+```
+
+Les deux paramètres modifiés par rapport au défaut méritent leur justification :
+
+- **`prioritize_token_position=true`** : nos titres commencent par « Marque Modèle Version ». Récompenser une correspondance en début de champ, c'est récompenser « c'est bien ce modèle » plutôt que « ce modèle est cité en passant ».
+- **`prioritize_num_matching_fields=false`** : ce paramètre (activé par défaut) favorise les documents dont les mots de la requête apparaissent dans **plus** de champs. Or nos champs sont volontairement redondants — `titre` contient marque, modèle et version, et la description les répète presque toujours. Le défaut récompense donc la redondance rédactionnelle, pas la pertinence. C'est un cas où le réglage par défaut de Typesense, pensé pour des catalogues à champs disjoints, est contre-productif sur des annonces.
+
+**Contrainte dure découverte dans la documentation, et elle est structurante : `sort_by` accepte au maximum 3 champs de tri.** `_text_match` en consomme un. On ne peut donc pas empiler « sponsorisés d'abord + pertinence + fraîcheur + distance » : il faut choisir 3 critères, et le boost commercial doit se contenter d'**une seule** expression `_eval` (à valeurs multiples, cf. Résultat n°5). Cette contrainte à elle seule impose de sortir le plafond de densité publicitaire du moteur.
+
+#### Résultat n°4 — tolérance aux fautes : deux paramètres globaux font mieux que le `num_typos` par champ, et cela corrige le §14.1
+
+Le §14.1 a retenu Typesense en partie pour son `num_typos` **par champ** (`num_typos=2,0,0`), face au `disableOnNumbers` global de Meilisearch. La lecture de la documentation complète montre que **Typesense a aussi les deux réglages globaux, et qu'ils sont mieux ciblés que le `num_typos` par champ** :
+
+| Paramètre | Défaut | Réglage LBT | Effet |
+|---|---|---|---|
+| `enable_typos_for_numerical_tokens` | `true` | **`false`** | tue définitivement 308→208, 2014→2015 |
+| `enable_typos_for_alpha_numerical_tokens` | `true` | **`false`** | tue A3→A4, C3→C4, 320d→320i |
+| `num_typos` (par champ) | `2` partout | `2,2,1,0` sur `titre,version,description,vendeur_nom` | garde la tolérance sur les mots |
+| `min_len_1typo` | `4` | `4` (conservé) | « kango »→« kangoo » fonctionne |
+| `min_len_2typo` | `7` | `7` (conservé) | protège déjà les mots courts de la double faute |
+| `typo_tokens_threshold` | `1` | `1` (conservé) | les variantes fautives ne sont cherchées que si l'exact ne donne rien |
+| `drop_tokens_threshold` | `1` | **`0`** | voir ci-dessous |
+| `split_join_tokens` | déclenché si 0 résultat | conservé | « 4 x 4 » ↔ « 4x4 », « twin air » ↔ « twinair » |
+
+**La décision la plus importante de ce résultat est `drop_tokens_threshold=0`.** Par défaut, si une requête à plusieurs mots ne rend pas au moins 1 résultat, Typesense **retire des mots** jusqu'à en trouver — de gauche à droite ou de droite à gauche, en commençant par les mots les plus rares. Sur des annonces auto, c'est un piège : « clio 3 **diesel** » sans résultat devient « clio 3 » et affiche des Clio essence, sans le dire. L'acheteur ne voit pas que son critère a été abandonné.
+
+Le raisonnement qui tranche n'est pas ergonomique, il est financier : **la §5.2 nous fait garantir un coût plafond par contact (« jamais plus de 30 € le contact, ou le mois est offert »)**. Un résultat hors critère produit soit aucun contact, soit un contact non qualifié — dans les deux cas, il dégrade le ratio qui déclenche la garantie. **Une recherche imprécise nous coûte directement de l'argent.** D'où : zéro résultat assumé, message explicite, et un bouton « élargir la recherche » qui refait la requête avec `drop_tokens_threshold=1` **en le disant** (nouvelle exigence §6).
+
+**Réserve honnête** : le comportement du tokenizer par défaut sur `1.5 dCi`, `e-208`, `ë-C4`, `GT Line+` et `C4 Picasso` **n'est pas déductible de la documentation**. `symbols_to_index` (indexer `+` pour « GT Line+ ») et `token_separators` (couper sur `-` pour que « e-208 » soit trouvé par « 208 ») sont documentés, mais l'effet du point décimal sur « 1.5 » ne l'est pas. Ne pas deviner : c'est un test de 30 minutes sur un nœud local, à faire avant d'écrire le schéma définitif → action n°39.
+
+#### Résultat n°5 — le tri par défaut, et pourquoi le plafond de densité publicitaire ne peut pas vivre dans le moteur
+
+**Trois contextes, trois `sort_by`, chacun dans le budget de 3 champs :**
+
+```
+# 1. Page catégorie / page SEO géolocalisée (pas de requête texte) — défaut = fraîcheur
+sort_by = _eval([ (boost_actif:true):2, (vitrine:true):1 ]):desc, date_mise_en_avant:desc
+
+# 2. Recherche texte — pertinence par paliers, popularité en départage
+sort_by = _text_match(buckets: 10):desc, score_popularite:desc, date_mise_en_avant:desc
+
+# 3. Recherche géolocalisée — la distance en paliers, pas en mètres
+filter_by = location:(43.6045, 1.4442, 50 km) && energie:=Diesel
+sort_by   = location(43.6045, 1.4442, exclude_radius: 30 km):asc, prix:asc, date_mise_en_avant:desc
+```
+
+Deux mécaniques valent d'être explicitées :
+
+- **`_text_match(buckets: 10)`** : Typesense découpe les résultats en 10 groupes de pertinence égale, puis laisse le critère suivant réordonner **à l'intérieur** de chaque groupe. C'est la seule façon propre de mélanger pertinence et popularité sans que l'une écrase l'autre. `bucket_size: N` existe aussi (paliers de taille fixe).
+- **`exclude_radius: 30 km`** : tout ce qui est dans 30 km est réputé à égale distance, on départage sur le prix. Le §14.1 avait identifié l'outil ; le voici câblé. Corollaire non évident : **le tri géographique consomme un des trois slots**, donc une recherche géolocalisée ne peut pas en plus trier par pertinence texte — il faut choisir. Retenu : sur une requête texte **avec** rayon, la pertinence gagne et la distance passe en filtre seul.
+
+**Et voici la conséquence architecturale que la §5.2 n'avait pas vue.** La décision du 2026-08-01 impose un plafond de densité : *« 1 sponsorisé maximum dans les 5 premiers résultats, 20 % maximum par page, étiquetage systématique »*. **Ce plafond est inexprimable en `sort_by`.** `_eval` est un critère de tri global : il place **tous** les documents `boost_actif:true` devant tous les autres. Si 40 garages boostent le même jour sur la même requête, la première page est intégralement sponsorisée — exactement ce que la §5.2 interdit.
+
+Le plafond doit donc être implémenté dans le module `search` (couche d'abstraction imposée par le §14.1), et sa mécanique est plus subtile qu'un filtre d'affichage :
+
+1. **Deux requêtes**, pas une : la liste organique (`filter_by: … && boost_actif:false`) et la liste sponsorisée (`filter_by: … && boost_actif:true`), chacune paginée indépendamment.
+2. **Entrelacement à positions fixes et déterministes** : par exemple slot 3 sur la page 1, slots 3 et 8 sur les suivantes. La fonction d'entrelacement doit être une fonction pure de `(numéro de page, rang)`, sinon **la pagination se casse** : un sponsorisé inséré page 1 décale la liste organique et fait réapparaître ou disparaître une annonce page 2. C'est le bug classique des régies publicitaires et il est invisible en test manuel sur une seule page.
+3. **Offsets calculés, pas déduits** : la page *n* de la liste organique demande `offset = (n-1) × (per_page − nb_sponsorisés_par_page)`. À noter : **`per_page` est plafonné à 250** par le moteur — largement suffisant, mais la sur-récupération doit rester dans cette borne.
+4. **L'étiquetage et le comptage vivent au même endroit**, ce qui permet de journaliser le taux réel de sponsorisés servis — l'indicateur qui prouve que le plafond est respecté.
+
+→ nouvelle action n°37. Le coût est d'une demi-journée de développement ; le coût de ne pas le faire est le différenciateur de confiance du §5.2.
+
+#### Résultat n°6 — `distinct` n'existe pas chez Typesense, et le vrai risque vient du flux pro
+
+L'action n°27 demandait « `distinct` par vendeur (empêcher un garage de saturer une page de résultats) ». **Le paramètre `distinct` est un concept Algolia/Meilisearch ; Typesense n'en a pas.** L'équivalent est `group_by` + `group_limit`, et la documentation le présente explicitement pour deux usages : la déduplication et la **« correction du déséquilibre » quand les résultats sont dominés par un même type de document**.
+
+```
+group_by = vendeur_id
+group_limit = 2
+group_missing_values = false
+```
+
+Trois pièges documentés, tous à absorber dans la couche `search` :
+
+1. **`per_page` compte alors des groupes, pas des résultats.** Une page de 20 devient 20 groupes × jusqu'à 2 annonces = jusqu'à 40 annonces. La pagination affichée doit être recalculée.
+2. **Depuis la v29, `found` devient une approximation** en mode `group_by`, sauf si l'on force `group_max_candidates`. Or nos compteurs SEO viennent déjà de Postgres (§14.1) — cohérent, mais il faut que le code ne lise jamais `found` pour un affichage public.
+3. **La forme de la réponse change** (`grouped_hits` imbriqués au lieu de `hits` plats). La couche `search` doit normaliser les deux formes, sinon le choix d'activer ou non le groupement devient un changement de contrat pour tout le front.
+
+**Mais le vrai problème n'est pas celui que l'action posait.** Il est apparu en croisant avec l'action n°31 (ingestion de flux de stock VO) : **un garage qui s'inscrit pousse 40 à 60 véhicules d'un coup par flux Ubiflow.** Tous entrent dans l'index dans la même minute, donc avec la même `date_publication`. Sur une page triée par fraîcheur — le tri par défaut —, **la page 1 devient un seul garage**, sans que personne n'ait acheté de visibilité. Au palier pilote (500 annonces actives), un seul import suffit à monopoliser tout le site.
+
+Trois correctifs, dont deux ne coûtent rien s'ils sont décidés maintenant :
+
+- **`group_by=vendeur_id, group_limit=2` activé sur les listes triées par fraîcheur**, désactivé sur les recherches filtrées explicites (si l'acheteur cherche « Kangoo diesel Toulouse », il veut voir les 6 Kangoo du même garage).
+- **Étaler `date_mise_en_avant` à l'import en masse** : soit répartir les véhicules sur la fenêtre d'import, soit reprendre la date réelle de première mise en vente fournie par le flux. Un import n'est pas un événement éditorial.
+- **Séparer `date_mise_en_ligne` (immuable), `date_maj` (technique) et `date_mise_en_avant` (tri fraîcheur)** — trois champs déjà au schéma du Résultat n°2. C'est aussi le garde-fou anti-rafraîchissement : une modification de prix ne doit pas remettre l'annonce en tête, sinon le flux XML d'un garage qui réévalue son stock chaque nuit occupe la première page tous les matins. Grief exact que la §5.2 reproche à LBC, à ne pas reproduire.
+
+→ nouvelle action n°38, à traiter avec la n°31.
+
+#### Résultat n°7 — le dictionnaire de synonymes automobile français, et la règle d'asymétrie qui le rend sûr
+
+C'est l'actif métier de l'action n°27 : quelque chose que Nicolas produit seul, que LBC exploite mal, et qui ne dépend d'aucune ressource technique.
+
+**Mécanique Typesense (v29+) à connaître avant d'écrire une entrée :**
+
+| Point | Ce que dit la documentation | Conséquence pour LBT |
+|---|---|---|
+| Les synonymes sont des **jeux** (`synonym_sets`), créés indépendamment puis **liés à la collection** via son champ `synonym_sets` | L'ancienne route `/collections/{c}/synonyms` a disparu ; les clés d'API scopées `synonyms:*` ne donnent **pas** accès aux nouvelles routes | à prévoir dans le script de provisionnement, sinon la réindexation perd les synonymes |
+| **Multidirectionnel** : `break ⇄ SW ⇄ estate` — chercher l'un ramène les autres | symétrique, sûr quand les termes sont vraiment équivalents | usage majoritaire |
+| **Unidirectionnel** (`root`) : chercher `root` ramène les `synonyms`, pas l'inverse | c'est **l'outil de sécurité** du dictionnaire | cf. règle d'asymétrie ci-dessous |
+| Les synonymes ne s'appliquent qu'aux tokens de **`q`**, jamais à `filter_by` | dès que le normaliseur convertit « diesel » en filtre, le synonyme ne joue plus | le dictionnaire sert surtout à atteindre le champ `version` **brut** des flux pros |
+| Une phrase entre guillemets **désactive** les synonymes | `"Série 1"` cherche littéralement | à documenter dans l'aide à la recherche |
+| Un synonyme portant un `locale` ne s'applique que si le champ le plus lourd a le même `locale` | nos champs de référence n'ont **pas** de locale (Résultat n°8) | **laisser `locale` vide** sur toutes les entrées, sinon elles ne se déclenchent jamais |
+| `synonym_num_typos` (défaut `0`) | résolution des synonymes sur mots corrigés | laisser à `0` : « bva » ne doit pas se déclencher sur « bwa » |
+
+**La règle d'asymétrie — le seul point du dictionnaire où une erreur coûte des ventes.** Un synonyme multidirectionnel entre deux termes qui ne sont pas équivalents crée des faux positifs invisibles. Le cas d'école : **SUV et 4x4 ne sont pas synonymes.** La majorité des SUV vendus sont à deux roues motrices. Un acheteur qui tape « 4x4 » veut de la motricité (montagne, chantier, remorque) : lui servir des SUV traction avant est une promesse non tenue. L'inverse est inoffensif — qui cherche « SUV » accepte volontiers un 4x4.
+
+→ **`root: "suv"` → `["suv", "crossover", "tout terrain", "4x4"]` en unidirectionnel. Et surtout PAS `root: "4x4"` → `["suv"]`.** La motricité réelle est portée par le champ `transmission`, séparé de `carrosserie` au schéma pour cette raison précise.
+
+**Dictionnaire de démarrage (~130 entrées, à valider sur les données du pilote).**
+
+*Carrosserie — multidirectionnel :*
+| Famille | Entrées |
+|---|---|
+| break | break, sw, estate, touring, avant, variant, kombi, familiale |
+| monospace | monospace, van, mpv, ludospace |
+| citadine | citadine, petite voiture, petite citadine, mini-citadine |
+| berline | berline, tricorps, sedan |
+| cabriolet | cabriolet, décapotable, roadster, convertible, spider |
+| utilitaire | utilitaire, fourgon, fourgonnette, camionnette, vu, vul |
+| pick-up | pick-up, pickup, plateau, benne |
+
+*Énergie et motorisation — unidirectionnel depuis le terme générique vers les codes commerciaux :*
+| `root` | `synonyms` |
+|---|---|
+| diesel | diesel, gazole, gasoil, hdi, bluehdi, dci, tdi, cdi, jtd, multijet, d-4d, crdi, tdci, dti, di-d |
+| essence | essence, sans plomb, sp95, sp98, tce, thp, tsi, tfsi, vti, puretech, mpi, gdi, vvt |
+| hybride | hybride, hev, mhev, hybride léger, full hybrid, e-tech, hsd |
+| hybride rechargeable | hybride rechargeable, phev, plug-in, plug in, recharge |
+| électrique | électrique, electrique, ev, bev, zéro émission, e-tense, ze |
+| gpl | gpl, lpg, bicarburation, bicarburant |
+
+*Boîte de vitesses — multidirectionnel (les codes constructeurs désignent bien tous une boîte automatique) :*
+| Famille | Entrées |
+|---|---|
+| automatique | automatique, auto, bva, bvas, eat6, eat8, eat, dsg, s-tronic, tiptronic, powershift, cvt, e-cvt, dct, pdk, multitronic, tct, 4matic n'est pas de la boîte (exclu) |
+| robotisée | robotisée, edc, dct, easytronic, sensodrive, dualogic, mmt |
+| manuelle | manuelle, bvm, mécanique, bvm5, bvm6 |
+
+*Transmission — unidirectionnel, jamais l'inverse (cf. règle d'asymétrie) :*
+| `root` | `synonyms` |
+|---|---|
+| 4x4 | 4x4, 4wd, awd, quattro, 4motion, xdrive, 4matic, all4, symmetrical awd, intégrale, 4 roues motrices |
+| suv | suv, crossover, tout terrain, tout-terrain, 4x4 |
+
+*Finitions génériques — multidirectionnel dans chaque famille, pour atteindre le champ `version` brut :*
+GT Line / GTLine / GT-Line · R-Line / RLine · S-Line / SLine · M Sport / MSport / Pack M · AMG Line / Pack AMG · Business / Pro / Entreprise · Zen / Life / Access / Authentique · Intens / Initiale / Exclusive / Excellence · Feel / Shine / Live (Citroën) · Allure / Active / Style (Peugeot) · Titanium / Trend / ST-Line (Ford) · Ambiente / Ambition / Style (Škoda)
+
+*Marques — multidirectionnel (les diacritiques sont déjà repliés, cf. Résultat n°8) :*
+vw / volkswagen · merco / mercedes / mercedes-benz / mb · bm / bmw / bem · citroen / citroën · skoda / škoda · alfa / alfa romeo · land / land rover · range / range rover · vw utilitaire / vw vu · ds / ds automobiles · mini / austin mini · peug / peugeot · renault / rno
+
+*Génération et millésime — à traiter dans le normaliseur, pas en synonymes :*
+`III` ⇄ `3`, `II` ⇄ `2`, `IV` ⇄ `4` ; « Clio 3 » = « Clio III » = « Clio 2010-2012 » ; « phase 2 » / « ph2 » / « restylée ». Raison : ce sont des règles de **réécriture** systématiques (romain↔arabe), pas des équivalences lexicales — les coder en synonymes multiplierait les entrées par le nombre de modèles.
+
+*Vocabulaire d'usage et familier — unidirectionnel vers des filtres, via le normaliseur plutôt que des synonymes :*
+« 7 places » / « familiale » / « grande famille » → `places:>=7` · « voiture sans permis » / « vsp » → carrosserie dédiée · « pas cher » / « petit prix » / « premier prix » → tri prix croissant, pas un filtre · « faible kilométrage » → `km:<80000` · « pour jeune conducteur » → `puissance_fiscale:<=5`
+
+**Entrées à ne PAS créer (liste à maintenir autant que le dictionnaire lui-même) :**
+`4x4 → suv` (motricité), `automatique → cvt` seul (une CVT n'est pas ce que veut tout le monde), `break → monospace` (volumes différents), `diesel → hybride diesel` (mélange deux marchés), `électrique → hybride` (erreur d'achat majeure), `utilitaire → pick-up` (usages disjoints), et **aucun synonyme entre modèles** (« Clio → Twingo » serait de la substitution commerciale, pas de la recherche : cela dégrade la confiance et donc la garantie contacts du §5.2).
+
+**Jeu de mots vides (`stopwords`, applicable à `q` uniquement) :** `vends`, `à vendre`, `a vendre`, `occasion`, `voiture`, `auto`, `automobile`, `annonce`, `véhicule`, `bon état`, `urgent`, `cause double emploi`. Attention documentée : les mots vides sont **retirés de la requête** — une requête entièrement composée de mots vides (« voiture occasion ») devient vide ; la couche `search` doit alors basculer sur une navigation par facettes plutôt que renvoyer un zéro résultat.
+
+#### Résultat n°8 — français : ne PAS mettre `locale: "fr"` sur les champs de référence, et pourquoi
+
+C'est le piège le plus contre-intuitif de la section, et il se déduit de l'interaction de deux paramètres.
+
+La documentation de localisation est explicite : **sans `locale`, un champ est traité comme de l'anglais, et les diacritiques des caractères accentués européens sont automatiquement retirés** ; avec un `locale` non anglais, la tokenisation ICU **préserve** les diacritiques, et une correspondance accentuée exacte est priorisée. La doc ajoute qu'en l'absence de correspondance accentuée, la tolérance aux fautes rattrape la version non accentuée.
+
+Or nous avons décidé au Résultat n°4 de mettre **`num_typos=0` sur `marque` et `modele`**. Le filet de sécurité disparaît donc : avec `locale: "fr"` sur `marque`, **« citroen » ne trouverait plus « Citroën »**, ni « skoda » « Škoda », ni « bleu ciel métallisé » sa variante non accentuée. Un Français sur deux ne tape pas les accents dans une barre de recherche.
+
+**Décision :**
+
+| Champ | `locale` | `stem` | Raison |
+|---|---|---|---|
+| `marque`, `modele`, `version`, `generation`, `titre` | **absent** | `false` | repli des diacritiques voulu (citroen = Citroën) ; pas de racinisation sur des noms propres |
+| `description_courte` | **`"fr"`** | **`true`** | seul champ de vraie prose française ; la tolérance aux fautes y est active, donc le repli accentué est assuré |
+| tout le reste | absent | `false` | champs de facette, indexés verbatim |
+
+Précision utile pour `description_courte` : la langue du racineur est **déduite du `locale` du champ** (Snowball). Sans `locale`, `stem: true` appliquerait les règles anglaises à du texte français — pire que pas de racinisation. La documentation avertit par ailleurs que la racinisation algorithmique « peut dégrader la pertinence sur les noms de marques, noms propres et lieux », ce qui est exactement le contenu d'une annonce auto : si le Snowball français sur-racinise (« berline »/« berlin »), le repli est un **dictionnaire de racinisation personnalisé** (`stem_dictionary`, format JSONL `{"word": …, "root": …}`), qui donne un contrôle exact sans effet de bord.
+
+#### Résultat n°9 — facettes : l'ordre se déduit du marché, et deux corrections
+
+**Ce que dit la documentation sur les facettes (et qui corrige le §14.1) :** l'échantillonnage des comptages de facettes est **désactivé par défaut** (`facet_sample_percent = 100`, `facet_sample_threshold = 0`) — il s'active à la demande, il n'est pas subi. Le §14.1 affirmait que « Typesense échantillonne les comptages au-delà d'un seuil » : c'est inexact. En revanche, deux plafonds réels subsistent : **`max_facet_values` vaut 10 par défaut** (masquant les valeurs suivantes), et la stratégie `top_values` (retenue automatiquement par `facet_strategy: automatic` sur les gros volumes) **ne renvoie pas un `total_values` exact**. **La décision du §14.1 — compteurs publics servis par un `COUNT` Postgres mis en cache — reste donc la bonne, mais pour ces deux motifs et non pour l'échantillonnage.**
+
+Réglages retenus : `max_facet_values=100` sur marque et modèle (il y a plus de 10 marques), `facet_strategy=exhaustive` (à 50 000 documents la documentation la donne comme optimale), `facet_query` + `facet_query_num_typos` pour la recherche dans une facette (« tapez votre marque »).
+
+**Ordre des facettes, déduit de données de marché plutôt que d'intuition** (sources en annexe, issues d'extraits de résultats de recherche — voir Limites) :
+
+| Rang | Facette | Justification chiffrée |
+|---|---|---|
+| 1 | **prix** | critère d'entrée universel |
+| 2 | **marque / modèle** | l'essentiel des requêtes en contiennent un (Résultat n°1) |
+| 3 | **énergie** | le diesel reste **44 % des ventes VO** en 2025, contre 4,8 % du neuf : la structure de la demande VO est radicalement différente du neuf |
+| 4 | **boîte de vitesses** | **54 % des voitures neuves immatriculées en 2025 sont automatiques** (PFA), contre 25 % en 2016 et 8 % en 2004 — ces véhicules arrivent en VO maintenant. La boîte cesse d'être un critère de niche ; l'enterrer dans « plus de critères » est une erreur de conception à 5 ans |
+| 5 | km, année | |
+| 6 | carrosserie, places | |
+| 7 | garantie, première main, transmission | différenciateurs de confiance (§6) |
+| — | **Crit'Air : attribut affiché, pas facette de premier rang** | l'Assemblée nationale a voté la **suppression des ZFE le 28/05/2025** dans le cadre de la loi de simplification. L'avenir de la vignette est incertain. Garder le champ (`critair` est au schéma, il coûte 4 octets) et l'afficher, mais ne pas en faire un filtre structurant — et ne pas construire d'argument marketing dessus |
+
+Le parc VO français vieillit (**âge moyen 11,1 ans**) et le marché de l'occasion pèse **5,5 M de transactions en 2025 (+0,9 %), soit 77 % des achats de voitures** : le stock adressable est très majoritairement composé de véhicules anciens, diesel et à boîte manuelle, alors que la demande bascule vers l'automatique. C'est un écart d'offre et de demande que la recherche doit rendre visible, pas masquer.
+
+#### Résultat n°10 — La Centrale a déjà déployé la recherche en langage naturel, et le chiffrage dit de ne pas la copier au MVP
+
+Découverte de veille concurrentielle, tombée de cette action. **La Centrale a mis en production une recherche en langage naturel** intégrée à son parcours (exemple documenté par la presse spécialisée : « j'ai trois enfants et je cherche une voiture spacieuse à moins de 15 000 euros dans un rayon de 40 km autour de Marseille »), et revendique une vingtaine de cas d'usage IA en production dont un assistant de pricing pour les professionnels. Le concurrent le plus proche de LBT sur la verticale auto est donc déjà sur le terrain de la pertinence sémantique — **la fenêtre identifiée par l'action n°27 est plus étroite qu'on ne le pensait**, et l'avantage ne sera pas « LBT comprend le français », il sera « LBT comprend le français sur son périmètre pour un coût marginal nul ».
+
+**Chiffrage, parce que c'est lui qui tranche.** Faire analyser chaque requête par un modèle de langage : ~600 tokens d'entrée (consigne + requête + référentiel abrégé) et ~60 de sortie. Aux tarifs Claude Haiku 4.5 (1 $/MTok en entrée, 5 $/MTok en sortie) :
+
+| Configuration | Coût / requête | À S3 (1,5 M visites/mois ≈ 2 à 4 M requêtes) |
+|---|---|---|
+| Appel systématique, sans cache | ~0,0009 $ ≈ **0,0008 €** | **1 600 à 3 200 €/mois** |
+| Appel systématique, avec mise en cache du prompt (lecture ≈ 0,1× l'entrée) | ~0,0005 $ ≈ **0,0004 €** | 800 à 1 600 €/mois |
+| **Appel uniquement sur la traîne à zéro/faible résultat (~8 % des requêtes) + cache par requête normalisée** | idem à l'unité | **60 à 130 €/mois** |
+
+Mise en regard : la chaîne de modération complète du §7.1 coûte **78 €/mois** au même palier. Un appel LLM systématique coûterait donc **20 à 40 fois toute la modération**, pour un gain qui, sur les requêtes structurées du Résultat n°1, est nul — le normaliseur fait le même travail gratuitement.
+
+**Décision :** normaliseur + synonymes + curation d'abord (coût marginal zéro) ; **analyse par LLM en repli uniquement sur les requêtes à zéro ou très faible résultat**, avec mise en cache par chaîne de requête normalisée (la distribution des requêtes est très concentrée : quelques milliers de requêtes distinctes couvrent l'essentiel du trafic). Au pilote, ce repli coûte moins d'un euro par mois — donc on peut le construire tôt et le mesurer, à condition de ne jamais le mettre sur le chemin par défaut. Les tarifs Haiku 4.5 sont à revérifier à la mise en œuvre.
+
+#### Résultat n°11 — protocole de mesure : 50 requêtes annotées, et la règle qui va avec
+
+Tout ce qui précède est de la conception documentaire. Rien n'a été testé (aucun nœud Typesense n'a été démarré). Le paramètre décisif — la pertinence perçue en français sur du vocabulaire automobile — ne s'obtient que par mesure, et **le jeu de test est constructible dès aujourd'hui, avant toute ligne de code**.
+
+**Composition du jeu de 50 requêtes** (Nicolas peut l'écrire seul, à partir des demandes téléphoniques réelles de son garage — c'est la meilleure source disponible et elle est gratuite) :
+
+| Nb | Type | Exemples |
+|---|---|---|
+| 15 | marque + modèle simples | `clio`, `kangoo`, `golf 7`, `3008` |
+| 8 | avec génération ou millésime | `clio 3`, `clio III`, `golf VII`, `208 2019` |
+| 7 | avec finition ou motorisation | `3008 gt line`, `308 1.5 bluehdi`, `a3 s-line` |
+| 5 | références chiffrées proches | `308` (ne doit jamais rendre de 208), `a4`, `c4`, `série 3` |
+| 5 | fautes de frappe plausibles | `kango`, `twingoo`, `citroen c3`, `peugot 208` |
+| 5 | langage naturel / usage | `voiture 7 places pas cher`, `petite voiture automatique` |
+| 5 | géolocalisées | `utilitaire diesel toulouse`, `kangoo 31` |
+
+**Indicateurs, dans cet ordre de priorité :**
+1. **taux de zéro-résultat** (la métrique la plus actionnable : chaque zéro est une entrée manquante du dictionnaire ou du normaliseur) ;
+2. **précision@5** annotée à la main (combien des 5 premiers résultats sont pertinents) ;
+3. taux de clic sur les 3 premiers résultats, une fois le pilote en trafic ;
+4. **contacts par vue de fiche** — la seule métrique qui relie la pertinence à la §5.2, donc à la garantie contacts, donc au chiffre d'affaires.
+
+**Règle de gouvernance à inscrire maintenant : aucun changement du schéma d'index, des poids de champs ou du dictionnaire de synonymes ne part en production sans un nouveau passage des 50 requêtes.** C'est la seule protection contre le mode de défaillance classique de la recherche — une amélioration locale qui dégrade silencieusement dix autres requêtes. → action n°40.
+
+#### Conséquences sur les autres sections
+
+- **§5.2 (options de visibilité)** : le plafond de densité (1 sponsorisé dans les 5 premiers, 20 % par page) **n'est pas implémentable dans le moteur** ; il exige une couche d'entrelacement déterministe côté application, avec une contrainte de pagination non triviale → action n°37. La décision reste valide, son coût de mise en œuvre était sous-estimé.
+- **§6 (UX)** : trois exigences nouvelles — (a) zéro résultat explicite plutôt que résultats élargis en silence, avec un bouton « élargir la recherche » qui le dit ; (b) ordre de facettes énergie puis boîte de vitesses en tête, Crit'Air rétrogradé en attribut affiché ; (c) une requête entièrement composée de mots vides bascule sur la navigation par facettes.
+- **§7.2 (modération)** : `score_qualite`, déjà nécessaire à la pertinence, alimente aussi la priorisation de la file de revue ciblée — un seul champ pour deux usages.
+- **§9 (acquisition)** : `departement` et `region` sont indexés et facettables, condition des pages SEO géolocalisées ; les compteurs affichés viennent de Postgres (confirmé, avec une justification corrigée — cf. Résultat n°9).
+- **§14 et §14.1** : deux corrections. (a) La tolérance aux fautes se règle mieux par `enable_typos_for_numerical_tokens=false` et `enable_typos_for_alpha_numerical_tokens=false` que par `num_typos` par champ — l'argument de départage face à Meilisearch reste valide mais le mécanisme retenu change. (b) Typesense **n'échantillonne pas** les comptages de facettes par défaut ; les plafonds réels sont `max_facet_values=10` et le `total_values` approximatif de la stratégie `top_values`. La décision « compteurs depuis Postgres » ne bascule pas. Nouvelle contrainte dure à retenir : **3 champs de tri maximum** par requête.
+- **§17** : sept actions étaient classées bloquées pour un motif erroné (Résultat n°0) → action n°35 en tête de file.
+
+#### Limites et incertitudes assumées
+
+- **Aucun test exécuté.** Aucun nœud Typesense n'a été démarré, aucun document indexé. Toute cette section est de la conception adossée à la documentation officielle. Le comportement du tokenizer sur `1.5 dCi`, `e-208`, `ë-C4`, `GT Line+` **n'est pas déductible de la documentation** et doit être mesuré (action n°39).
+- **Le dictionnaire de synonymes est une hypothèse de vocabulaire, pas une observation.** Il vient de la connaissance du domaine, pas des requêtes réelles des acheteurs — que seul le pilote produira. Il faut s'attendre à ce que 20 à 30 % des entrées soient inutiles et qu'un nombre équivalent manque.
+- **Le référentiel marque/modèle/version n'existe pas encore.** La piste ADEME Car Labelling est identifiée mais **n'a pas pu être téléchargée** (politique réseau, Résultat n°0) : son contenu exact — notamment la granularité des dénominations commerciales et sa couverture du parc ancien — reste à vérifier.
+- **Les chiffres de marché (5,5 M de transactions VO 2025, diesel 44 % du VO, 54 % de boîtes automatiques dans le neuf, âge moyen 11,1 ans, suppression des ZFE votée le 28/05/2025) proviennent d'extraits de résultats de recherche, pas de pages sources consultées** — les domaines concernés sont refusés par la politique réseau. Ils sont cohérents entre eux et avec des ordres de grandeur connus, mais ils doivent être revérifiés sur AAA-Data, la PFA et le SDES avant tout usage externe (argumentaire commercial, communication). L'état exact du droit sur les ZFE fin 2026 est en particulier à confirmer.
+- **Le chiffrage de l'analyse LLM repose sur une hypothèse de volume de requêtes** (2 à 4 recherches par visite, dérivée des 1,5 M visites/mois du §5.1, elles-mêmes non validées) et sur des tarifs à revérifier. La conclusion — deux ordres de grandeur d'écart entre l'appel systématique et l'appel en repli — est robuste à un facteur 2 sur l'un ou l'autre.
+- **`score_popularite` est un champ sans formule.** Sa composition (vues, contacts, complétude, fraîcheur, et leurs poids) n'est pas définie et ne peut pas l'être sans données. Au pilote, une valeur constante suffit : le champ doit exister au schéma, sa formule peut attendre.
+- **Rien n'a été vérifié sur la façon dont LBC ou La Centrale traitent réellement ces requêtes.** L'affirmation du §14.1 selon laquelle « LBC exploite mal la pertinence sémantique » n'est toujours pas étayée par un test comparatif — et le Résultat n°10 montre qu'elle est déjà fausse pour La Centrale.
+
+---
+
 ## 15. Skills nécessaires au projet — veille & gestion
 
 - Bibliothèque actuelle : 341 skills installés le 2026-07-26 (voir [[installed-skills-library]] en mémoire), audités et liés entre eux.
@@ -824,6 +1216,12 @@ Pourquoi cela ne justifie pas Elasticsearch pour autant : à S3, **25 000 nouvel
   - Un skill **packaging et pricing SaaS/marketplace B2B** (construction de paliers, ARPA et mix, garanties de performance, migration tarifaire) serait utile ; le §5.2 s'est fait sans, à la main. Priorité moyenne.
   - **Aggravation de la contrainte réseau, à traiter avant tout** : l'**intégralité du domaine `leboncoin.fr`** est désormais constatée inaccessible depuis les sessions automatisées (`leboncoinsolutionspro.fr`, `assistance.leboncoin.info`, `leboncoin.fr/dc/cgv_pro`), ainsi que la presse spécialisée (`autoactu.com`, `clubic.com`, `fiches-auto.fr`) et les forums professionnels (`dealabs.com`). **Conséquence directe : l'action n°8 (veille concurrentielle LBC) est structurellement infaisable depuis l'agent quotidien** — il faut soit la basculer en session locale, soit lui donner une autre source (alertes e-mail, capture manuelle par Nicolas depuis son propre espace pro LBC, qui est de toute façon la meilleure source du marché).
 
+- **Besoins identifiés le 2026-08-02** (session locale future) :
+  - **Ce n'est pas un skill qu'il faut, c'est un réglage** : la contrainte réseau notée le 2026-08-01 comme « aggravation » est en réalité **notre propre politique réseau d'environnement d'exécution** et non un blocage des sites (§14.2, Résultat n°0). Elle se corrige par configuration → action §17 n°35. **Corollaire de méthode immédiatement réutilisable : la documentation technique de la plupart des logiciels libres est versionnée sur GitHub, donc accessible malgré la politique** — l'intégralité de la documentation Typesense v30.2 (~500 Ko) a été lue dans `raw.githubusercontent.com/typesense/typesense-website`. Même méthode applicable à Postgres, Meilisearch, YOLO, PaddleOCR, et à tout choix du §14.
+  - **Précision du besoin de skill Typesense** : viser l'API **v30.x** et non les tutoriels antérieurs — les synonymes sont passés de `/collections/{c}/synonyms` à des **jeux de synonymes** (`/synonym_sets`) liés à la collection, la curation à des **jeux de curation** (`curation_sets`), et le comportement de `group_by` a changé en v29 (`found` devient approximatif). Un skill adossé à la documentation v28 ou antérieure produira du code faux.
+  - Un skill **pertinence de recherche e-commerce en français** reste le besoin le plus utile et le moins couvert (analyse de requêtes, dictionnaires de synonymes, jeux de test annotés, mesure de la pertinence perçue) ; la §14.2 a été faite sans, à la main.
+  - Un skill **référentiels de données automobiles françaises** (ADEME Car Labelling, CNIT, SIV, AAA-Data, Eurotax/Autovista) serait directement rentable pour les actions n°36 et n°34. Priorité moyenne.
+
 ## 16. Journal d'avancement quotidien
 
 *Chaque session de travail (manuelle ou automatisée) ajoute une entrée datée ici : ce qui a été fait, ce qui a été décidé, ce qui reste ouvert.*
@@ -839,6 +1237,8 @@ Pourquoi cela ne justifie pas Elasticsearch pour autant : à S3, **25 000 nouvel
 
 - **2026-08-01** — **Actions §17 n°6 et n°29 traitées ensemble : paliers d'abonnement pro et options de visibilité** (nouvelle **§5.2**). **Le résultat structurant contredit un raccourci de ce document : « 12× moins cher que LBC » n'est pas une position défendable.** Un garage n'achète pas un abonnement, il achète des contacts acheteurs — et le référentiel du marché est le **coût par lead**. Avec un taux de transformation VO de **15,9 %** (baromètre Carvivo 2022) et un repère de **~35 € HT le lead**, le garage type du §5.1 (20 véhicules, 10 ventes/mois) a besoin de **~63 contacts/mois** ; la facture LBC de 1 780 € revient donc à **28 €/contact** si LBC les livre tous, **~64 €** si LBC en livre sa part de marché des leads (44 %, Carvivo). **LBC est cher d'un facteur ~2 au contact, pas d'un facteur 12** — le facteur 12 est un rapport de factures, pas de valeur. Annoncé tel quel à un garagiste, il fait entendre « 12× moins d'audience », ce qui sera vrai au démarrage. **Le seuil qui compte est étonnamment bas : à 149 €/mois, LBT devient rationnel dès ~5 contacts qualifiés/mois** — soit 100 contacts/mois pour 20 garages pilotes. C'est le vrai objectif produit de la phase 1, ajouté au §2. **Deuxième découverte, en amont du prix : le blocage n'est pas tarifaire, il est logistique.** Un garage ne saisit pas ses annonces à la main, il pousse son stock en flux XML via **Ubiflow, Kepler VO ou Stockway**. Tant que LBT n'est pas une destination de ces outils, le coût d'entrée réel est la ressaisie de 20 à 60 véhicules, que **ni la gratuité ni aucune garantie ne compensent** ; une fois destination, essayer LBT est une case à cocher. Nouveau chantier produit (§6), nouveau risque (§12), nouveau levier d'acquisition en tête du §9, action n°31. **Grille retenue** : unité = **l'emplacement** (véhicules en ligne), jamais le crédit — LBC vient de prouver le contraire par l'exemple, son quota décomptant les renouvellements comme des publications. Cinq paliers HT/mois **sans engagement** : Découverte ≤ 3 véh. **0 €**, Garage 4-15 **79 €**, Garage+ 16-30 **149 €**, Concession 31-60 **249 €**, Groupe 61-120 **399 €** — marge brute **90 à 94 %**, et le palier gratuit ne coûte que **0,30 €/mois par compte à condition qu'il n'ouvre droit à aucun support humain** (avec support : 2 875 €/mois pour 500 comptes, soit 10 % de l'objectif de CA M12 — le coût du gratuit est une décision de support, pas une fatalité). **Différenciateur central retenu : la garantie contacts** — « jamais plus de 30 € le contact, ou le mois est offert » — qui rend l'audience faible du démarrage inoffensive au lieu d'en faire un aveu, s'auto-calibre par région, et coûte au maximum ~10 €. **Options de visibilité (action n°29) : aucune vente à l'unité aux pros au MVP**, quota mensuel inclus par palier ; épinglage sur requête écarté ; plafond de densité 1 sponsorisé dans les 5 premiers et 20 % par page. Le point élégant : **la garantie contacts est aussi le garde-fou anti-sur-monétisation** — saturer les résultats dégrade la pertinence, donc les contacts, donc déclenche les mois gratuits ; LBT ne peut pas s'enrichir en dégradant l'expérience acheteur. **Correction du §2** : « 200 garages abonnés » supposait tous les pros au palier médian ; avec un mix réaliste l'ARPA est de **136 €** et non 149 €, le CA M12 de **27 180 €** et le seuil de rentabilité de **119 comptes payants** (contre 108) — l'objectif devient « 200 comptes pros **payants** », ~300 comptes au total. **Séquence de mise en marché** : grille complète publiée dès le pilote mais facturation qui **s'active d'elle-même** au franchissement du seuil de contacts — pas une promotion qui expire, un prix indexé sur la valeur livrée. **Résultat négatif assumé et important : la grille pro automobile de LBC n'a pas pu être établie** — `leboncoinsolutionspro.fr`, `assistance.leboncoin.info` et les CGV Pro sont toutes en 403, et les montants des agrégateurs (« 29 € », « 79 € ») sont incohérents et trois ordres de grandeur sous la facture réelle : ils ne doivent pas être utilisés. **Le seul repère solide est la facture de Nicolas, qui n'a jamais été relue** (HT ou TTC ? périmètre ? engagement ?) alors que toute la §5.2 en dépend — action n°33, la moins chère de la file. **Limite d'environnement aggravée** : l'intégralité du domaine `leboncoin.fr` et la presse spécialisée auto étant bloquées, **l'action n°8 (veille concurrentielle LBC) est structurellement infaisable depuis l'agent quotidien** (§15).
 
+- **2026-08-02** — **Action §17 n°27 traitée : schéma d'index et pertinence de la recherche auto** (nouvelle **§14.2**). **Le résultat le plus rentable de la session ne concerne pas la recherche : les « 403 » invoqués depuis le 2026-07-28 pour bloquer sept actions de la file ne viennent pas des sites, ils viennent de la politique réseau de notre propre environnement d'exécution.** Le proxy le dit explicitement (`connect_rejected` / « gateway answered 403 to CONNECT (policy denial) ») ; seuls GitHub, GitLab et PyPI sont en liste blanche. Élargir cette liste est un réglage à la portée de Nicolas et débloque les actions n°8, 13, 15, 21, 25, 33 et 34 → **nouvelle action n°35, la moins chère de la file**. Corollaire déjà exploité : la documentation officielle Typesense v30.2 (~500 Ko) a été lue dans son dépôt source sur `raw.githubusercontent.com`, **si bien que cette section est la première du document à être intégralement sourcée en primaire**. **Sur le fond, le recadrage central est que la pertinence auto n'est pas un problème de scoring de texte mais de reconnaissance d'entités** : dans « clio 3 essence », « 3008 gt line 2019 » ou « utilitaire diesel toulouse », **il ne reste aucun texte libre à scorer** — tous les tokens sont des valeurs de facettes écrites sans les facettes. La brique la plus rentable est donc un **normaliseur de requête** (code à nous, versionné, testable), complété par le **filtrage dynamique** de la curation Typesense pour la longue traîne. **Livrables** : schéma de ~40 champs (`range_index` sur prix/km/année, `default_sorting_field: score_popularite` — qui sert aussi à choisir les variantes de préfixe, `max_candidates` porté de 4 à 10), poids `8,6,2,1` avec **`text_match_type=max_weight`** (le défaut `max_score` laisse une description bavarde battre un titre pertinent), `prioritize_num_matching_fields=false` (nos champs sont volontairement redondants : le défaut récompense la verbosité), trois `sort_by` de référence, et un **dictionnaire de ~130 entrées** avec la règle qui le rend sûr — **l'asymétrie** : `root: suv` → 4x4 oui, l'inverse jamais, parce que la plupart des SUV sont à deux roues motrices et qu'un acheteur de 4x4 achète de la motricité. **Trois corrections du §14.1** : (a) la tolérance aux fautes se règle mieux par les deux paramètres **globaux** `enable_typos_for_numerical_tokens=false` et `enable_typos_for_alpha_numerical_tokens=false` que par le `num_typos` par champ ; (b) Typesense **n'échantillonne pas** les comptages de facettes par défaut (les vrais plafonds sont `max_facet_values=10` et le `total_values` approximatif de `top_values`) — la décision « compteurs depuis Postgres » tient, sa justification était fausse ; (c) contrainte dure jamais notée : **3 champs de tri maximum par requête**. **Deux décisions contre-intuitives, chacune adossée à une interaction de paramètres** : **`drop_tokens_threshold=0`** — refuser que le moteur retire silencieusement un mot pour éviter le zéro-résultat, parce qu'un résultat hors critère dégrade le ratio de la **garantie contacts du §5.2 et nous coûte donc directement de l'argent** ; et **pas de `locale: "fr"` sur marque/modèle** — sans locale les diacritiques sont repliés (« citroen » trouve « Citroën »), avec locale ils sont préservés et, comme nous y avons mis `num_typos=0`, le filet de rattrapage disparaît. **Deux bugs évités avant d'exister** : le plafond de densité publicitaire du §5.2 (1 sponsorisé dans les 5 premiers, 20 % par page) est **inexprimable dans le moteur** — `_eval` place *tous* les boostés devant — et exige une couche d'entrelacement déterministe côté application, sous peine de casser la pagination (action n°37) ; et un garage qui pousse 60 véhicules par flux Ubiflow **monopolise la page 1** d'une liste triée par fraîcheur (action n°38, à traiter avec la n°31). **Veille concurrentielle tombée de l'analyse : La Centrale a déjà déployé la recherche en langage naturel en production** — la fenêtre du différenciateur « pertinence » est plus étroite qu'estimé, et le chiffrage tranche contre l'imitation : un appel LLM systématique coûterait **1 600 à 3 200 €/mois au palier national, soit 20 à 40× toute la chaîne de modération (78 €/mois)**, pour un gain nul sur des requêtes structurées → LLM **en repli uniquement sur la traîne à zéro résultat** (~8 %) avec cache, soit 60 à 130 €/mois. Enfin, l'ordre des facettes est déduit de données de marché et non d'intuition : **le diesel reste 44 % du VO** quand il est tombé à 4,8 % du neuf, **54 % des voitures neuves immatriculées en 2025 sont automatiques** (contre 8 % en 2004) — la boîte de vitesses devient une facette de premier rang —, et **Crit'Air est rétrogradé en attribut affiché** après le vote de suppression des ZFE du 28/05/2025. Six nouvelles actions (n°35 à 40), dont trois que Nicolas peut faire seul et sans code.
+
 ## 17. File d'attente des prochaines actions (pour les sessions automatisées)
 
 *Liste vivante. Chaque session quotidienne prend l'action la plus prioritaire encore "ouverte", la traite en profondeur, la marque "traitée" avec un résumé, ajoute une entrée au §16, et peut ajouter de nouvelles actions découvertes en cours de route. Une seule action approfondie par jour, pas un survol de plusieurs — la qualité prime sur le volume.*
@@ -850,33 +1250,39 @@ Pourquoi cela ne justifie pas Elasticsearch pour autant : à S3, **25 000 nouvel
 5. [ouvert] Chiffrer un premier budget prévisionnel Phase 1 (MVP + lancement régional) (§13)
 6. [**traité 2026-08-01**] Définir précisément les paliers d'abonnement pro → nouvelle **§5.2**, traitée avec l'action n°29. **Grille : 5 paliers à l'emplacement, sans engagement — 0 € (≤3 véh.) / 79 € (4-15) / 149 € (16-30) / 249 € (31-60) / 399 € (61-120), HT/mois**, marge 90-94 %, prélèvement SEPA par défaut. **Recadrage central : le référentiel de prix est le coût par contact, pas la facture du concurrent** — LBC est cher d'un facteur ~2 au contact (28-64 €/contact contre un repère marché de 35 €), pas de 12, et « 12× moins cher » s'entend « 12× moins d'audience ». **Différenciateur retenu : la garantie contacts** (« jamais plus de 30 € le contact, ou le mois est offert »), qui rend l'audience faible du démarrage inoffensive. Seuil de rationalité pour un garage : **5 contacts qualifiés/mois**. Corrections dérivées : ARPA 136 € (et non 149 €), seuil de rentabilité 119 comptes payants, objectif §2 reformulé en « 200 comptes pros *payants* ». **Non obtenu : la grille pro auto de LBC** (403 sur tout le domaine leboncoin.fr) → action n°33
 7. [**partiellement traité 2026-07-31**] Rechercher si des skills spécifiques manquent pour le moteur de recherche/stack retenus, une fois choisis (§15). **Volet moteur de recherche réglé** : besoin d'un skill **Typesense** et, plus important, d'un skill **pertinence de recherche e-commerce en français** — tous deux inscrits au §15 pour une session locale. Reste ouvert pour le reste de la stack (framework applicatif, ORM, file d'attente), non encore choisie
-8. [**bloqué depuis l'agent quotidien — à rebasculer**] Veille concurrentielle LBC — premier point structuré (prix, nouvelles fonctionnalités, communication) (§3). **Constat du 2026-08-01 : l'intégralité du domaine `leboncoin.fr` (dont `leboncoinsolutionspro.fr` et `assistance.leboncoin.info`) et la presse spécialisée auto (`autoactu.com`, `clubic.com`, `fiches-auto.fr`) sont en 403** — cette action est structurellement infaisable en session automatisée. À traiter soit en session locale, soit par une autre source : **Nicolas dispose d'un accès à son propre espace pro LBC, qui est la meilleure source du marché** (grille réelle, options, conditions) — une capture trimestrielle de sa part vaut mieux que toute recherche web
+8. [**bloqué depuis l'agent quotidien — à rebasculer**] Veille concurrentielle LBC — premier point structuré (prix, nouvelles fonctionnalités, communication) (§3). **Constat du 2026-08-01 : l'intégralité du domaine `leboncoin.fr` (dont `leboncoinsolutionspro.fr` et `assistance.leboncoin.info`) et la presse spécialisée auto (`autoactu.com`, `clubic.com`, `fiches-auto.fr`) sont en 403** — cette action est structurellement infaisable en session automatisée. À traiter soit en session locale, soit par une autre source : **Nicolas dispose d'un accès à son propre espace pro LBC, qui est la meilleure source du marché** (grille réelle, options, conditions) — une capture trimestrielle de sa part vaut mieux que toute recherche web **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.**
 9. [ouvert] Détailler le plan de recrutement des 10-20 premiers garages pilotes (script d'approche, argumentaire face à la frustration tarifaire LBC du 27/04/2026) (§9). **Enrichi le 2026-08-01 (§5.2)** : l'ordre d'argumentation est désormais fixé (garantie contacts → sans engagement → ajout au flux Ubiflow sans ressaisie → prix en conclusion, jamais en ouverture), et le grief LBC précis à exploiter est identifié (le quota décompte les renouvellements comme des publications). Prérequis dur : l'action n°31, sans laquelle le script se heurtera à « je ne vais pas ressaisir mon stock »
 10. [ouvert] Étudier la faisabilité technique et légale du système d'avis/réputation vendeur (différenciateur confiance mentionné en §6)
 11. [**traité 2026-07-29**] Comparer les options de modération automatique d'images à 250 k opérations/mois → nouvelle §7.1. Conclusion structurante : **les API commerciales ne couvrent aucun de nos trois risques réels** (photo volée, plaque visible, coordonnées incrustées) — elles ne peuvent pas être le socle. Architecture retenue : cascade auto-hébergée sur un serveur CPU à ~25 €/mois (pHash, ViT NSFW, YOLOv11 plaques + floutage, OCR — **sans GPU**) + VLM sélectif à ~53 €/mois. **0,003 €/annonce** au lieu de 0,018 €. Différenciateur produit gratuit identifié : floutage automatique des plaques, absent de LBC (§6). Découvertes juridiques CNIL + DSA reportées en §8.
 12. [**traité 2026-07-30**] Définir la politique de modération → nouvelle **§7.2**. 4 files + réclamations, **« publier par défaut, bloquer par exception »** (≤ 2 % de blocage a priori) parce que **la sur-modération est le risque dominant** (Appeals Centre Europe : 52 % des retraits infirmés). Audit aléatoire de 2 % des auto-validées = seule mesure non biaisée des faux négatifs. **100 % de revue humaine jusqu'à ~1 000 annonces/mois** (3,4 h/mois, et cela produit le jeu de données de l'action n°16), puis 0,73 ETP au palier national. **Coût de modération corrigé : 0,089 €/annonce au lieu de 0,058 € — le §5.1 omettait les files légalement obligatoires** ; coût marginal total ~0,21 €/annonce. Modération gardée en interne. Base juridique corrigée : DSA art. 16 et s., plus la LCEN (loi SREN 2024) — cf. §8
-13. [ouvert] Vérifier sur sources officielles LBC les quotas particuliers 2026 : nombre de photos gratuites (3 ?) et nombre d'annonces auto gratuites par an (2 puis ~8 € ?) — impact direct sur l'argumentaire de différenciation (§3)
+13. [ouvert] Vérifier sur sources officielles LBC les quotas particuliers 2026 : nombre de photos gratuites (3 ?) et nombre d'annonces auto gratuites par an (2 puis ~8 € ?) — impact direct sur l'argumentaire de différenciation (§3) **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.**
 14. [ouvert] Modéliser la déflection du support (FAQ, self-service, réponses automatisées) : 2ᵉ poste du coût marginal par annonce (0,092 €, soit ~48 % du total) (§6, §13)
-15. [ouvert] Vérifier les tarifs Sightengine, Meilisearch Cloud et Cloudflare Images sur leurs pages officielles (les chiffres du 2026-07-28 viennent d'agrégateurs tiers ; `developers.cloudflare.com` renvoyait un 403 depuis l'environnement d'exécution) et revalider le taux de change USD/EUR retenu (0,92). **Ajouté le 2026-07-29** : y joindre Cloudflare Workers AI (neurones par classification d'image — non confirmé, fourchette 3 à 55 €/mois au palier S3, écart trop large pour décider), AWS Rekognition (paliers + confirmation du périmètre après l'arrêt du Batch Image Content Moderation aux nouveaux clients le 30/04/2026), Hive et Azure Content Safety. **Étendu le 2026-07-31** : y joindre **Typesense Cloud** (grille horaire RAM/CPU + bande passante, `cloud.typesense.org` en 403) et les **tarifs Hetzner Cloud après la hausse d'avril 2026** (CX33, CPX31), les deux chiffres du §14.1 provenant d'agrégateurs
+15. [ouvert] Vérifier les tarifs Sightengine, Meilisearch Cloud et Cloudflare Images sur leurs pages officielles (les chiffres du 2026-07-28 viennent d'agrégateurs tiers ; `developers.cloudflare.com` renvoyait un 403 depuis l'environnement d'exécution) et revalider le taux de change USD/EUR retenu (0,92). **Ajouté le 2026-07-29** : y joindre Cloudflare Workers AI (neurones par classification d'image — non confirmé, fourchette 3 à 55 €/mois au palier S3, écart trop large pour décider), AWS Rekognition (paliers + confirmation du périmètre après l'arrêt du Batch Image Content Moderation aux nouveaux clients le 30/04/2026), Hive et Azure Content Safety. **Étendu le 2026-07-31** : y joindre **Typesense Cloud** (grille horaire RAM/CPU + bande passante, `cloud.typesense.org` en 403) et les **tarifs Hetzner Cloud après la hausse d'avril 2026** (CX33, CPX31), les deux chiffres du §14.1 provenant d'agrégateurs **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.**
 16. [ouvert] **Priorité haute** — Constituer un jeu de test de 300-500 photos de véhicules réelles (le garage de Nicolas est la source évidente : photos de vitrine, intérieurs, moteurs, plaques sous différents angles, éclairages, états) et **mesurer les taux de faux positifs / faux négatifs** des modèles retenus en §7.1 : détection de plaques (un raté = exposition RGPD), NSFW (un faux positif = travail humain inutile), OCR. C'est le paramètre le plus décisif de l'architecture de modération et il ne s'obtient que par mesure — à faire avant tout développement
 17. [ouvert] Déterminer si LBT relèvera du statut **micro ou petite entreprise** au sens de la recommandation 2003/361/CE (< 50 salariés et CA ou bilan ≤ 10 M€), donc exclue des obligations DSA Section 3 (art. 19) et Section 4 (art. 29), et à quelle échéance du plan le seuil serait franchi — l'exclusion se prolongeant 12 mois après la perte du statut, c'est une date à inscrire dans la roadmap (§8, §10)
 18. [ouvert] Spécifier le **pipeline de dépôt d'annonce** de bout en bout : ordre des étages de la §7.1, latence cible par étage (budget total < 60 s à la publication), comportement en cas d'indisponibilité d'un modèle (publier et re-modérer, ou bloquer ?), file d'attente asynchrone vs synchrone, et journalisation des décisions exigée par le DSA art. 17 (§7, §8)
 19. [ouvert] Concevoir l'**index de déduplication d'images** : quel hachage (pHash 64 bits vs PDQ 256 bits), quel seuil de distance de Hamming, quelle structure d'index à 5 M d'images en base, et quelle politique en cas de correspondance (blocage, signalement, avertissement à l'acheteur) (§7.1)
 20. [ouvert] Évaluer une **recherche d'image inversée externe** (au-delà de notre propre base) pour détecter les photos reprises d'autres plateformes — faisabilité technique, légalité, coût. C'est le seul angle mort restant de l'anti-fraude photo (§7.1)
-21. [ouvert] **Priorité haute — à faire en session locale** (les sources officielles sont bloquées depuis l'environnement automatisé) : revérifier sur **EUR-Lex** le texte exact des art. 6, 14, 16, 17, 18, 19, 20, 21, 23 et 29 du DSA et sur **Légifrance** l'état de la LCEN après la loi SREN n° 2024-449 du 21/05/2024, puis rédiger les livrables : **CGU décrivant la politique de modération (art. 14, format lisible par machine)**, formulaire et procédure de signalement (art. 16), **modèles d'exposé des motifs par motif de décision (art. 17)**, procédure de réclamation (art. 20). Ces livrables sont sur le chemin critique du lancement public (§8, §7.2)
+21. [ouvert] **Priorité haute — à faire en session locale** (les sources officielles sont bloquées depuis l'environnement automatisé) : revérifier sur **EUR-Lex** le texte exact des art. 6, 14, 16, 17, 18, 19, 20, 21, 23 et 29 du DSA et sur **Légifrance** l'état de la LCEN après la loi SREN n° 2024-449 du 21/05/2024, puis rédiger les livrables : **CGU décrivant la politique de modération (art. 14, format lisible par machine)**, formulaire et procédure de signalement (art. 16), **modèles d'exposé des motifs par motif de décision (art. 17)**, procédure de réclamation (art. 20). Ces livrables sont sur le chemin critique du lancement public (§8, §7.2) **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.**
 22. [ouvert] Spécifier le **back-office de modération** : les 4 files avec leurs SLA, l'enregistrement structuré de décision de la §7.2 (13 champs, dont origine et moyens automatisés — exigence art. 17), la conservation 12 mois, l'interface de revue (raccourcis, décisions en un clic, débit cible 80 annonces/h) et le tableau de bord des indicateurs de la §7.2. À croiser avec l'action n°18 (pipeline de dépôt)
 23. [ouvert] Définir la **grille de sanctions graduées et les règles anti-abus** en détail (§7.2 en donne le squelette) : seuils de récidive, durées de suspension, gestion des faux comptes après suspension, et traitement des **signalements malveillants entre garages concurrents** — risque spécifique à une place de marché auto
 24. [ouvert] Arbitrer **construire ou acheter le back-office de modération** : chiffrer les éditeurs Trust & Safety du marché (Tremau, Checkstep, ActiveFence et autres) contre un développement interne. Repère de cadrage : le besoin est de 0,73 ETP au palier national, un outil facturé à l'élément modéré serait donc probablement disproportionné (§14)
-25. [ouvert] **Trouver les données de référence manquantes du §7.2** : taux de signalement pour 1 000 annonces et taux de réclamation sur une place de marché d'annonces. Les rapports de transparence DSA de **LBC France** (`img.leboncoin.fr`), **eBay** (`static.ebayinc.com`) et des places de marché européennes (Wallapop, Marktplaats/Adevinta, OLX) contiennent ces chiffres mais sont **bloqués depuis l'environnement automatisé** → à récupérer en session locale. À défaut, ces deux taux ne s'obtiendront qu'au pilote
+25. [ouvert] **Trouver les données de référence manquantes du §7.2** : taux de signalement pour 1 000 annonces et taux de réclamation sur une place de marché d'annonces. Les rapports de transparence DSA de **LBC France** (`img.leboncoin.fr`), **eBay** (`static.ebayinc.com`) et des places de marché européennes (Wallapop, Marktplaats/Adevinta, OLX) contiennent ces chiffres mais sont **bloqués depuis l'environnement automatisé** → à récupérer en session locale. À défaut, ces deux taux ne s'obtiendront qu'au pilote **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.**
 26. [ouvert] Évaluer l'intégration de **HistoVec** (service public gratuit d'historique des véhicules) au parcours de dépôt : la fraude au compteur touche ~10,6 % du parc français (carVertical) et une voiture au kilométrage trafiqué se vend ~39 % au-dessus de sa valeur réelle — **aucun contrôle de photo ne détecte cela**, mais un historique administratif attaché à l'annonce le rendrait beaucoup plus difficile. Différenciateur confiance potentiellement fort sur l'auto, à croiser avec l'action n°10 (avis/réputation vendeur) (§6)
-27. [ouvert] **Priorité haute — spécifier le schéma d'index et la pertinence de la recherche auto** (§14.1) : champs indexés et leur poids, champs facettables et triables, `num_typos` par champ, `distinct` par vendeur (empêcher un garage de saturer une page de résultats), stratégie de tri par défaut (fraîcheur ? pertinence ? distance amortie par `exclude_radius` ?), et surtout un **dictionnaire de synonymes automobile français** — break/SW/estate, 4x4/SUV, BVA/EDC/DSG/boîte auto, HDI/dCi/TDI/diesel, « Clio 3 »/« Clio III », utilitaire/fourgon/camionnette. **C'est un actif métier que Nicolas peut produire seul et que LBC exploite mal** : sur une verticale unique, la pertinence sémantique est un différenciateur accessible, contrairement à l'effet de réseau. À valider par un jeu de 50 requêtes annotées sur les données du pilote
+27. [**traité 2026-08-02**] Spécifier le schéma d'index et la pertinence de la recherche auto → nouvelle **§14.2**, adossée à la documentation officielle Typesense v30.2 lue en source primaire. **Recadrage central : sur l'automobile, la pertinence n'est pas un problème de scoring de texte mais de reconnaissance d'entités** — dans la majorité des requêtes (« clio 3 essence », « 3008 gt line 2019 ») il ne reste aucun texte libre à scorer, tous les tokens sont des valeurs de facettes. La brique la plus rentable est donc un **normaliseur de requête** (code à nous, versionné), complété par le filtrage dynamique de la curation pour la longue traîne. Livrables : schéma de ~40 champs, poids et `text_match_type=max_weight`, réglages de tolérance aux fautes (**correction du §14.1** : les deux paramètres globaux `enable_typos_for_*_tokens=false` valent mieux que le `num_typos` par champ), `drop_tokens_threshold=0` justifié par la garantie contacts du §5.2, trois `sort_by` de référence, `group_by=vendeur_id` (Typesense n'a pas de `distinct`), dictionnaire de ~130 entrées avec **règle d'asymétrie** (`root: suv` → 4x4, jamais l'inverse), et décision `locale`/`stem` contre-intuitive (pas de `locale: fr` sur marque/modèle, sinon « citroen » ne trouve plus « Citroën » puisque `num_typos=0` y supprime le filet). **Trois découvertes structurantes hors périmètre** : (a) les 403 qui bloquent 7 actions viennent de notre propre politique réseau → action n°35 ; (b) le plafond de densité publicitaire du §5.2 est inexprimable dans le moteur (3 champs de tri maximum) → action n°37 ; (c) un import de flux pro monopolise la page 1 → action n°38
 28. [ouvert] Concevoir les **alertes sur recherche sauvegardée** (« préviens-moi dès qu'un Kangoo diesel < 8 000 € apparaît dans 50 km ») : stockage des critères, évaluation en lot côté Postgres (le moteur retenu n'a pas de percolateur, §14.1), fréquence, plafonnement anti-spam, coût email (Brevo, déjà à 0,00075 €/email au §5.1) et articulation avec la notification de baisse de prix du §6. Fonction attendue sur un site d'annonces et levier de rétention — c'est ce qui fait revenir un acheteur qui n'a pas trouvé du premier coup
 29. [**traité 2026-08-01**] Définir les **options de visibilité payantes** → **§5.2, Résultat n°5**, traité avec l'action n°6 comme prescrit. **Décision : aucune vente à l'unité aux pros au MVP**, quota mensuel inclus par palier (≈ 1 remontée par tranche de 6 emplacements) ; boosts à l'unité conservés côté **particuliers** (0,99-4,99 €). Deux mécaniques au MVP (remontée en tête via `_eval()` décroissant sur 48 h, vitrine mise en avant incluse aux paliers hauts) ; **épinglage sur requête écarté** malgré sa disponibilité technique. **Plafond de densité non négociable : 1 sponsorisé maximum dans les 5 premiers résultats, 20 % par page, étiquetage systématique** — à coder dans la couche d'abstraction `search` (§14). Justification mécanique plutôt que morale : **la garantie contacts rend la sur-monétisation directement coûteuse** (moins de pertinence → moins de contacts → mois offerts). DSA art. 26/27 probablement non applicables (Section 3, exclusion micro/petite entreprise) mais à respecter par défaut → à vérifier avec l'action n°21
 30. [ouvert] Spécifier l'**indexeur Postgres → Typesense** : déclenchement (événement de publication, modification de prix, vente, expiration), cohérence en cas d'échec, réindexation complète scriptée, et la **couche d'abstraction interne** `search` qui conditionne la réversibilité du choix du §14.1. À croiser avec l'action n°18 (pipeline de dépôt d'annonce) — une annonce entre dans l'index au même moment où elle sort de la chaîne de modération
 31. [ouvert] **Priorité haute — prérequis de toute vente pro (§5.2, Résultat n°2)** : spécifier l'**ingestion de flux de stock VO** (parseur XML/CSV multi-formats + API REST, photos par URL, réconciliation par référence véhicule, retrait à la vente, mise à jour de prix) **et engager le référencement de LBT comme destination chez Ubiflow, Kepler VO et Stockway**. Le volet partenariat est le plus long et le moins technique : il commence par un appel. Sans lui, le coût d'entrée d'un garage reste la ressaisie manuelle de son stock et le pilote plafonnera au réseau personnel de Nicolas. À croiser avec les actions n°18 (pipeline de dépôt) et n°30 (indexeur) : un flux pro entre par le même tuyau de modération qu'un dépôt particulier, mais un garage pousse 60 véhicules d'un coup à l'inscription
 32. [ouvert] **Priorité haute — à faire avant la première vente** : définir et instrumenter le **« contact qualifié »** sur lequel repose la garantie contacts du §5.2 (« jamais plus de 30 € le contact, ou le mois est offert ») : définition opposable inscrite aux CGV pro, déduplication par acheteur sur 30 jours, comptage des messages et des affichages de numéro, exclusion des contacts frauduleux ou automatisés, compteur temps réel visible par le garage (§6), et procédure de crédit du mois. Sans compteur incontestable, la garantie devient une source de litige au lieu d'un argument
-33. [ouvert] **La moins chère et la plus rentable de la file** — **relire la facture LBC réelle de Nicolas** et documenter : montant **HT ou TTC**, périmètre exact (nombre d'emplacements, options de visibilité incluses ou facturées à part, mono ou multi-région), durée d'engagement, date. **Toute la §5.2 repose sur ce seul repère de 1 780 €/mois pour 20 véhicules**, jamais vérifié, alors que l'écart HT/TTC seul vaut 20 %. Y joindre, si Nicolas y a accès depuis son espace pro, une capture de la grille automobile complète — inaccessible depuis l'agent quotidien (403 sur tout `leboncoin.fr`) et introuvable ailleurs de façon fiable
+33. [ouvert] **La moins chère et la plus rentable de la file** — **relire la facture LBC réelle de Nicolas** et documenter : montant **HT ou TTC**, périmètre exact (nombre d'emplacements, options de visibilité incluses ou facturées à part, mono ou multi-région), durée d'engagement, date. **Toute la §5.2 repose sur ce seul repère de 1 780 €/mois pour 20 véhicules**, jamais vérifié, alors que l'écart HT/TTC seul vaut 20 %. Y joindre, si Nicolas y a accès depuis son espace pro, une capture de la grille automobile complète — inaccessible depuis l'agent quotidien (403 sur tout `leboncoin.fr`) et introuvable ailleurs de façon fiable **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.**
 34. [ouvert] Trouver une **distribution sourcée de la taille du stock VO des professionnels français** (nombre de véhicules simultanément en vente par établissement). C'est cette répartition qui détermine le mix de CA du §5.2 — donc l'ARPA de 136 € et le seuil de 119 comptes payants, aujourd'hui posés sur une hypothèse non sourcée. Pistes : ANFA (chiffres clés de la branche), Mobilians, AAA-Data, ou un comptage direct des vitrines pro d'un portail existant sur la région pilote — **cette dernière méthode est faisable sans aucune source tierce et donnerait en prime la liste nominative des prospects de l'action n°9**
+35. [ouvert] **Priorité maximale — la plus rentable de toute la file, et elle coûte un réglage** : **élargir la politique réseau de l'environnement d'exécution des sessions automatisées**. Le diagnostic du 2026-08-02 (§14.2, Résultat n°0) établit que les « 403 » invoqués depuis le 2026-07-28 sont émis par **la passerelle réseau de notre propre environnement** (`connect_rejected` / « gateway answered 403 to CONNECT (policy denial) »), pas par les sites : seuls GitHub, GitLab et PyPI sont dans la liste blanche. Élargir la liste — ou passer en accès sortant non restreint, paramétrable par Nicolas, cf. `code.claude.com/docs/en/claude-code-on-the-web` — débloque en session automatisée les actions **n°8, 13, 15, 21, 25, 33 et 34**. Réserve : certains sites (`leboncoin.fr`) opposeront peut-être ensuite un vrai blocage anti-bot, ce qui n'a jamais été testé
+36. [ouvert] **Priorité haute — spécifier le normaliseur de requête auto** (§14.2, Résultat n°1) : chiffres romains → arabes, repli des accents, reconnaissance marque/modèle/génération sur référentiel, reconnaissance des codes commerciaux (HDi, dCi, TCe, EDC…), extraction des seuils numériques (« moins de 100 000 km », « - de 10 000 € »), reconnaissance des communes et départements, et ce qui part en `filter_by` vs ce qui reste en `q`. Prérequis : constituer le **référentiel marque/modèle/version** — piste gratuite identifiée, la base **ADEME Car Labelling** (données UTAC d'homologation : marque, modèle, dénomination commerciale, CNIT, énergie ; trimestrielle ; sur `data.gouv.fr` et `data.ademe.fr`), **non téléchargée** faute d'accès réseau (action n°35), et dont la couverture du parc VO ancien reste à vérifier
+37. [ouvert] **Priorité haute — coder la couche d'entrelacement des annonces sponsorisées** (§14.2, Résultat n°5) : le plafond de densité décidé au §5.2 (1 sponsorisé maximum dans les 5 premiers, 20 % par page, étiquetage) **ne peut pas s'exprimer en `sort_by`** — `_eval` place *tous* les boostés devant, et le moteur n'accepte que 3 champs de tri. Il faut deux requêtes (organique / sponsorisé) et un entrelacement à positions fixes qui soit une **fonction pure de (page, rang)**, sinon la pagination fait réapparaître ou disparaître des annonces d'une page à l'autre. Y joindre la journalisation du taux réel de sponsorisés servis, seule preuve que le plafond est respecté. `per_page` est plafonné à 250 par le moteur
+38. [ouvert] **À traiter avec l'action n°31 — un import de flux pro monopolise la page 1** (§14.2, Résultat n°6) : un garage qui s'inscrit pousse 40 à 60 véhicules dans la même minute, donc avec la même date, et sature une liste triée par fraîcheur (au pilote, 500 annonces actives : un seul import suffit). Correctifs : `group_by=vendeur_id` + `group_limit=2` sur les listes triées par fraîcheur (désactivé sur les recherches filtrées explicites), **étalement de `date_mise_en_avant` à l'import en masse**, et séparation des trois dates (`date_mise_en_ligne` immuable / `date_maj` technique / `date_mise_en_avant` de tri) qui sert aussi de garde-fou anti-rafraîchissement — grief exact reproché à LBC au §5.2
+39. [ouvert] **Test de 30 minutes, à faire avant d'écrire le schéma définitif** (§14.2, Résultat n°4) : démarrer un nœud Typesense local et mesurer le comportement du tokenizer par défaut sur `1.5 dCi`, `e-208`, `ë-C4`, `GT Line+`, `C4 Picasso`, `Clio III` — l'effet du point décimal et du tiret **n'est pas déductible de la documentation**, et il détermine les réglages `symbols_to_index` et `token_separators`. Ne pas deviner
+40. [ouvert] **Constituer le jeu de 50 requêtes annotées — Nicolas peut le faire seul, dès maintenant, sans code** (§14.2, Résultat n°11) : composition fixée (15 marque+modèle, 8 avec génération, 7 avec finition, 5 références chiffrées proches, 5 fautes de frappe, 5 langage naturel, 5 géolocalisées), à écrire depuis les demandes téléphoniques réelles de son garage. Indicateurs par ordre de priorité : taux de zéro-résultat, précision@5, clic sur les 3 premiers, **contacts par vue de fiche** (seule métrique qui relie la pertinence à la garantie du §5.2). Règle de gouvernance associée : aucun changement de schéma, de poids ou de synonymes en production sans repasser les 50 requêtes
 
 ---
 
@@ -998,3 +1404,31 @@ Pourquoi cela ne justifie pas Elasticsearch pour autant : à S3, **25 000 nouvel
 | **Grille pro automobile de LBC** | **NON OBTENUE** | [leboncoinsolutionspro.fr/automobile/](https://leboncoinsolutionspro.fr/automobile/) (403), [assistance.leboncoin.info — Présentation des offres commerciales Automobile](https://assistance.leboncoin.info/hc/fr/articles/27896546571922-Pr%C3%A9sentation-des-offres-commerciales-leboncoin-pour-les-professionnels-de-l-Automobile) (403), [leboncoin.fr/dc/cgv_pro](https://www.leboncoin.fr/dc/cgv_pro) (403) | **Nulle.** Les montants d'agrégateurs (« Starter 29 € », « Business 79 €», « Pack Local 39 € HT ») sont incohérents entre eux et trois ordres de grandeur sous la facture réelle : **ne pas les utiliser** |
 
 **Hôtes bloqués par la politique réseau (403) lors de cette session**, confirmés comme refus de politique d'entreprise via le point de contrôle du proxy et non comme incidents : `leboncoinsolutionspro.fr`, `assistance.leboncoin.info`, `www.leboncoin.fr`, `www.autoactu.com`, `www.clubic.com`, `www.fiches-auto.fr`, `forum-auto.caradisiac.com`, `www.dealabs.com`, `scalecity.fr`. S'ajoutent aux hôtes déjà recensés les 28, 29, 30 et 31 juillet (§15).
+
+## Annexe — Sources du schéma d'index et de la pertinence §14.2 (2026-08-02)
+
+**Source primaire — documentation officielle Typesense v30.2, lue directement dans son dépôt source.** L'accès à `typesense.org` étant refusé par la politique réseau de l'environnement (voir §14.2, Résultat n°0), les fichiers sources de la documentation ont été récupérés sur `raw.githubusercontent.com/typesense/typesense-website/master/docs-site/content/30.2/` — c'est-à-dire **la même source que le site publié**, sans intermédiaire :
+
+- `api/search.md` (158 Ko) — tous les paramètres de recherche et leurs valeurs par défaut : `query_by`, `query_by_weights`, `text_match_type`, `num_typos` (défaut 2), `min_len_1typo` (4), `min_len_2typo` (7), `typo_tokens_threshold` (1), `drop_tokens_threshold` (1), `enable_typos_for_numerical_tokens` (true), `enable_typos_for_alpha_numerical_tokens` (true), `split_join_tokens`, `prioritize_exact_match` (true), `prioritize_token_position` (false), `prioritize_num_matching_fields` (true), `max_candidates` (4), `sort_by` (**maximum 3 champs**), `group_by` / `group_limit` (3) / `group_missing_values` / `group_max_candidates`, `facet_by`, `max_facet_values` (10), `facet_strategy` (`automatic`), `facet_sample_percent` (**100 — échantillonnage désactivé par défaut**), `facet_query`, `facet_query_num_typos` (2), `per_page` (10, **plafonné à 250**), `exhaustive_search`, `stopwords`, `pinned_hits` / `hidden_hits`, `filter_curated_hits`, `infix`.
+- `api/collections.md` (77 Ko) — options de champ : `facet`, `optional`, `index`, `store`, `sort`, `range_index` (défaut `false`), `stem`, `stem_dictionary`, `locale`, `token_separators`, `symbols_to_index`, `default_sorting_field` (et son rôle dans le choix des variantes de préfixe et de fautes de frappe), `enable_nested_fields`, `synonym_sets`, `curation_sets`.
+- `api/curation.md` (50 Ko) — jeux de curation, `pinned_hits`/`hidden_hits`, **filtrage dynamique** (`{variable}` dans `rule.query` + `filter_by` + `remove_matched_tokens`, et l'exigence `facet: true` sur les champs concernés), tri dynamique, `curation_tags`, `stop_processing`, `effective_from_ts`.
+- `api/synonyms.md` (23 Ko) — **jeux de synonymes** (`/synonym_sets`, nouvelle route depuis la v29 ; les clés d'API scopées `synonyms:*` ne l'ouvrent pas), multidirectionnel vs unidirectionnel (`root`), `locale` par entrée (appliqué uniquement si le champ le plus lourd a le même `locale`), `synonym_num_typos` (0), non-application aux phrases entre guillemets et à `filter_by`.
+- `api/geosearch.md` (14 Ko) — `geopoint`, `filter_by: location:(lat, lng, N km)`, tri par distance, **`exclude_radius`**, `precision`.
+- `api/stopwords.md`, `api/documents.md`, `api/stemming.md` (racinisation Snowball, langue déduite du `locale` du champ ; avertissement sur la dégradation de pertinence sur noms propres et lieux ; dictionnaires personnalisés en JSONL).
+- `guide/ranking-and-relevance.md` — critères de classement, composition du score par champ, `max_score` / `max_weight` / `sum_score`, `_text_match(buckets: N)` et `bucket_size`, `_eval()` simple et à scores multiples (`_eval([ (a):3, (b):2 ])`), départage par champs utilisateur.
+- `guide/locale.md` — comportement par défaut « anglais » et **repli automatique des diacritiques** ; préservation des diacritiques sous ICU pour les locales non anglaises ; rattrapage par la tolérance aux fautes ; `pre_segmented_query`.
+- `guide/tips-for-searching-common-types-of-data.md` — usages de `token_separators` et `symbols_to_index`.
+
+**Diagnostic réseau (Résultat n°0)** : sortie de `curl -sS "$HTTPS_PROXY/__agentproxy/status"` dans l'environnement d'exécution, et sondage HTTP de 13 domaines. Documentation de référence de la configuration : `code.claude.com/docs/en/claude-code-on-the-web` (politique réseau des environnements).
+
+**Tarifs Claude Haiku 4.5** (Résultat n°10) : 1 $/MTok en entrée, 5 $/MTok en sortie ; lecture de cache ≈ 0,1× l'entrée, écriture 1,25× (TTL 5 min) ou 2× (TTL 1 h). Catalogue de modèles daté du 2026-06-24. **À revérifier à la mise en œuvre.**
+
+**Sources de marché — extraits de résultats de recherche uniquement, pages non consultées** (domaines refusés par la politique réseau ; à revérifier via l'action n°35 avant tout usage externe) :
+
+- Marché VO 2025 : **5,5 M de transactions (+0,9 %), 77 % des achats de voitures**, âge moyen du parc VO **11,1 ans**, **diesel 44 % des ventes VO** contre 4,8 % du neuf (essence 21,9 %, hybride 42,5 % du neuf) — extraits de `aaa-data.fr`, `statistiques.developpement-durable.gouv.fr` (SDES), `plaques24.fr`, `bymycar.fr`.
+- Boîtes automatiques : **54 % des voitures neuves immatriculées en 2025**, contre 25 % en 2016 et 8 % en 2004 (chiffres attribués à la **PFA**) — extraits de `autojm.fr`, `adicie.com`, `auto-infos.fr`. Marché du neuf 2025 : 1,665 M d'immatriculations (−5,2 % vs 2024).
+- ZFE : suppression votée par la commission spéciale de l'Assemblée nationale le **27/03/2025** puis en séance le **28/05/2025** (98 voix contre 51) dans le projet de loi de simplification de la vie économique ; devenir de la vignette Crit'Air incertain — extraits de `guichetcartegrise.com`, `france3-regions.franceinfo.fr`, `carte-grise-france.fr`, `mieuxrespirerenville.gouv.fr`.
+- La Centrale, recherche en langage naturel et IA en production (Résultat n°10) — extraits de `larevuedudigital.com`, `lemondeinformatique.fr`, `caradisiac.com`, `journalauto.com`, `auto-infos.fr`. Éléments retenus : recherche « texte libre » en langage naturel intégrée au parcours acheteur, ~20 cas d'usage IA en production, assistant de pricing (Pilot Price) pour les professionnels depuis juin 2025.
+- Référentiel véhicules : **ADEME Car Labelling** / « Émissions de CO2 et de polluants des véhicules commercialisés en France » — données UTAC d'homologation acquises annuellement par l'ADEME depuis 2001, contenant gammes, marques, modèles, n° CNIT et type d'énergie ; mise à jour trimestrielle ; publiée sur `data.gouv.fr`, `data.ademe.fr` et divers portails Opendatasoft. **Existence et périmètre établis par extraits ; fichier non téléchargé.**
+
+**Note de méthode** : la §14.2 distingue explicitement ce qui vient de la documentation officielle (paramètres, valeurs par défaut, contraintes du moteur — fiable), ce qui vient d'extraits de recherche (chiffres de marché — à revérifier), et ce qui vient de la connaissance du domaine (le dictionnaire de synonymes — hypothèse à valider sur les données du pilote).
