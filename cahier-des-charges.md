@@ -1,7 +1,7 @@
 # Cahier des charges — LBT (lebontruc.fr / .com)
 ### Devenir un concurrent sérieux de LeBonCoin (LBC) en 24-36 mois
 
-*Document vivant — dernière mise à jour : 2026-08-01. Porté par Nicolas Therond (PDG RETRO+), en phase de conception avec Claude. Pas encore d'équipe technique affectée.*
+*Document vivant — dernière mise à jour : 2026-08-04. Porté par Nicolas Therond (PDG RETRO+), en phase de conception avec Claude. Pas encore d'équipe technique affectée.*
 
 ---
 
@@ -29,6 +29,8 @@ Ne pas confondre "concurrent sérieux" et "clone généraliste de LBC" : l'objec
 | Mois 36 | Position "alternative crédible et moins chère que LBC" reconnue sur auto + collection, base pour lever des fonds ou négocier un rapprochement si pertinent |
 
 *Ces chiffres sont des hypothèses de travail à valider — à revoir dès qu'on aura des données réelles du pilote régional.*
+
+**Mise en cohérence du 2026-08-04 (§13.1) — l'objectif M12 et le jalon M24 ne disent pas la même chose du même projet.** (a) **200 comptes pros payants à M12** suppose une capacité commerciale qui n'était budgétée nulle part : partant de zéro à M6, cela fait ~33 signatures par mois pendant six mois, soit deux à trois commerciaux à plein temps (~48 k€ sur l'exercice, désormais inscrits au §13.1). L'objectif n'est pas irréaliste, il était **gratuit**. (b) **La « rentabilité opérationnelle sur l'auto » à M24 est, elle, incompatible avec l'objectif M12 tel qu'écrit** : au coût fixe qu'implique l'équipe de la roadmap (~39 400 €/mois), le point mort se situe à **402 comptes payants** — le double de l'objectif M12, à atteindre en douze mois de plus. Deux issues cohérentes, à choisir explicitement : viser ~400 comptes à M24 avec un financement assumé, ou **abaisser le coût fixe** à ~17 600 €/mois, ce qui ramène le point mort à 179 comptes et le rend atteignable dans les trois trajectoires commerciales testées (§13.1, Résultat n°5).
 
 ---
 
@@ -126,6 +128,8 @@ Coût mensuel de la couche image **au palier S3**, selon l'architecture :
 #### Résultat n°3 — le coût marginal réel est humain
 
 Coût chargé d'un modérateur/agent support en France : salaire brut moyen ~26 350 €/an (Indeed/Glassdoor 2026) + ~40 % de charges patronales ≈ **37 000 €/an chargé**, soit **~23 €/h** sur ~1 600 h travaillées.
+
+> **Correction du 2026-08-04 (§13.1, Résultat n°0) — ce ratio de 1,40 est faux depuis le 1ᵉʳ janvier 2026.** La **réduction générale dégressive unique (RGDU)** a étendu l'allègement de charges patronales de 1,6 SMIC à **3 SMIC** ; à 26 350 € de brut annuel le coefficient vaut **24,61 %**, ramenant les charges nettes à ~17,4 % et le coût employeur à **~30 900 €/an**, soit **~32 400 €** avec mutuelle, prévoyance et médecine du travail — **~20,3 €/h et non 23 €/h (−12 %)**. Le coût marginal par annonce passe donc de ~0,21 € à **~0,19 €** (0,026 € technique + ~0,157 € humain). Les chiffres du tableau ci-dessous sont conservés tels quels, par prudence : ils sont conservateurs et aucune conclusion ne bascule.
 
 | Poste | Hypothèse | €/annonce |
 |---|---|---|
@@ -1032,11 +1036,17 @@ Un garage branché en flux ne se déconnecte pas parce qu'il est mécontent : il
 - **M19-24** : consolidation, recherche de rentabilité opérationnelle sur l'auto
 - **M25-36** : croissance des deux verticales, décision sur une éventuelle 3ᵉ verticale ou une levée de fonds
 
+**Jalon ajouté le 2026-08-04 (§13.1) — le go/no-go de M6 est le seul jalon qui décide de quelque chose.** La roadmap ci-dessus enchaîne les phases comme si le passage de l'une à l'autre allait de soi. Le §13.1 montre qu'il existe un point de décision net à **M6** : la mesure de **λ** (contacts qualifiés livrés par garage et par mois) sur 20 garages pilotes. En amont, l'engagement est de **~120 000 € sans aucun recrutement** ; en aval, il est de 250 000 à 460 000 € sur 24 mois. **Critère : λ ≥ 8 valide le modèle du §5.2 ; λ ≤ 5 impose de revoir le prix ou le segment avant d'aller plus loin.**
+
+**Réserve sur le jalon M24 (« rentabilité opérationnelle sur l'auto ») :** il n'est atteignable qu'avec une structure de coûts frugale (§13.1, Résultat n°5). Avec l'équipe que la roadmap implique par ailleurs, le point mort tombe à M22 dans le seul scénario commercial le plus optimiste, et jamais dans les deux autres.
+
 ---
 
 ## 11. Organisation & ressources
 
 Actuellement : Nicolas + Claude, phase de conception, **aucune ressource technique affectée**. Décision à prendre : à quel moment impliquer l'équipe IT de RETRO+ (Fabien, les 3 ingénieurs 3IL, l'admin sys) — probablement dès le passage en développement du MVP (fin de la phase de cahier des charges), pas avant, pour ne pas diluer leur temps sur un concept encore mouvant.
+
+**Précisé le 2026-08-04 (§13.1) — l'équipe RETRO+ ne peut pas construire le MVP, et il faut l'écrire.** Le périmètre spécifié pèse **~417 jours-homme** (186 pour la version réduite du go/no-go). À 0,5 ETP prélevé sur une équipe qui a déjà un métier, le MVP complet demanderait près de quatre ans et la version réduite plus d'un an et demi — c'est-à-dire hors délai dans les deux cas. **Ce que RETRO+ peut apporter utilement, en revanche, est réel et gratuit** : l'administration système (un poste que le §14.1 évitait justement de charger), la revue d'architecture, les liens avec 3IL pour l'alternance (Résultat n°7), et l'hébergement des locaux (Résultat n°6). **Le développement, lui, doit être acheté ou recruté.**
 
 **Veille concurrentielle LBC** : mettre en place un suivi léger et récurrent (trimestriel suffit) plutôt qu'une étude figée — les prix et politiques de LBC bougent vite (cf. changement du 27/04/2026).
 
@@ -1062,12 +1072,14 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 | **La garantie contacts consomme la moitié du chiffre d'affaires** — risque financier n°1 identifié le 2026-08-01 (§5.3). À livraison égale au seuil garanti, la forme binaire rend **44 % des mois gratuits** ; le seuil de rentabilité varie de **128 à 234 comptes payants** selon un paramètre (le taux de plein tarif ρ) que personne n'a mesuré | Règle de prix linéaire `min(prix ; 30 € × contacts)` au lieu du seuil binaire (+1,5× de recette à promesse identique) ; seuils de plein tarif placés à ~60 % de la livraison visée ; **ρ suivi comme indicateur financier n°1**, devant le nombre d'abonnés ; mesure de λ et de sa dispersion dès le pilote (action n°43) |
 | **Conflit d'intérêts structurel du compteur** : plus de la moitié du trafic web est automatisée (53 % en 2025, Imperva), et un compteur gonflé par des bots **augmenterait les factures de LBT**. C'est le seul dispositif du projet où la rigueur coûte de l'argent à celui qui l'écrit | Liste d'exclusions limitative et **publiée** ; exclusions **affichées au garage avec leur motif** ; **taux d'exclusion suivi comme indicateur** (sa baisse est une alerte, pas une bonne nouvelle) ; détecteur de messages-type partagé avec la modération (action n°45) |
 | Absence de ressource technique dédiée | Décision claire sur le déclenchement de l'implication de l'équipe RETRO+ (§11) |
+| **Structure de coûts dimensionnée pour un succès qui n'arrive qu'à moitié — risque financier n°1 identifié le 2026-08-04 (§13.1).** Sur les neuf combinaisons (coût fixe × trajectoire commerciale) testées, **une seule atteint la rentabilité opérationnelle à M24 avec l'équipe qu'implique la roadmap du §10** (F ≈ 39 400 €/mois → seuil de 402 comptes payants, soit le double de l'objectif M12). Le scénario le plus coûteux en trésorerie (~456 k€ sur 24 mois) est aussi celui qui n'atteint jamais le point mort : équipe complète, trajectoire commerciale moyenne | **Recruter après le go/no-go, pas avant** (§13.1, Résultat n°9) : 186 j-h en freelance et ~120 k€ suffisent à mesurer λ en 6 mois. Puis viser la **structure frugale** (F ≈ 17 600 €/mois : 1 CDI + 1 alternant + 1 commercial + 0,3 ETP modération), qui atteint le point mort dans les **trois** trajectoires commerciales testées. Réduire F est une décision ; améliorer la trajectoire est un pari — et le premier levier pèse plus lourd que le second |
+| **La rémunération du dirigeant n'est dans aucun budget** (§13.1, Résultat n°6). Nicolas assure aujourd'hui la direction produit, la direction commerciale et la modération de niveau 2 à coût nul pour LBT. Valorisé au marché, cela ajoute 6 000 à 8 000 €/mois à F, soit ~70 comptes payants au seuil de rentabilité | Trancher explicitement, et maintenant, entre rémunération LBT, refacturation RETRO+ ou apport en compte courant valorisé — le choix ne coûte rien à faire aujourd'hui et fausse tous les seuils tant qu'il n'est pas fait |
 
 ---
 
 ## 13. Plan de ressources (matériel & humain)
 
-*À construire progressivement par les sessions de travail quotidiennes (voir §17). Le volet "coûts variables" est chiffré depuis le 2026-07-28 (§5.1) ; le volet "coûts fixes" (équipe, budget par phase) reste à faire — c'est lui qui détermine le seuil de rentabilité.*
+*Le volet "coûts variables" est chiffré depuis le 2026-07-28 (§5.1). **Le volet "coûts fixes" (équipe, budget par phase) a été traité le 2026-08-04 → §13.1.** Son résultat principal invalide une hypothèse qui traversait tout le document : le coût fixe mensuel en régime n'est pas 15 000 € mais **~39 400 €** avec l'équipe qu'implique la roadmap du §10, ce qui porte le seuil de rentabilité de 153 à **402 comptes pros payants**. Les paragraphes ci-dessous, écrits avant ce chiffrage, restent valables pour leur contenu propre mais leurs seuils de rentabilité sont à lire avec le §13.1.*
 
 **Acquis du 2026-08-01 (§5.2) — côté recettes :** la grille pro est arrêtée (5 paliers, 0/79/149/249/399 € HT) et donne un **ARPA hypothétique de 136 €** pour une marge unitaire de ~126 €. Le seuil de rentabilité est donc de **119 comptes pros payants** à F = 15 000 €/mois et **239** à F = 30 000 €/mois (contre 108 et 216 estimés en §5.1, qui supposaient tous les pros au palier médian). L'action n°5 dispose désormais des deux moitiés de l'équation : il ne manque que le budget de coûts fixes lui-même. **Deux postes de coût nouveaux à y inscrire** : le référencement/intégration chez les multidiffuseurs (Ubiflow, Kepler VO, Stockway — coût inconnu, possiblement une commission ou un abonnement côté portail) et le **coût du palier gratuit, qui est entièrement une décision de support** : 160 €/mois en self-service strict, 2 875 €/mois si les comptes gratuits ouvrent droit au support humain.
 
@@ -1080,7 +1092,248 @@ Actuellement : Nicolas + Claude, phase de conception, **aucune ressource techniq
 - Besoins humains par phase (dev, design, modération/support, commercial garages...)
 - Quand et comment impliquer l'équipe RETRO+ (Fabien, les 3 ingénieurs 3IL, l'admin sys) vs recruter/externaliser spécifiquement pour LBT
 - Besoins matériels/infra (hébergement, stockage images, coûts variables par annonce/par utilisateur)
-- Budget prévisionnel par phase
+- Budget prévisionnel par phase — **traité le 2026-08-04, voir §13.1**
+
+---
+
+### 13.1 Budget prévisionnel de la Phase 1 — MVP + lancement régional (établi le 2026-08-04, session n°10)
+
+*Traitement de l'action §17 n°5. Méthode : chiffrage **ascendant** (poste par poste) plutôt que descendant, parce que le document dispose désormais de la quasi-totalité de la matière — le périmètre fonctionnel est écrit (§7.1, §7.2, §7.3, §5.2, §5.3, §14.1, §14.2), les coûts variables sont modélisés (§5.1), la trajectoire d'effectif de modération est établie (§7.2) et la grille de recettes est arrêtée (§5.2, §5.3). Ne manquait que le **coût fixe**, c'est-à-dire l'équipe. Sources salariales et sociales : recherche web du 2026-08-03, listées en annexe. **Toutes les valeurs sont en euros HT** ; la TVA est neutre pour LBT (déductible en amont, collectée en aval sur des abonnements B2B).*
+
+*Limite de sources, identique aux sessions précédentes : la politique réseau de l'environnement d'exécution a été **re-testée ce jour** (`developers.google.com`, `leboncoin.fr`, `data.gouv.fr`, `eur-lex.europa.eu`, `cloud.typesense.org` → `connect_rejected`, « gateway answered 403 to CONNECT (policy denial) ») et est **strictement inchangée** — action n°35. Les barèmes sociaux ci-dessous (SMIC, RGDU, aide à l'apprentissage) proviennent de sources secondaires professionnelles concordantes (cabinets d'expertise comptable, éditeurs de paie, OPCO) et non de Légifrance ni de l'URSSAF ; ils sont cohérents entre eux à l'euro près sur les paramètres clés, ce qui est un bon indice mais pas une vérification. **Les grilles de salaires sont des repères d'agrégateurs**, pas des offres reçues.*
+
+#### Résultat n°0 — Correction du §5.1 : le coût horaire chargé est surestimé de ~12 %, à cause d'une réforme entrée en vigueur le 1ᵉʳ janvier 2026
+
+Le §5.1 posait « salaire brut ~26 350 €/an **+ ~40 % de charges patronales** ≈ 37 000 €/an chargé, soit ~23 €/h ». Ce ratio de 1,40 est le réflexe habituel, et il est **faux pour les bas et moyens salaires depuis le 1ᵉʳ janvier 2026**.
+
+La **réduction générale dégressive unique (RGDU)** a fusionné la réduction Fillon, les taux réduits de maladie et d'allocations familiales en un dispositif unique, et surtout elle a **étendu le champ de l'allègement de 1,6 SMIC à 3 SMIC**. Le coefficient se calcule par `C = Tmin + Tdelta × [0,5 × (3 × SMIC annuel / rémunération annuelle − 1)]^1,75`, avec `Tmin = 0,0200` et `Tdelta = 0,3781` pour une entreprise de moins de 50 salariés (FNAL à 0,10 %), soit un coefficient maximal de **0,3981**. Le SMIC de référence du calcul est **gelé à 21 876,40 €/an** (valeur du 1ᵉʳ janvier 2026, gel entériné par décret du 12 juin 2026) alors que le SMIC lui-même est passé à 1 867,02 €/mois brut au 1ᵉʳ juin 2026 — un détail qui n'a rien d'anecdotique puisqu'il fixe le plafond du dispositif à ~65 629 €/an de rémunération.
+
+Coefficients calculés pour les profils dont LBT a besoin (charges patronales brutes retenues : 42 % non-cadre, 45 % cadre ; le ratio final est une **approximation par excès de l'allègement**, la RGDU ne couvrant pas le versement mobilité, la taxe d'apprentissage, la prévoyance ni la mutuelle — ces derniers postes sont donc budgétés séparément à 1 500 €/an/salarié) :
+
+| Profil | Brut annuel | Coefficient RGDU | Charges nettes | **Coût employeur** | Ratio |
+|---|---|---|---|---|---|
+| Modérateur / agent support (hypothèse §5.1) | 26 350 € | **24,61 %** | 17,4 % | **30 933 €/an** | ×1,17 |
+| Commercial terrain junior (fixe) | 32 000 € | 14,26 % | 27,7 % | 40 876 €/an | ×1,28 |
+| Commercial terrain confirmé (fixe + variable) | 42 000 € | 6,11 % | 35,9 % | **57 075 €/an** | ×1,36 |
+| Développeur full-stack confirmé | 48 000 € | 3,95 % | 41,1 % | **67 705 €/an** | ×1,41 |
+| Lead / développeur senior | 60 000 € | 2,18 % | 42,8 % | **85 693 €/an** | ×1,43 |
+| Plafond du dispositif (3 SMIC) | 65 629 € | 2,00 % | 43,0 % | 93 849 €/an | ×1,43 |
+
+**Conséquence directe sur le §5.1** : le coût chargé d'un modérateur/agent support n'est pas 37 000 €/an mais **~30 900 € + ~1 500 € (mutuelle, prévoyance, médecine du travail) ≈ 32 400 €/an**, soit **~20,3 €/h** sur 1 600 h travaillées au lieu de 23 €/h — **−12 %**. Comme ~87 % du coût marginal par annonce est humain (§7.2), le coût marginal passe mécaniquement de **~0,21 € à ~0,19 €/annonce** (0,026 € de technique + ~0,157 € d'humain). Le coût variable par compte pro du §5.3 (14,2 €/mois) baisse dans la même proportion sur sa part humaine ; **il n'est volontairement pas rechiffré ici** — le laisser à 14,2 € est conservateur et aucune conclusion ne bascule.
+
+**Conséquence structurelle, moins évidente et plus importante : la RGDU rend l'écart de coût entre un poste à 26 k€ et un poste à 60 k€ plus grand qu'il n'y paraît.** Le premier coûte 1,17 fois son brut, le second 1,43 — le lead développeur coûte **2,8 fois** le modérateur en brut mais **3,4 fois** en coût employeur. Toute logique d'arbitrage « faire faire par un profil moins cher » est donc plus rentable en 2026 qu'elle ne l'était en 2025. Cela renforce deux décisions déjà prises ailleurs : garder la modération en interne avec des profils non-cadres (§7.2) et recourir à l'alternance côté développement (Résultat n°7).
+
+#### Résultat n°1 — Le MVP complet pèse ~420 jours-homme, et le prix du jour varie de 1 à 2,4 selon qui l'écrit
+
+Chiffrage ascendant du périmètre effectivement spécifié dans ce document à ce jour. Ce n'est **pas un devis** : c'est une estimation d'ordre de grandeur destinée à dimensionner un budget, et elle vaut ce que valent les spécifications sur lesquelles elle s'appuie.
+
+| Lot | Réf. | j-h |
+|---|---|---|
+| Socle : authentification, comptes particulier/pro, vérification SIREN, RGPD, emails transactionnels | §8 | 25 |
+| Dépôt d'annonce + chaîne image (sharp, 3 variantes pré-générées, object storage) | §5.1 | 20 |
+| Modération automatique : pHash, NSFW, YOLO plaques + floutage, OCR, VLM sélectif | §7.1 | 35 |
+| Back-office de modération : 4 files + réclamations, SLA, journal de décision 13 champs (art. 17) | §7.2 | 30 |
+| Recherche : schéma Typesense, indexeur Postgres→Typesense, normaliseur de requête, référentiel marque/modèle | §14.1, §14.2 | 40 |
+| Entrelacement des annonces sponsorisées + journalisation du taux de densité | action n°37 | 8 |
+| Front acheteur : listes, fiche véhicule, pages SEO géolocalisées | §6 | 35 |
+| Alertes sur recherche sauvegardée | action n°28 | 12 |
+| Espace pro, vitrine, gestion des paliers et des quotas | §5.2 | 20 |
+| Ingestion de flux : 3 chemins, parseur tolérant, journal d'import, garde-fou de disparition | §7.3 | 30 |
+| Compteur de contacts : journal en ajout seul, arrêté mensuel scellé, contestation | §5.3 | 20 |
+| Téléphonie CPaaS : numéros suivis, collecte des CDR, OTP SMS | §5.3 | 15 |
+| Facturation SEPA + règle de prix `min(prix ; 30 € × contacts)` | §5.2, §5.3 | 20 |
+| Messagerie acheteur ↔ vendeur | §6 | 18 |
+| Tableaux de bord : modération (§7.2) et financier ρ (action n°46) | §7.2 | 15 |
+| Infrastructure, CI/CD, observabilité, sauvegardes | §14 | 20 |
+| **Sous-total** | | **363** |
+| **+ 15 % de tests, recette et corrections** | | **≈ 417 j-h** |
+
+Fourchette raisonnable : **350 à 500 j-h**. Ce qui n'y est **pas** : application mobile native (hors scope MVP), verticale collection (Phase 2), paiement des boosts particuliers, refonte de `collectionneur.net`, et tout ce qui n'est pas encore spécifié dans ce document.
+
+Prix du jour-homme selon le canal, à qualité égale supposée :
+
+| Canal | €/j-h | Coût du MVP complet (417 j-h) | Délai avant le premier jour produit | Engagement |
+|---|---|---|---|---|
+| **CDI interne** (lead 60 k€ + confirmé 48 k€, 205 j productifs/an chacun) | **381 €** | **159 000 €** | 2 à 4 mois (recrutement) | 12 mois et + |
+| **Freelance senior** (TJM médian marché 2026 : 550 €, fourchette 450-700 €) | **550 €** | **229 000 €** | 2 à 4 semaines | aucun |
+| **ESN / agence** (repère 800-1 200 €) | **900 €** | **375 000 €** | 4 à 8 semaines | contrat de projet |
+| **Alternant ingénieur** (voir Résultat n°7) | ~180 €/j-équivalent | non applicable seul | rentrée scolaire | 12-24 mois |
+
+**Le rapport est de 1 à 2,4 entre l'interne et l'agence**, et l'écart interne/freelance (381 contre 550 €) est de +44 % — moins spectaculaire que le folklore ne le prétend, parce que le freelance ne coûte ni recrutement, ni congés, ni période d'improductivité, ni risque de mauvais recrutement. **Conclusion de méthode : le freelance n'est pas cher, il est cher *au jour* et bon marché *au risque*.** Tant que le concept bouge — et il bouge encore, cinq actions de la file peuvent modifier le périmètre —, payer 44 % de plus pour ne rien engager est un bon prix. Ce qui plaide pour la séquence du Résultat n°3 : freelance d'abord, internalisation ensuite, jamais l'inverse.
+
+#### Résultat n°2 — Ce qu'il faut construire avant le go/no-go ne pèse pas 417 jours-homme mais 186, et c'est le chiffre qui compte
+
+Le document a produit, session après session, une liste d'inconnues dont **une domine toutes les autres** : **λ, le nombre de contacts qualifiés livrés par garage et par mois** (action n°43). λ détermine ρ (le taux de plein tarif), ρ détermine l'ARPA encaissé, l'ARPA détermine le seuil de rentabilité, et le seuil de rentabilité détermine si le projet est finançable. **Aucune source publique ne donne λ** — il ne s'obtient qu'en mettant 20 garages et de vrais acheteurs en présence.
+
+La question budgétaire pertinente n'est donc pas « combien coûte LBT » mais **« combien coûte la mesure de λ »**. Périmètre minimal permettant de la produire :
+
+| Lot conservé | j-h | Pourquoi il est indispensable à la mesure |
+|---|---|---|
+| Socle (auth, comptes, SIREN, RGPD, emails) | 25 | sans compte vérifié, pas de contact qualifiable |
+| Dépôt d'annonce + images | 20 | l'offre |
+| Modération : **revue humaine à 100 %, outil minimal** | 10 | §7.2 établit que 100 % d'humain tient jusqu'à ~1 000 annonces/mois pour 3,4 h/mois |
+| Recherche Typesense **sans normaliseur** | 20 | 500 annonces se cherchent sans reconnaissance d'entités |
+| Front acheteur (listes, fiche, pages géo) | 25 | la demande |
+| Messagerie acheteur ↔ vendeur | 15 | canal de contact n°2 |
+| Compteur de contacts + journal + arrêté | 15 | **c'est l'instrument de mesure : il n'est pas optionnel** |
+| Téléphonie CPaaS + OTP | 12 | le téléphone est le canal dominant du VO (§5.3) — sans lui, λ est sous-estimé |
+| Import CSV (**chemin 3 seul**) | 8 | suffit pour 20 garages du réseau de Nicolas (§7.3) |
+| Infra, CI, observabilité | 12 | |
+| **Sous-total** | **162** | |
+| **+ 15 %** | **≈ 186 j-h** | **102 500 € en freelance, 71 000 € en interne** |
+
+**Ce qui est différé après le go/no-go, et pourquoi c'est légitime :**
+
+| Différé | j-h économisés | Justification |
+|---|---|---|
+| Chaîne de modération automatique (§7.1) | 35 | **§7.2 a déjà démontré que 100 % de revue humaine tient jusqu'à ~1 000 annonces/mois** ; et l'action n°16 (jeu de 300-500 photos) est de toute façon un prérequis non satisfait |
+| Back-office de modération complet (§7.2) | 20 sur 30 | 4 files et 13 champs de journal pour 3,4 h/mois de travail : un tableur suffit à 500 annonces, tant que la traçabilité art. 17 est conservée |
+| Normaliseur de requête (§14.2) | 20 sur 40 | la reconnaissance d'entités est rentable à 50 000 annonces, pas à 500 |
+| Flux tirés + API REST (§7.3, chemins 1 et 2) | 22 sur 30 | le chemin CSV couvre le pilote ; les chemins tiers dépendent d'un **délai de partenariat** (action n°48), pas de code |
+| Alertes sur recherche sauvegardée | 12 | levier de rétention, pas de mesure |
+| Facturation SEPA | 20 | **le pilote est gratuit** — facturer 20 garages amis à la main coûte moins cher que de coder la facturation |
+| Entrelacement sponsorisé, tableaux de bord, espace pro complet | 43 | rien à sponsoriser tant qu'il n'y a pas d'audience |
+
+→ **Le prix de l'information qui décide de tout est de l'ordre de 100 000 € et de 6 mois**, contre ~280 000 € pour l'année pleine (Résultat n°3) et 450 à 500 000 € pour aller jusqu'au point mort (Résultat n°5). **C'est le seul chiffre de cette section qui appelle une décision immédiate** : les deux autres n'ont de sens qu'une fois λ connu.
+
+#### Résultat n°3 — Budget M1-M12, scénario central : ~281 000 €
+
+Scénario retenu : **amorçage en freelance, internalisation à partir du M4, commercialisation à partir du M7.** Il suppose le go/no-go du Résultat n°2 franchi favorablement vers M6 ; en cas d'échec, la dépense s'arrête à ~110-130 k€ (M1-M6) et les CDI n'ont pas été recrutés.
+
+| Poste | Détail | M1-M12 |
+|---|---|---|
+| **Développement CDI** | lead (85 693 €/an) + confirmé (67 705 €/an), à partir du M4 | **115 048 €** |
+| Alternant ingénieur | à partir du M9 (rentrée), ~1 000 €/mois net d'aide | 4 000 € |
+| Freelance senior | 8 j/mois M1-M3 (dérisquage, prototypes) + 5 j/mois M4-M8 (ML modération) @ 550 € | 26 950 € |
+| Recrutement | cabinet sur le poste de lead (~15 % du brut annuel) | 8 000 € |
+| **Commercial terrain** | 1 poste M7-M12 + 1 poste M10-M12 (57 075 €/an + 600 €/mois de frais) | **48 206 €** |
+| Modération / support | 0,2 ETP à partir du M7 (§7.2 : 0,07 ETP suffit au palier régional, 0,2 pour la marge) | 3 243 € |
+| Mutuelle, prévoyance, médecine du travail | 1 500 €/an/salarié au prorata | 3 375 € |
+| Matériel | 3 postes de travail + périphériques | 7 000 € |
+| Infra technique | dev M1-M5 (~50 €/mois), S1 M6-M9 (~165 €), S2 M10-M12 (~300 €) | 1 810 € |
+| CPaaS + OTP SMS | à partir du M7, montée en charge (§5.3) | 3 300 € |
+| **Juridique** | CGU/politique de modération DSA art. 14/16/17/20 (**6 000 €**, action n°21) + RGPD/DPO (4 000 €) + marque INPI 3 classes et antériorité (1 000 €) + constitution de société (600 €) | **11 600 €** |
+| Expert-comptable | ~300 €/mois HT (SAS avec salariés) | 3 600 € |
+| Assurances | RC professionnelle + cyber | 2 000 € |
+| Amorçage / marketing local | 2 000 €/mois à partir du M6 (voir Résultat n°8) | 14 000 € |
+| Outils SaaS | CI, Sentry, Figma, visio, gestion | 3 000 € |
+| **Sous-total** | | **255 133 €** |
+| Aléas 10 % | | 25 513 € |
+| **TOTAL M1-M12** | | **≈ 281 000 €** |
+
+Structure : **développement 55 %, commercial 17 %, juridique et administratif 8 %, marketing 5 %, infrastructure 0,6 %.** Le poste « serveurs » — celui sur lequel un projet technique passe le plus de temps à arbitrer — représente **1 810 € sur 281 000 €, soit six millièmes du budget**. C'est la confirmation la plus nette du Résultat n°2 du §5.1 : *l'infrastructure technique est un non-sujet*, et tout arbitrage d'hébergeur qui coûterait plus d'une demi-journée de réflexion est une perte nette.
+
+Recettes de l'année 1, selon la trajectoire de comptes payants (montée linéaire de 0 à M6 jusqu'à la valeur M12, ARPA 136 € × ρ = 0,826, coût variable 14,2 €/compte/mois) :
+
+| Trajectoire M12 | Compte-mois cumulés | Recette | Coût variable | **Contribution** | **Besoin de trésorerie année 1** |
+|---|---|---|---|---|---|
+| **200 payants** (objectif §2) | 700 | 78 635 € | 9 940 € | 68 695 € | **≈ 212 000 €** |
+| 120 payants (médian) | 420 | 47 181 € | 5 964 € | 41 217 € | ≈ 239 000 € |
+| 80 payants (prudent) | 280 | 31 454 € | 3 976 € | 27 478 € | ≈ 253 000 € |
+
+→ **Le besoin de trésorerie de l'année 1 est compris entre 212 000 € et 253 000 €, et il est remarquablement insensible à la réussite commerciale** : entre l'objectif affiché et un scénario 2,5 fois moins bon, l'écart n'est que de 41 000 €, soit 16 %. **La première année est un investissement, pas une course au chiffre d'affaires** — ce qui est une bonne nouvelle pour le pilotage (peu de risque de mauvaise surprise) et une mauvaise pour l'espoir d'auto-financement.
+
+#### Résultat n°4 — Le coût fixe mensuel en régime n'est pas 15 000 €, c'est ~39 000 €, et cela double le seuil de rentabilité
+
+Depuis le 2026-07-28, tout le document raisonne sur `F = 15 000 €/mois` (variante à 30 000 €) — une hypothèse posée sans support, jamais reconstruite. Reconstruite ascendamment à partir de l'équipe que la roadmap du §10 implique pour la période M13-M24 (extension nationale auto + lancement de la verticale collection) :
+
+| Poste | €/mois |
+|---|---|
+| 2 développeurs CDI (lead + confirmé) | 12 783 € |
+| 1 alternant ingénieur | 1 000 € |
+| 3 commerciaux terrain (frais inclus) | 16 069 € |
+| Modération + support 1,5 ETP (§7.2, palier national) | 4 054 € |
+| Infrastructure S2 → S3 | 500 € |
+| CPaaS + OTP (~300 comptes pros) | 1 500 € |
+| Marketing / amorçage | 2 000 € |
+| Administratif (comptabilité, assurances, outils, locaux) | 1 500 € |
+| **TOTAL F** | **≈ 39 400 €/mois** — *hors rémunération de Nicolas* |
+
+Seuil de rentabilité `= F / (136 × ρ − 14,2)`, en comptes pros payants :
+
+| ρ (taux de plein tarif) | Marge unitaire | F = 15 000 € *(hypothèse historique)* | F = 17 600 € *(variante frugale)* | **F = 39 400 € *(équipe de la roadmap)*** |
+|---|---|---|---|---|
+| 0,560 — règle binaire (§5.3) | 62,0 € | 242 | 283 | **636** |
+| **0,826 — règle de prix linéaire au seuil** | **98,1 €** | **153** | **179** | **402** |
+| 1,000 — plein tarif | 121,8 € | 123 | 144 | 324 |
+
+**Le seuil de rentabilité de LBT n'est pas 153 comptes payants, c'est 402 — le double de l'objectif M12 du §2, et davantage que ce que la roadmap prévoit d'avoir atteint à M24.** L'erreur n'était pas dans le modèle de recettes, qui a été affiné trois fois (§5.2, §5.3) ; elle était dans le seul paramètre que personne n'avait jamais chiffré, du côté des coûts. C'est le résultat le plus important de cette session, et il était accessible depuis le 28 juillet.
+
+**Deux lectures possibles, et il faut choisir explicitement :**
+
+1. **Le seuil est le problème** → il faut viser 400 comptes payants, donc accélérer le commercial, donc augmenter encore F. Cercle qui ne se referme qu'avec un financement externe.
+2. **F est le problème** → il faut construire une organisation dont le point mort est atteignable par le pilote lui-même. C'est la variante frugale ci-dessous, et **c'est la seule qui soit compatible avec l'autofinancement**.
+
+#### Résultat n°5 — Matrice de trésorerie : une seule case sur neuf atteint la rentabilité opérationnelle à M24
+
+Besoin de trésorerie de l'année 2 (M13-M24), selon le coût fixe mensuel et la trajectoire commerciale (montée linéaire, ρ = 0,826). Un nombre négatif signifie que l'année s'autofinance et dégage du résultat.
+
+| F mensuel | 80 → 200 payants | 120 → 300 payants | 200 → 450 payants |
+|---|---|---|---|
+| **17 600 € — frugal** (1 CDI + 1 alternant + 1 commercial + 0,3 ETP modération) | +39 900 € | **−45 400 €** | **−184 300 €** |
+| 25 000 € — intermédiaire | +129 200 € | +43 900 € | **−95 000 €** |
+| **39 400 € — équipe de la roadmap** | +302 100 € | +216 700 € | **−77 900 €** |
+
+Mois d'atteinte du point mort mensuel :
+
+| F mensuel | 80 → 200 | 120 → 300 | 200 → 450 |
+|---|---|---|---|
+| 17 600 € | **M22** | **M16** | **M11** |
+| 25 000 € | jamais avant M24 | M21 | M15 |
+| 39 400 € | jamais avant M24 | jamais avant M24 | **M22** (de justesse) |
+
+**Sur neuf combinaisons, une seule atteint à M24 la « rentabilité opérationnelle sur l'auto » que le §10 fixe comme jalon, avec l'équipe que le même §10 implique — et elle suppose la trajectoire commerciale la plus optimiste des trois.** À l'inverse, la ligne frugale atteint le point mort dans les trois trajectoires. **Le coût fixe pèse plus lourd que la performance commerciale sur l'issue du projet** : passer de la trajectoire prudente à la trajectoire ambitieuse à F constant (39 400 €) fait gagner 380 000 € sur l'année 2, mais passer de F = 39 400 € à F = 17 600 € à trajectoire constante en fait gagner 262 000 € **sans dépendre du marché**. Le premier levier est un pari, le second est une décision.
+
+Trésorerie cumulée sur 24 mois (année 1 + année 2), les trois cas de figure de référence :
+
+| Scénario | Année 1 | Année 2 | **Cumul** |
+|---|---|---|---|
+| Ambitieux (F = 39 400 €, 200 → 450) | 212 000 € | 78 000 € | **≈ 290 000 €** |
+| Médian avec l'équipe complète (F = 39 400 €, 120 → 300) | 239 000 € | 217 000 € | **≈ 456 000 €** |
+| **Prudent et frugal** (année 1 réduite de 20 %, F = 17 600 €, 80 → 200) | 197 000 € | 40 000 € | **≈ 237 000 €** |
+
+→ **L'enveloppe à prévoir pour amener LBT au point mort sur l'auto est de 250 000 à 460 000 € sur 24 mois**, le haut de fourchette correspondant à une équipe complète servant une trajectoire commerciale moyenne — c'est-à-dire au scénario le plus probable si l'on recrute avant de savoir. C'est aussi le scénario le plus cher **et** le seul qui n'atteint jamais le point mort.
+
+#### Résultat n°6 — Ce que ce budget ne contient pas, et qu'il faut lire avant d'en tirer une conclusion
+
+| Absent | Ordre de grandeur | Commentaire |
+|---|---|---|
+| **Rémunération de Nicolas** | 0 € budgété | Structurant : il est aujourd'hui la direction produit, la direction commerciale et la modération de niveau 2. Si LBT devait payer ce travail, F augmenterait de 6 000 à 8 000 €/mois et le seuil de rentabilité de ~70 comptes. **À trancher explicitement : rémunération LBT, refacturation RETRO+, ou apport en compte courant valorisé.** |
+| Locaux | ~0 € supposé | Hypothèse implicite : hébergement dans les locaux de RETRO+. À confirmer, sinon +800 à 1 500 €/mois. |
+| Verticale collection (Phase 2, M13+) | non chiffré | La roadmap la place à M18. Adossée à `collectionneur.net`, elle réutilise le socle mais demande un schéma, une modération et une acquisition propres — a minima 80 à 120 j-h et 1 commercial. **Elle n'est dans aucune ligne de ce budget.** |
+| Application mobile native | non chiffré | Hors scope MVP assumé, mais c'est un manque concurrentiel face à LBC. 100 à 150 j-h si un jour décidé. |
+| Coût de référencement chez les multidiffuseurs | inconnu | §7.3 : LBT écrit le connecteur (3 000 à 8 000 € de charge par éditeur, absorbée en interne), mais **l'existence ou non d'un coût côté portail n'est pas connue** — c'est l'une des questions de l'action n°48. |
+| Jeu de test photos (action n°16) et jeu de 50 requêtes (action n°40) | ~0 € | Réalisables par Nicolas, coût en temps seulement. |
+| Reprise / migration de `collectionneur.net` | non chiffré | Hors scope Phase 1. |
+| Contentieux, litiges, provision pour risque | 0 € | La §5.3 et l'action n°41 montrent que l'exposition juridique est maîtrisée par construction, mais une provision de 5 à 10 k€/an serait prudente à partir de la première facture pro. |
+
+#### Résultat n°7 — Aides et leviers : l'alternance est le meilleur rapport coût/jour du marché, le CII est un bonus et non un plan, et une fenêtre se ferme au 31/12/2026
+
+**Alternance.** Un apprenti ingénieur (bac+5, 22 ans, 2ᵉ année) est rémunéré ~61 % du SMIC, soit ~1 139 €/mois brut ; les cotisations sont exonérées jusqu'à 50 % du SMIC, et l'aide exceptionnelle à l'embauche s'élève à **2 000 € pour un diplôme de niveau 6 ou 7** dans une entreprise de moins de 250 salariés (décret n° 2026-168 du 6 mars 2026), contre 4 500 € pour un bac+2 et 5 000 € jusqu'au bac. Coût employeur net de l'aide : **~1 000 €/mois la première année**. Pour ~130 jours de présence en entreprise et une productivité qu'il faut honnêtement estimer à la moitié d'un confirmé, cela donne **~180 €/jour-équivalent-confirmé — moins de la moitié du coût interne (381 €) et un tiers du freelance.** À ne pas surinterpréter : l'alternant consomme aussi ~15 % du temps d'un senior en encadrement, ce qui ramène le coût réel à ~250 €/j-équivalent, et il ne peut pas porter l'architecture. **Il reste le meilleur rapport coût/jour disponible, et LBT y a un accès privilégié via les liens de RETRO+ avec 3IL (§11).**
+
+⚠️ **Échéance dure : le décret ne couvre que les contrats conclus à compter du 8 mars 2026 et débutant avant le 1ᵉʳ janvier 2027.** Un alternant recruté pour la rentrée de septembre 2026 ouvre droit à l'aide ; le régime applicable à la rentrée 2027 n'est pas connu. **Si le principe de l'alternance est retenu, la décision doit être prise avant l'été 2026** — c'est-à-dire maintenant.
+
+**Crédit d'impôt innovation (CII).** 20 % des dépenses de conception de prototypes d'un produit nouveau, plafonnées à 400 000 €/an, soit **80 000 € de crédit maximum**, réservé aux PME, **prorogé jusqu'au 31 décembre 2027**. Verdict honnête : **une plateforme d'annonces n'est pas en soi un « produit nouveau » au sens du CII**, et présenter l'ensemble du développement au crédit d'impôt serait une position fragile en cas de contrôle. Les briques qui pourraient sérieusement se défendre sont celles que ce document a justement identifiées comme non standard : la cascade de modération auto-hébergée avec floutage de plaques (§7.1), le normaliseur de requête automobile (§14.2), le compteur de contacts opposable et sa règle de prix (§5.3). Cela représente ~95 j-h, soit ~36 000 € en interne → **~7 000 € de CII**. **À budgéter à zéro et à traiter comme un bonus**, pas comme une ligne de financement. Le CIR (recherche) est hors sujet.
+
+**Autres leviers non explorés faute d'accès aux sources officielles** (action n°35) : statut **Jeune Entreprise Innovante** (exonérations de cotisations patronales sur les personnels de R&D — à vérifier, le régime a été resserré par les lois de finances récentes), **Bourse French Tech** et prêts d'amorçage Bpifrance, aides régionales à l'innovation (la région du bassin de Nicolas), **ACRE** si Nicolas crée une structure distincte. Aucun de ces dispositifs n'a été vérifié ; ils sont mentionnés pour mémoire et rassemblés dans une action dédiée.
+
+#### Résultat n°8 — L'acquisition payante côté particuliers est économiquement irrationnelle, et c'est pourquoi la ligne marketing est si faible
+
+Repères relevés (agrégateurs 2026, à prendre comme ordres de grandeur) : CPC moyen Google Ads France ~2,7 à 4,6 € tous secteurs, **CPA du secteur automobile ~40 €**, budget média typique d'une TPE-PME 800 à 2 500 €/mois.
+
+Confronté au modèle de LBT, cela tranche tout seul. **Côté particuliers, une annonce déposée rapporte 0 € de recette directe** (gratuité assumée, §5) ; sa valeur est indirecte, via la liquidité qu'elle apporte aux acheteurs, donc via les contacts livrés aux pros. Acheter un dépôt d'annonce à 40 € de CPA quand la marge d'un compte pro entier est de 98 €/mois n'a de sens à aucune échelle. **Côté pros**, un CPA de 40 € pour un abonnement à 98 € de marge mensuelle serait excellent — mais ce n'est pas là que les garages se trouvent : ils se trouvent par le réseau de Nicolas (action n°49), par le démarchage direct (action n°9) et par le référencement chez les multidiffuseurs (action n°48), tous à coût média nul.
+
+→ **Décision de cadrage : pas d'acquisition payante en Phase 1, ni côté particuliers, ni côté pros.** Les 2 000 €/mois de la ligne « amorçage » vont au contenu et au référencement naturel (les pages SEO géolocalisées du §14.2 sont l'actif d'acquisition principal), à la presse quotidienne régionale et aux partenariats locaux (clubs, événements auto), et à l'amorçage manuel de l'offre. Le seul budget média justifiable serait un test de retargeting **une fois** que l'audience existe et que λ est mesuré — donc pas avant M12. Cela renforce la §9 : **le démarrage à froid de LBT se résout par le terrain et par le référencement de flux, pas par la publicité.**
+
+#### Résultat n°9 — Recommandation
+
+1. **Ne pas recruter avant le go/no-go.** Financer 186 j-h en freelance (~102 500 €) sur 6 mois, plus ~15 000 € de juridique, d'infrastructure et de frais de structure : **enveloppe de décision ~120 000 €**. Aucun CDI, aucun engagement au-delà du mois.
+2. **Le critère de sortie du go/no-go est λ**, mesuré sur 20 garages du réseau de Nicolas et ~500 annonces particuliers : λ ≥ 8 contacts/garage/mois valide le modèle du §5.2 ; λ ≤ 5 le condamne en l'état et impose de revoir le prix ou le segment. Le compteur du §5.3 est l'instrument, ce qui explique qu'il figure au périmètre minimal.
+3. **Si le go est franchi, viser la structure frugale (F ≈ 17 600 €/mois), pas l'équipe complète.** 1 CDI lead + 1 alternant + 1 commercial + 0,3 ETP de modération atteignent le point mort dans les trois trajectoires commerciales testées, là où l'équipe de la roadmap ne l'atteint que dans une sur trois. L'équipe complète se justifie **après** le point mort, financée par la marge, ou par une levée assumée comme telle.
+4. **Prévoir l'enveloppe de 250 000 à 460 000 € sur 24 mois** et décider maintenant de son origine : autofinancement RETRO+, apport en compte courant, prêt d'amorçage, ou levée. Le pire des cas budgétaire n'est pas l'échec commercial — c'est le succès partiel avec une structure de coûts dimensionnée pour le succès complet.
+5. **Trancher trois questions qui ne coûtent rien à trancher et qui déplacent le seuil de rentabilité de dizaines de comptes** : la rémunération de Nicolas, l'hébergement dans les locaux de RETRO+, et le recrutement d'un alternant pour la rentrée 2026 avant que la fenêtre d'aide ne se ferme.
+
+---
 
 ## 14. Choix technologiques
 
@@ -1628,6 +1881,12 @@ Tout ce qui précède est de la conception documentaire. Rien n'a été testé (
   - **Un skill « développement de partenariats d'intégration B2B »** (argumentaire vers un éditeur de logiciel, programme partenaires, documentation développeur et bac à sable, connecteur écrit par le portail) serait utile et n'existe pas. La §7.3 a établi que le chantier n°31 est **plus commercial que technique** : le parseur prend des jours, le référencement prend des mois. Priorité moyenne, mais c'est le chemin critique du segment pro.
   - **Contrainte réseau : re-testée le 2026-08-03, strictement inchangée.** `ubiflow.net`, `leboncoin.fr`, `data.gouv.fr`, `eur-lex.europa.eu` et `google.com` répondent tous `connect_rejected` / « gateway answered 403 to CONNECT (policy denial) » ; la passerelle confirme que seuls GitHub, GitLab et PyPI sont en liste blanche. **La §7.3 est donc la première section importante du document à être écrite entièrement sur extraits de résultats de recherche, sans une seule source primaire** — ses chiffres tarifaires sont des ordres de grandeur. L'action n°35 reste la plus rentable de la file, et son coût est toujours un réglage.
 
+- **Besoins identifiés le 2026-08-04, session n°10** (session locale future) :
+  - **Priorité haute — un skill « paie et coût employeur France 2026 »**, ou à défaut un accès fiable aux barèmes URSSAF. Le §13.1 a établi que la **RGDU** (entrée en vigueur au 1ᵉʳ janvier 2026, allègement étendu de 1,6 à 3 SMIC) invalide le ratio ×1,40 utilisé depuis le 2026-07-28 et corrige de **−12 %** le coût horaire d'un modérateur, donc le coût marginal par annonce. Or ~87 % de la structure de coûts de LBT est humaine : **c'est le domaine où une erreur de barème coûte le plus cher au modèle**, et c'est aussi celui où les paramètres changent chaque année. Le besoin n'est pas la théorie, ce sont les **valeurs à jour** (SMIC de référence RGDU gelé à 21 876,40 €, coefficients Tmin/Tdelta, périmètre exact des cotisations couvertes).
+  - **Un skill « plan de financement et aides à l'innovation France »** (CII/CIR, JEI, Bpifrance, aides régionales, ACRE, aides à l'apprentissage). Le §13.1 a chiffré le CII mais a dû laisser JEI, Bpifrance et les aides régionales entièrement non vérifiés faute d'accès aux sources officielles → action n°55. Les montants en jeu (jusqu'à 80 k€/an de CII, exonérations JEI sur les personnels de R&D) sont du même ordre que le budget annuel de développement : ce n'est pas un sujet accessoire.
+  - **Un skill « estimation d'effort logiciel »** (chiffrage ascendant, calibration par référentiels type COCOMO ou story points, marges de recette). Les 417 j-h du §13.1 sont une estimation d'ingénieur, non calibrée sur des projets comparables, et **c'est le paramètre le plus sensible de tout le budget** : ±25 % sur l'effort déplace l'enveloppe de décision de ±30 k€ et l'enveloppe 24 mois de ±100 k€.
+  - **Contrainte réseau : re-testée le 2026-08-03 (session n°10), toujours strictement inchangée** — `developers.google.com`, `leboncoin.fr`, `data.gouv.fr`, `eur-lex.europa.eu` et `cloud.typesense.org` répondent `connect_rejected`. Les barèmes sociaux du §13.1 proviennent donc de cabinets comptables et d'éditeurs de paie, concordants entre eux mais **non vérifiés sur Légifrance ni sur urssaf.fr**. Dixième session consécutive où l'action n°35 est la moins chère de la file.
+
 ## 16. Journal d'avancement quotidien
 
 *Chaque session de travail (manuelle ou automatisée) ajoute une entrée datée ici : ce qui a été fait, ce qui a été décidé, ce qui reste ouvert.*
@@ -1651,6 +1910,8 @@ Tout ce qui précède est de la conception documentaire. Rien n'a été testé (
 
 - **2026-08-03 (session n°9)** — **Action §17 n°31 traitée, et avec elle l'action n°38 : ingestion des flux de stock VO et référencement chez les multidiffuseurs** (nouvelle **§7.3**). **Le premier résultat est une correction de cible : les « trois multidiffuseurs » répétés depuis le 2026-08-01 dans quatre sections n'en sont pas trois.** Ubiflow est bien un multidiffuseur pur (400+ portails, sur le VO depuis 2007) ; **Kepler VO est un logiciel de gestion** qui embarque sa propre diffusion, donc une *source* et non un tuyau tiers ; et **Stockway est le multidiffuseur du véhicule industriel** (réseau Via Mobilis — Europe Camions, Europe TP, Europe Utilitaires, Europe Manutention), sans aucun rapport avec la voiture particulière. La cible réelle n'est pas trois appels dont un hors sujet, mais **une campagne auprès d'une dizaine d'éditeurs**, dont 4-5 logiciels VO qui font eux-mêmes multidiffuseur (Iziscar >30 portails, Spider-VO >25, OptimCar, Kepler VO) — soit autant de **décisions indépendantes**, donc aucun point de passage unique capable de fermer la porte à LBT. **Deuxième résultat : le coût d'entrée du garage est enfin chiffré, et il est supérieur au prix du produit.** Le repère de marché est de **15 à 20 minutes par véhicule et par portail** ; ressaisir un stock sur LBT coûte donc **~5 h 50 pour 20 véhicules et ~17 h 30 pour 60**, soit 150 à 600 € de main-d'œuvre — **1 à 4 mois d'abonnement Garage+ engloutis avant la première annonce publiée**. Corollaire que le §5.2 n'avait pas tiré : **« sans engagement » ne compense rien**, puisque le coût est un coût d'entrée déjà payé, pas un coût de sortie ; et la population pro se scinde en **deux marchés d'argumentaires différents** selon qu'un garage est déjà branché (coût ~0, la vente est une case à cocher) ou non (LBT doit fournir le chemin) — d'où deux nouveaux points au §9. **Troisième résultat, le plus utile techniquement : il n'existe pas de format standard, la tentative a échoué, et c'est une bonne nouvelle.** L'association **STX3** (fondée fin 2007, ~20 membres, XML) visait à devenir le standard pan-européen d'ici 2015 ; son constat fondateur était que **~450 formats coexistaient** pour la seule commercialisation de véhicules. Quinze ans plus tard AutoScout24 accepte toujours `.csv`, `.szf`, `.xml` (EVA) et son propre format. **Conséquence (a) : LBT n'a aucun format à adopter** — l'adaptation de format *est* le métier du multidiffuseur (400 portails = 400 formats), il suffit de publier une spécification propre et un bac à sable ; la crainte implicite « il faut parler la langue d'Ubiflow » était infondée. **Conséquence (b), pour le chemin direct : adopter la spécification Google Vehicle Listings** — publique, en CSV/TSV/XML, attributs requis recouvrant presque exactement le schéma du §14.2, rafraîchissement recommandé toutes les 4 h, et **déjà émise par les logiciels VO** (Spider VO diffuse vers Google Vehicle Ads). Deux écarts imposés : `vehicle_landing_page` facultatif et non republié en lien sortant (LBT *est* la page de destination, il ne va pas financer le trafic du site du garage), et **`vin` accepté comme clé de réconciliation mais jamais publié** — même logique que la plaque au §7.1, un VIN diffusé permet de fabriquer l'annonce clone que la déduplication pHash cherche justement à couper. **Spécification livrée** : trois chemins (dépôt manuel avec modèle de tableur, flux tiré par URL, API REST) et un seul parseur ; **le flux est un état et non un journal** ; **garde-fou de disparition à 30 %** — au-delà, geler l'import plutôt que dépublier, parce que le mode de panne le plus coûteux n'est pas technique mais commercial (le garage ne voit pas un bug, il voit que LBT ne marche pas) ; photos copiées et **jamais *hotlinkées*** (cela casserait à la fois le floutage de plaque du §7.1 et l'egress nul du §5.1) ; idempotence SHA-256 ; journal d'import ligne à ligne avec motifs de rejet — même discipline que l'arrêté de contacts du §5.3, et pour la même raison : **ce que le pro ne peut pas vérifier, il ne le croit pas**. **Trois effets de bord traités** : l'import de masse **monopolise la page 1** (action n°38 — correctif principal retenu : **étaler `date_mise_en_avant` sur 72 h à l'import**, c'est le seul qui traite la cause ; plus `group_by=vendeur_id`, plus la séparation des trois dates qui sert de garde-fou anti-rafraîchissement, un flux automatique commettant ce grief **mécaniquement et sans mauvaise intention**) ; il **sature la file de modération** (400 annonces et 4 000-6 000 images pour 20 garages pilotes → file à débit lissé, **SLA < 24 h assumé et annoncé** au lieu des < 5 min du §6, et **pré-modération au niveau du compte** (SIREN vérifié) plutôt que de l'annonce) ; il rend le coût du §5.1 **conservateur sans changer de conclusion** (non rechiffré volontairement). **Quatrième résultat, côté partenariats : la bonne question n'est pas « comment se brancher » mais « pourquoi un éditeur nous brancherait »** — un connecteur lui coûte 3 000 à 8 000 € puis du support à vie, pour un portail sans audience. Décisions : **gratuité totale**, spécification publique et bac à sable **sans contrat préalable**, et **LBT écrit le connecteur** si l'éditeur ne veut pas le faire. **Ce que LBT ne copie pas à LBC : la prime de visibilité aux annonces issues d'un flux** — pour la même raison mécanique que le plafond de densité du §5.2, privilégier une annonce pour son tuyau et non pour sa pertinence dégrade les contacts et **déclenche la garantie du §5.3**. **Veille concurrentielle tombée de l'analyse (§3)** : le programme partenaires LBC est **sans frais de branchement**, et **à partir d'octobre 2026 les annonces diffusées via API bénéficieront d'un gain de visibilité significatif** — LBC rend donc le canal API structurellement supérieur au dépôt manuel, ce qui confirme l'importance du chantier, renforce la position de péage des multidiffuseurs, et crée une **fenêtre de démarchage datée** (les pros mal outillés verront leur visibilité baisser sans avoir rien changé). **Dernier résultat, défensif : le flux est aussi un canal de sortie** — un garage branché se déconnecte quand *son éditeur* retire LBT, pas quand il est mécontent. D'où deux règles décidées maintenant parce qu'elles coûtent cher plus tard : toujours maintenir le chemin direct en parallèle (un compte qui n'existe que par le tuyau d'un tiers est **loué**), et **ne jamais intermédier la relation contractuelle ni le compteur de contacts** — si un multidiffuseur demande à devenir revendeur, la réponse est non. **Limite majeure et sans précédent dans ce document : aucune source primaire.** La politique réseau a été re-testée ce jour et est strictement inchangée (`ubiflow.net`, `leboncoin.fr`, `data.gouv.fr`, `eur-lex.europa.eu`, `google.com` → 403 de la passerelle) ; l'outil de récupération de page passe par la même passerelle. **La §7.3 est donc écrite entièrement sur extraits de résultats de recherche** — ses chiffres tarifaires sont des ordres de grandeur, et deux chiffres relevés (390 € de frais d'installation, grille 35-280 €/mois) ont été **explicitement écartés** parce qu'ils proviennent d'un contexte où l'offre *emploi* d'Ubiflow était décrite en parallèle. Cinq nouvelles actions (n°47 à 51), dont trois que Nicolas peut faire seul et sans code.
 
+- **2026-08-04 (session n°10, exécutée le 03/08/2026)** — **Action §17 n°5 traitée : budget prévisionnel de la Phase 1** (nouvelle **§13.1**). **Le résultat structurant est que l'hypothèse la plus lourde de tout le document n'avait jamais été chiffrée, et qu'elle était fausse d'un facteur 2,6.** Depuis le 2026-07-28, chaque calcul de seuil de rentabilité repose sur `F = 15 000 €/mois` de coûts fixes, valeur posée sans support et jamais reconstruite, pendant que le côté recettes était affiné trois fois (§5.2, §5.3). Reconstruit ascendamment à partir de l'équipe qu'implique la roadmap du §10, **F vaut ~39 400 €/mois** (2 développeurs, 1 alternant, 3 commerciaux, 1,5 ETP de modération/support, infrastructure, CPaaS, marketing, administratif) — **et le seuil de rentabilité passe de 153 à 402 comptes pros payants**, soit le double de l'objectif M12 du §2. **Corollaire décisif, obtenu en croisant coût fixe et trajectoire commerciale : sur neuf combinaisons testées, une seule atteint à M24 la « rentabilité opérationnelle » que le §10 fixe comme jalon** — et elle suppose la trajectoire commerciale la plus optimiste. La structure frugale (F ≈ 17 600 €/mois) l'atteint dans les trois. **Le coût fixe pèse plus lourd que la performance commerciale sur l'issue du projet** : à F constant, passer de la trajectoire prudente à l'ambitieuse fait gagner 380 k€ sur l'année 2, mais réduire F de 39 400 à 17 600 € à trajectoire constante en fait gagner 262 k€ **sans dépendre du marché** — le premier est un pari, le second une décision. **Chiffres livrés** : MVP complet **~417 jours-homme** (chiffrage ascendant de 16 lots, tous adossés à des sections déjà écrites) ; prix du jour-homme **381 € en CDI interne, 550 € en freelance, 900 € en ESN** — rapport de 1 à 2,4, mais l'écart interne/freelance n'est que de +44 %, ce qui rend le freelance *bon marché au risque* tant que le périmètre bouge ; **budget M1-M12 de ~281 000 €** dont 55 % de développement, 17 % de commercial et **0,6 % d'infrastructure** (1 810 € sur 281 000 € — confirmation définitive du Résultat n°2 du §5.1 : tout arbitrage d'hébergeur coûtant plus d'une demi-journée est une perte nette) ; besoin de trésorerie année 1 de **212 à 253 k€**, remarquablement **insensible à la réussite commerciale** (16 % d'écart entre l'objectif et un scénario 2,5 fois moins bon — la première année est un investissement, pas une course au CA) ; **enveloppe 24 mois de 250 000 à 460 000 €**, le haut de fourchette correspondant au scénario le plus cher *et* au seul qui n'atteint jamais le point mort. **Le résultat le plus actionnable est ailleurs, dans un recadrage de la question** : la bonne question budgétaire n'est pas « combien coûte LBT » mais **« combien coûte la mesure de λ »**, le nombre de contacts livrés par garage et par mois, dont dépendent ρ, l'ARPA, le seuil de rentabilité et donc la finançabilité — et qu'aucune source publique ne donne. Périmètre minimal pour le produire : **186 j-h et ~120 000 € sur 6 mois, sans un seul recrutement**, en différant légitimement la chaîne de modération automatique (§7.2 a déjà démontré que 100 % de revue humaine tient jusqu'à ~1 000 annonces/mois), le normaliseur de requête, les flux tiers, les alertes et la facturation (**le pilote est gratuit : facturer 20 garages amis à la main coûte moins cher que de coder la facturation**). **Correction du §5.1, dérivée d'une réforme entrée en vigueur le 1ᵉʳ janvier 2026** : la **réduction générale dégressive unique (RGDU)** a étendu l'allègement de charges patronales de 1,6 à **3 SMIC** ; le ratio ×1,40 est faux pour les bas et moyens salaires, un modérateur à 26 350 € de brut coûte **30 900 €/an et non 37 000 € (~20,3 €/h au lieu de 23 €/h, −12 %)**, et le coût marginal par annonce passe de ~0,21 € à **~0,19 €**. Effet de second ordre plus intéressant que la correction elle-même : **la RGDU creuse l'écart de coût entre profils** (un poste à 26 k€ coûte 1,17 fois son brut, un poste à 60 k€ en coûte 1,43), ce qui renforce mécaniquement deux décisions déjà prises — modération interne avec des profils non-cadres (§7.2) et recours à l'alternance. **Alternance justement chiffrée** : ~180 €/jour-équivalent brut d'encadrement, ~250 € net — le meilleur rapport coût/jour du marché, et **une échéance dure** puisque le décret n° 2026-168 du 6 mars 2026 ne couvre que les contrats débutant **avant le 1ᵉʳ janvier 2027** (2 000 € d'aide pour un niveau bac+3 à bac+5) : si le principe est retenu, la décision se prend avant l'été. **CII traité honnêtement plutôt que optimistement** : 20 % plafonnés à 400 k€ de dépenses, mais une plateforme d'annonces n'est pas un « produit nouveau » — seules les briques non standard (cascade de modération §7.1, normaliseur §14.2, compteur opposable §5.3) se défendraient, soit **~7 000 €. À budgéter à zéro et à traiter comme un bonus.** **Décision de cadrage marketing** : **aucune acquisition payante en Phase 1**. Avec un CPA automobile de ~40 € et une annonce particulier dont la recette directe est nulle par construction (§5), acheter du dépôt n'a de sens à aucune échelle ; et les garages ne se trouvent pas en régie mais par le réseau (n°49), le terrain (n°9) et les multidiffuseurs (n°48), tous à coût média nul — le démarrage à froid de LBT se résout par le terrain et le référencement de flux, pas par la publicité. **Trois absences assumées et signalées** : la **rémunération de Nicolas** n'est dans aucune ligne (elle vaut 6 000 à 8 000 €/mois de F, soit ~70 comptes au seuil), la **verticale collection** de la Phase 2 n'est chiffrée nulle part alors que la roadmap la place à M18, et les **locaux** sont supposés fournis par RETRO+. **Conséquence sur le §11, écrite explicitement pour la première fois : l'équipe RETRO+ ne peut pas construire le MVP** — 417 j-h à 0,5 ETP prélevé sur une équipe qui a déjà un métier, c'est près de quatre ans. Elle apporte l'administration système, la revue d'architecture, l'accès à 3IL et les locaux ; **le développement doit être acheté ou recruté.** **Limite de sources** : politique réseau re-testée et strictement inchangée (`developers.google.com`, `leboncoin.fr`, `data.gouv.fr`, `eur-lex.europa.eu`, `cloud.typesense.org` → `connect_rejected`) — les barèmes sociaux viennent de cabinets comptables et d'éditeurs de paie concordants, **non vérifiés sur Légifrance ni urssaf.fr**, et les grilles de salaires sont des repères d'agrégateurs. Quatre nouvelles actions (n°52 à 55).
+
 ## 17. File d'attente des prochaines actions (pour les sessions automatisées)
 
 *Liste vivante. Chaque session quotidienne prend l'action la plus prioritaire encore "ouverte", la traite en profondeur, la marque "traitée" avec un résumé, ajoute une entrée au §16, et peut ajouter de nouvelles actions découvertes en cours de route. Une seule action approfondie par jour, pas un survol de plusieurs — la qualité prime sur le volume.*
@@ -1659,7 +1920,7 @@ Tout ce qui précède est de la conception documentaire. Rien n'a été testé (
 2. [**traité 2026-07-31**] Comparer 3-4 moteurs de recherche candidats pour le cas d'usage annonces géolocalisées → nouvelle **§14.1**. **Décision : Typesense**, auto-hébergé un nœud, indexé depuis Postgres (Typesense Cloud pendant le MVP tant qu'aucune ressource technique n'est affectée). Recadrage central : **au volume de LBT (50 000 annonces actives à M24, ~60 Mo indexables) aucun candidat n'est contraint par la performance** — les trois moteurs dédiés tiennent sur un VPS à 7-17 €/mois, donc l'arbitrage se joue sur les fonctions métier, pas sur les benchmarks. Départagé par : **boost commercial au moment de la requête** (`_eval()` + curation, absents de Meilisearch), **tolérance aux fautes par champ** (308/208/508), et **trajectoire de licence** (Meilisearch a placé sharding et réplication en Enterprise Edition sous BSL 1.1 ; Typesense garde Raft dans l'OSS — et sa GPL-3.0 n'impose rien à un service réseau non distribué). Écartés : Elasticsearch/OpenSearch (JVM disproportionnée ; le percolateur se contourne en SQL), Postgres seul (repli MVP), pile Cloudflare. Dérivés : compteurs SEO depuis Postgres, trois conditions de réversibilité
 3. [ouvert] Détailler les obligations légales précises (LCEN, RGPD, identification vendeurs pro, DAC7) avec sources à jour (§8)
 4. [ouvert] Étudier des cas comparables à l'étranger (sites d'annonces auto ayant réussi à se différencier d'un leader établi) pour en tirer des enseignements
-5. [ouvert] Chiffrer un premier budget prévisionnel Phase 1 (MVP + lancement régional) (§13)
+5. [**traité 2026-08-04**] Chiffrer un premier budget prévisionnel Phase 1 (MVP + lancement régional) → nouvelle **§13.1**. **Le résultat n'est pas le budget, c'est l'invalidation de l'hypothèse `F = 15 000 €/mois`** qui sous-tendait tous les seuils de rentabilité du document depuis le 2026-07-28 : reconstruit ascendamment, le coût fixe en régime vaut **~39 400 €/mois** et **le seuil passe de 153 à 402 comptes pros payants**. **Sur neuf combinaisons (coût fixe × trajectoire), une seule atteint le jalon M24 du §10** ; la structure frugale (F ≈ 17 600 €) l'atteint dans les trois — **réduire F est une décision, améliorer la trajectoire est un pari, et le premier levier pèse plus lourd**. Chiffres : MVP complet **417 j-h**, jour-homme **381 € (CDI) / 550 € (freelance) / 900 € (ESN)**, **budget M1-M12 ~281 k€** (55 % dev, 17 % commercial, **0,6 % infrastructure**), trésorerie année 1 **212-253 k€** et quasi insensible à la réussite commerciale, **enveloppe 24 mois 250-460 k€**. **Recadrage central : la question n'est pas « combien coûte LBT » mais « combien coûte la mesure de λ » — 186 j-h, ~120 000 €, 6 mois, zéro recrutement.** Corrections dérivées : **RGDU 2026** (coût horaire modérateur −12 %, coût marginal 0,21 → **0,19 €/annonce**), **aucune acquisition payante en Phase 1**, **l'équipe RETRO+ ne peut pas construire le MVP** (§11). Non budgétés et signalés : rémunération de Nicolas, verticale collection, locaux. Actions dérivées n°52 à 55
 6. [**traité 2026-08-01**] Définir précisément les paliers d'abonnement pro → nouvelle **§5.2**, traitée avec l'action n°29. **Grille : 5 paliers à l'emplacement, sans engagement — 0 € (≤3 véh.) / 79 € (4-15) / 149 € (16-30) / 249 € (31-60) / 399 € (61-120), HT/mois**, marge 90-94 %, prélèvement SEPA par défaut. **Recadrage central : le référentiel de prix est le coût par contact, pas la facture du concurrent** — LBC est cher d'un facteur ~2 au contact (28-64 €/contact contre un repère marché de 35 €), pas de 12, et « 12× moins cher » s'entend « 12× moins d'audience ». **Différenciateur retenu : la garantie contacts** (« jamais plus de 30 € le contact, ou le mois est offert »), qui rend l'audience faible du démarrage inoffensive. Seuil de rationalité pour un garage : **5 contacts qualifiés/mois**. Corrections dérivées : ARPA 136 € (et non 149 €), seuil de rentabilité 119 comptes payants, objectif §2 reformulé en « 200 comptes pros *payants* ». **Non obtenu : la grille pro auto de LBC** (403 sur tout le domaine leboncoin.fr) → action n°33
 7. [**partiellement traité 2026-07-31**] Rechercher si des skills spécifiques manquent pour le moteur de recherche/stack retenus, une fois choisis (§15). **Volet moteur de recherche réglé** : besoin d'un skill **Typesense** et, plus important, d'un skill **pertinence de recherche e-commerce en français** — tous deux inscrits au §15 pour une session locale. Reste ouvert pour le reste de la stack (framework applicatif, ORM, file d'attente), non encore choisie
 8. [**bloqué depuis l'agent quotidien — à rebasculer**] Veille concurrentielle LBC — premier point structuré (prix, nouvelles fonctionnalités, communication) (§3). **Constat du 2026-08-01 : l'intégralité du domaine `leboncoin.fr` (dont `leboncoinsolutionspro.fr` et `assistance.leboncoin.info`) et la presse spécialisée auto (`autoactu.com`, `clubic.com`, `fiches-auto.fr`) sont en 403** — cette action est structurellement infaisable en session automatisée. À traiter soit en session locale, soit par une autre source : **Nicolas dispose d'un accès à son propre espace pro LBC, qui est la meilleure source du marché** (grille réelle, options, conditions) — une capture trimestrielle de sa part vaut mieux que toute recherche web **Correction du 2026-08-02 (§14.2, Résultat n°0) : le blocage n'est pas le fait des sites, c'est la politique réseau de notre environnement d'exécution — voir action n°35, qui rend cette action faisable en session automatisée.** **Premier élément de veille obtenu malgré le blocage, le 2026-08-03 (§3, §7.3 Résultat n°7)** : le programme partenaires LBC est **sans frais de branchement** et **à partir d'octobre 2026 les annonces diffusées via API bénéficieront d'un gain de visibilité significatif** — LBC rend donc le canal API structurellement supérieur au dépôt manuel. À confirmer et à dater précisément dès que le réseau le permettra : c'est à la fois un modèle de programme partenaires à copier et une fenêtre de démarchage.
@@ -1706,6 +1967,11 @@ Tout ce qui précède est de la conception documentaire. Rien n'a été testé (
 49. [ouvert] **Recensement de l'équipement des 10-20 garages du réseau de Nicolas — un seul comptage, trois actions servies** (§7.3, Résultat n°8) : pour chacun, quel logiciel de gestion, quel multidiffuseur (ou aucun), et **combien de véhicules simultanément en ligne**. Cela donne (a) la carte du terrain pilote et le tri entre les deux populations d'argumentaire du §9 (branché / non équipé), (b) **la distribution des tailles de stock que l'action n°34 n'a pas pu sourcer** — donc l'ARPA et le seuil de rentabilité du §5.2 —, et (c) la liste nominative des prospects de l'action n°9. Le paramètre le plus décisif est le **taux d'équipement** : il détermine si le chemin direct est un complément ou le canal principal, et aucune source publique ne le donne
 50. [ouvert] **Spécifier le modèle de tableur et le parseur tolérant** — c'est le premier livrable de développement de la §7.3 (chemin 3, celui qui ne dépend d'aucun tiers). Le modèle Excel/CSV téléchargeable sur le modèle de la *Mustertabelle* d'AutoScout24, et surtout un parseur qui absorbe le réel : encodages CP1252 vs UTF-8, séparateurs `;` vs `,`, décimales à la virgule, colonnes désordonnées ou renommées, kilométrage en `120 000 km` / `120000` / `120.000`, prix TTC vs HT, valeurs vides vs zéro, dates au format français. **C'est là que passeront 90 % des rejets réels**, et un rejet non expliqué au garage est un client perdu (d'où le journal d'import ligne à ligne). À croiser avec l'action n°36 (normaliseur de requête) : les deux normalisent le même vocabulaire automobile et doivent partager le même référentiel marque/modèle
 51. [ouvert] **Arbitrer le sort du lien sortant vers le site du garage** (`vehicle_landing_page`, §7.3 Résultat n°4). La §7.3 décide de ne pas le republier au MVP — LBT financerait le trafic du site du marchand sans contrepartie. Mais c'est un champ **requis chez Google**, donc présent dans presque tous les flux, et son absence sera remarquée par les pros. Trois options à trancher : jamais publié ; publié pour tous (argument d'acquisition à coût direct nul mais qui fuit les contacts hors du compteur du §5.3 — c'est le point décisif) ; ou **option payante des paliers hauts**. L'arbitrage n'est pas de principe : il dépend de la part des contacts qui partiraient hors compteur, donc il doit être mesuré au pilote avec λ (action n°43) plutôt que décidé maintenant
+52. [ouvert] **Priorité maximale — décision de dirigeant, coût nul, effet immédiat sur tous les seuils du document (§13.1, Résultat n°6)** : trancher les **trois questions de structure** que le budget a dû laisser ouvertes et qui déplacent le seuil de rentabilité de plusieurs dizaines de comptes chacune. (a) **La rémunération de Nicolas** — rémunération LBT, refacturation RETRO+, ou apport en compte courant valorisé ? Au marché, elle vaut 6 000 à 8 000 €/mois de coût fixe, soit ~70 comptes payants au seuil ; tant que le choix n'est pas fait, tous les seuils du §13.1 sont optimistes du même montant. (b) **Les locaux** : hébergement dans ceux de RETRO+ (hypothèse retenue, coût nul) ou location propre (+800 à 1 500 €/mois) ? (c) **Le véhicule juridique** : LBT dans RETRO+, filiale, ou société distincte — ce qui conditionne l'éligibilité aux aides de l'action n°55 (JEI, ACRE, seuil PME du §17 n°17) autant que la gouvernance. Aucune de ces trois questions ne demande de recherche : elles demandent une décision
+53. [ouvert] **Priorité haute — arbitrer et engager le recrutement d'un alternant ingénieur pour la rentrée 2026, avant la fermeture de la fenêtre d'aide (§13.1, Résultat n°7)**. L'alternance est le meilleur rapport coût/jour disponible (**~180 €/jour-équivalent brut d'encadrement, ~250 € net**, contre 381 € en CDI et 550 € en freelance), LBT y a un accès privilégié via les liens de RETRO+ avec **3IL** (§11), et le décret n° 2026-168 du 6 mars 2026 accorde **2 000 € d'aide pour un niveau bac+3 à bac+5** — mais **uniquement pour les contrats débutant avant le 1ᵉʳ janvier 2027**, le régime 2027 étant inconnu. À faire : vérifier le calendrier de dépôt des offres d'alternance de 3IL, confirmer le montant et les conditions auprès de l'OPCO, et décider. **Réserve à ne pas oublier : un alternant ne peut pas porter l'architecture** et consomme ~15 % du temps d'un senior — il complète un lead, il ne le remplace pas
+54. [ouvert] **Fiabiliser l'estimation de 417 jours-homme, seul paramètre du budget dont ±25 % déplace l'enveloppe 24 mois de ±100 k€ (§13.1, Résultat n°1)**. Le chiffrage est ascendant et adossé aux sections écrites, mais **il n'est calibré sur aucun projet comparable** et il est produit par la même partie qui écrit les spécifications — biais structurel. Deux méthodes de contre-expertise, l'une gratuite et l'autre presque : (a) faire chiffrer le **périmètre réduit de 186 j-h** par deux ou trois freelances ou agences sur la base d'un cahier des charges extrait de ce document — un devis est gratuit et il vaut mieux qu'une estimation interne ; (b) demander à Fabien et aux ingénieurs 3IL une revue indépendante des 16 lots. À faire **avant** l'engagement des ~120 k€ de l'enveloppe de décision, pas après
+55. [ouvert] **Vérifier les dispositifs de financement laissés non explorés faute d'accès aux sources officielles (§13.1, Résultat n°7)** — bloqué en session automatisée par la politique réseau, donc **session locale ou action n°35 d'abord**. À vérifier sur sources primaires : **statut Jeune Entreprise Innovante** (exonérations de cotisations patronales sur les personnels de R&D — régime resserré par les lois de finances récentes, périmètre 2026 à établir), **Bourse French Tech et prêts d'amorçage Bpifrance**, **aides régionales à l'innovation** de la région du bassin de Nicolas, **ACRE** en cas de structure distincte (lien avec l'action n°52c). Y joindre la revalidation sur `urssaf.fr` et Légifrance des barèmes utilisés au §13.1 (RGDU : `Tmin = 0,0200`, `Tdelta = 0,3781`, SMIC de référence gelé à 21 876,40 €/an, coefficient maximal 0,3981 ; SMIC au 01/06/2026 : 1 867,02 €/mois brut) — **~87 % de la structure de coûts de LBT est humaine, c'est le domaine où une erreur de barème coûte le plus cher**, et ces valeurs proviennent aujourd'hui de cabinets comptables concordants et non de la source officielle
+
 
 ---
 
@@ -1930,3 +2196,37 @@ Tout ce qui précède est de la conception documentaire. Rien n'a été testé (
 
 **Marché** (contexte, Résultat n°1)
 - `anfa-auto.fr` (chiffres clés 2025 de la branche, Régioscopes), `mobilians.fr`, `insee` via `epsimas.com` et `modelesdebusinessplan.com` : **104 000+ entreprises** d'entretien-réparation automobile en France, garages indépendants à **65-70 %** de parts de marché. **Aucune de ces sources ne donne le nombre de marchands VO ni la distribution de leurs stocks** — c'est le trou que l'action n°49 comble par comptage direct
+
+---
+
+## Annexe — Sources du budget prévisionnel §13.1 (recherche web du 2026-08-03, session n°10)
+
+*Toutes les sources ci-dessous ont été obtenues via des **extraits de résultats de recherche**, la politique réseau de l'environnement d'exécution interdisant la récupération des pages elles-mêmes (action n°35). **Aucune source primaire** : ni Légifrance, ni urssaf.fr, ni service-public.fr, ni economie.gouv.fr n'ont pu être consultés. Les barèmes sociaux sont issus de cabinets d'expertise comptable et d'éditeurs de paie, concordants entre eux à l'euro près sur les paramètres clés — indice de fiabilité, pas preuve. À revalider par l'action n°55.*
+
+**Salaires et coût du travail**
+- Salaire développeur full-stack France 2026 : ~42 000 à 45 000 € brut/an en moyenne ; junior 38-48 k€, confirmé 48-65 k€, senior/lead 65-85 k€ ; écart Île-de-France +25 à +27 % — `salerya.fr`, `welovedevs.com`, `licornesociety.com`, `cocowork.fr`
+- TJM freelance développeur full-stack 2026 : médiane **550 €/j**, fourchette 450-700 €, senior 650 € ; tous profils confondus ~520 €/j — baromètre Malt 2026 (`malt.fr/t/barometre-tarifs/tech`), `meaflow.com`, `freelance-solution.fr`
+- Salaire commercial terrain B2B 2026 : fixe 28-45 k€ + variable 8-20 k€ ; package confirmé 45-60 k€ ; le variable représente 20-35 % du package — `recruteurindependant.com`, `michaelpage.fr`, `talentscommerciaux.fr`
+- Charges patronales 2026 : ~42 % du brut pour un non-cadre, ~45 % pour un cadre ; ratio coût employeur 1,25 à 1,45 selon le niveau de rémunération — `keobiz.fr`, `l-expert-comptable.com`, `dougs.fr`, `swim.legal`
+
+**Réduction générale dégressive unique (RGDU), en vigueur au 1ᵉʳ janvier 2026** — *paramètre le plus structurant de la section*
+- Fusion de la réduction Fillon, du taux réduit maladie et du taux réduit allocations familiales ; **champ étendu de 1,6 SMIC à 3 SMIC** — `economie.gouv.fr` (via extraits), `spartes.fr`, `fntp.fr`, `nibelis.com`, `secuspm.com`
+- Formule `C = Tmin + Tdelta × [0,5 × (3 × SMIC annuel / rémunération annuelle − 1)]^P` avec **P = 1,75**, `Tmin = 0,0200`, `Tdelta = 0,3781` (FNAL 0,10 %, entreprises < 50 salariés), coefficient maximal **0,3981** (0,4021 pour ≥ 50 salariés) — `fiche-paie.fr`, `compta-online.com`, `culture-rh.com`, `acompia.com`
+- **SMIC annuel de référence du calcul gelé à 21 876,40 €** (valeur du 1ᵉʳ janvier 2026), gel entériné par décret du 12 juin 2026 — `mapaye.fr`, `compta-online.com`
+- SMIC brut mensuel 35 h : **1 823,03 €** au 01/01/2026, **1 867,02 €** au 01/06/2026 (horaire 12,02 € puis 12,31 €) — `info.gouv.fr` (via extraits), `legisocial.fr`, `fiche-paie.fr`
+
+**Alternance**
+- **Décret n° 2026-168 du 6 mars 2026** (JO du 07/03/2026), applicable aux contrats conclus à compter du **8 mars 2026** et débutant **avant le 1ᵉʳ janvier 2027** : aide de **5 000 €** jusqu'au niveau bac (niveaux 3-4), **4 500 €** pour un bac+2 (niveau 5) et **2 000 € pour les niveaux 6 et 7 (bac+3 à bac+5)** dans les entreprises de moins de 250 salariés ; 6 000 € si l'apprenti est reconnu travailleur handicapé — `legifrance.gouv.fr` (référence relevée, texte non consulté), `lefebvre-dalloz.fr`, `akto.fr`, `filiz.io`, `axens-audit.fr`
+- Cotisations exonérées jusqu'à 50 % du SMIC pour les contrats postérieurs au 01/03/2025 ; rémunération 2026 de 27 % à 100 % du SMIC selon l'âge et l'année — `culture-rh.com`, `ypareo.com`, `hayot-expertise.fr`
+
+**Financement de l'innovation**
+- **Crédit d'impôt innovation (CII)** : 20 % des dépenses de conception de prototypes ou d'installations pilotes d'un produit nouveau, plafond de **400 000 €/an** de dépenses soit **80 000 €** de crédit, réservé aux PME, **prorogé jusqu'au 31 décembre 2027** ; taux majorés en outre-mer (60 %) et en Corse (35-40 %) — `entreprendre.service-public.gouv.fr` (via extraits), `leyton.com`, `cci-paris-idf.fr`, `les-aides.fr`
+- JEI, Bpifrance et aides régionales : **non vérifiés**, action n°55
+
+**Prestataires et frais de structure**
+- Rédaction de CGU/CGV sur mesure : 800 à 3 000 € HT selon complexité ; **1 350 à 1 800 € HT pour un site de type plateforme de mise en relation** ; missions au forfait à partir de 500 € HT — `captaincontrat.com`, `avocat-rainio.com`, `actav.fr`, `view-avocats.fr`. *Le §13.1 retient 6 000 € parce que le besoin réel dépasse des CGV : politique de modération lisible par machine (DSA art. 14), procédure de signalement (art. 16), modèles d'exposé des motifs (art. 17), procédure de réclamation (art. 20) et annexe « contact qualifié » des CGV pro (action n°41).*
+- **Dépôt de marque INPI 2026 : 190 € pour une classe, +40 € par classe supplémentaire** ; renouvellement décennal 290 € ; certificat sous 5-6 mois en l'absence d'opposition — grille tarifaire INPI applicable au 2 juillet 2026 (référence relevée, document non consulté), `legalplace.fr`, `legalstart.fr`, `indy.fr`
+- Expert-comptable pour une SAS : 100 à 400 € HT/mois (80-180 € en cabinet en ligne) ; budget de gestion annuel type 1 500 à 4 500 € incluant ~300 € de RC professionnelle — `legalplace.fr`, `les-experts-comptables.fr`, `keobiz.fr`, `yrpartners.fr`
+
+**Acquisition payante** *(ordres de grandeur d'agrégateurs, dispersés — à ne pas utiliser autrement que pour trancher l'ordre de grandeur, ce que fait le Résultat n°8)*
+- CPC moyen Google Ads France 2026 : de 2,67 € à 4,61 € tous secteurs selon la source ; **CPA du secteur automobile ~40 €** ; budget média typique d'une TPE-PME 800 à 2 500 €/mois — `growth-angels.com`, `agence-anode.fr`, `ioquery.fr`, `propulslead.com`
