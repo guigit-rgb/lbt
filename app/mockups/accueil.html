@@ -200,17 +200,26 @@
   .utility .wrap { padding: 0.85rem 1.5rem; display: flex; flex-direction: column; gap: 0.65rem; }
   .u-row { display: flex; align-items: center; gap: 0.6rem; overflow-x: auto; }
   .u-row .label { color: var(--muted); flex-shrink: 0; }
+  .recent-block { display: flex; flex-direction: column; gap: 0.55rem; }
+  .recent-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 0.55rem; }
   .chip {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    padding: 0.35rem 0.7rem;
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    padding: 0.55rem 1rem;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 999px;
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .chip .x { color: var(--muted); font-size: 0.72rem; }
+  .chip .x { color: var(--muted); font-size: 0.8rem; }
   .mini-strip { display: flex; gap: 0.6rem; overflow-x: auto; }
   .mini-card {
     flex-shrink: 0;
@@ -390,12 +399,14 @@
 
 <div class="utility">
   <div class="wrap">
-    <div class="u-row">
-      <span class="label">Recherches récentes</span>
-      <a class="chip" href="#">Clio essence &lt; 12 000 € <span class="x">✕</span></a>
-      <a class="chip" href="#">Utilitaire diesel &lt; 15 000 € <span class="x">✕</span></a>
-      <a class="chip" href="#">Vinyles jazz <span class="x">✕</span></a>
-      <a class="chip" href="#">205 GTI collection <span class="x">✕</span></a>
+    <div class="recent-block">
+      <span class="recent-title">Recherches récentes</span>
+      <div class="chip-row">
+        <a class="chip" href="#">Clio essence &lt; 12 000 € <span class="x">✕</span></a>
+        <a class="chip" href="#">Utilitaire diesel &lt; 15 000 € <span class="x">✕</span></a>
+        <a class="chip" href="#">Vinyles jazz <span class="x">✕</span></a>
+        <a class="chip" href="#">205 GTI collection <span class="x">✕</span></a>
+      </div>
     </div>
     <div class="u-row">
       <span class="label" style="flex-shrink:0;">Vues récemment</span>
