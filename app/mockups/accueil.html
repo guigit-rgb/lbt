@@ -2,14 +2,14 @@
 <style>
   :root {
     --ink: #1c1b18;
-    --paper: #e7e8de;
-    --surface: #f4f4ee;
-    --surface-2: #eceee2;
+    --paper: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f4f4ef;
     --accent: #1f4d3e;
     --accent-ink: #eef2ee;
     --warm: #c1592c;
     --warm-ink: #fdf1ea;
-    --line: #d4cfbe;
+    --line: #e2e0d5;
     --muted: #6c6a5e;
   }
   @media (prefers-color-scheme: dark) {
@@ -25,9 +25,9 @@
     --warm-ink: #2a1710; --line: #3a3628; --muted: #a49f8c;
   }
   :root[data-theme="light"] {
-    --ink: #1c1b18; --paper: #e7e8de; --surface: #f4f4ee; --surface-2: #eceee2;
+    --ink: #1c1b18; --paper: #ffffff; --surface: #ffffff; --surface-2: #f4f4ef;
     --accent: #1f4d3e; --accent-ink: #eef2ee; --warm: #c1592c;
-    --warm-ink: #fdf1ea; --line: #d4cfbe; --muted: #6c6a5e;
+    --warm-ink: #fdf1ea; --line: #e2e0d5; --muted: #6c6a5e;
   }
 
   * { box-sizing: border-box; }
@@ -81,7 +81,7 @@
     letter-spacing: -0.02em;
     display: flex;
     align-items: baseline;
-    gap: 0.15rem;
+    gap: 0;
     flex-shrink: 0;
   }
   .wordmark .truc { color: var(--warm); }
@@ -182,7 +182,8 @@
     z-index: 30;
   }
   .cat-item:hover .submenu,
-  .cat-item:focus-within .submenu {
+  .cat-item:focus-within .submenu,
+  .cat-item.open .submenu {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -210,16 +211,17 @@
   }
   .chip-row { display: flex; flex-wrap: wrap; gap: 0.55rem; }
   .chip {
-    display: inline-flex; align-items: center; gap: 0.45rem;
-    padding: 0.55rem 1rem;
+    display: inline-flex; align-items: center; gap: 0.6rem;
+    padding: 0.85rem 1.4rem;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 999px;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
+    font-weight: 500;
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .chip .x { color: var(--muted); font-size: 0.8rem; }
+  .chip .x { color: var(--muted); font-size: 0.85rem; }
   .mini-strip { display: flex; gap: 0.6rem; overflow-x: auto; }
   .mini-card {
     flex-shrink: 0;
@@ -317,7 +319,7 @@
 
 <header class="site">
   <div class="wrap nav">
-    <a class="wordmark" href="#"><span>le bon</span> <span class="truc">truc</span></a>
+    <a class="wordmark" href="#"><span>lebon</span><span class="truc">truc</span></a>
     <form class="nav-search" role="search">
       <span class="icon">⌕</span>
       <input type="search" placeholder="Une Clio, un vinyle, un utilitaire…" aria-label="Rechercher une annonce" />
@@ -607,3 +609,28 @@
     <span>Dépôt gratuit · Sans engagement · CGU</span>
   </div>
 </footer>
+
+<script>
+  // Maquette uniquement : ouvre/ferme le sous-menu au clic (en plus du survol),
+  // pour un comportement fiable sur tactile et au clic direct.
+  document.querySelectorAll('.cat-item').forEach(function (item) {
+    var link = item.querySelector('.cat-tile-link');
+    link.addEventListener('click', function (e) {
+      var hasSubmenu = item.querySelector('.submenu');
+      if (!hasSubmenu) return;
+      e.preventDefault();
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.cat-item.open').forEach(function (other) {
+        if (other !== item) other.classList.remove('open');
+      });
+      item.classList.toggle('open', !isOpen);
+    });
+  });
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.cat-item')) {
+      document.querySelectorAll('.cat-item.open').forEach(function (item) {
+        item.classList.remove('open');
+      });
+    }
+  });
+</script>
