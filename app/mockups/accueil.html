@@ -1,0 +1,425 @@
+<title>lebontruc.fr — Accueil</title>
+<style>
+  :root {
+    --ink: #1c1b18;
+    --paper: #e7e8de;
+    --surface: #f4f4ee;
+    --accent: #1f4d3e;
+    --accent-ink: #eef2ee;
+    --warm: #c1592c;
+    --warm-ink: #fdf1ea;
+    --line: #d4cfbe;
+    --muted: #6c6a5e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #ece7d9;
+      --paper: #17140f;
+      --surface: #1d1a14;
+      --accent: #7fb59e;
+      --accent-ink: #0d1f19;
+      --warm: #e0895c;
+      --warm-ink: #2a1710;
+      --line: #3a3628;
+      --muted: #a49f8c;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14;
+    --accent: #7fb59e; --accent-ink: #0d1f19; --warm: #e0895c;
+    --warm-ink: #2a1710; --line: #3a3628; --muted: #a49f8c;
+  }
+  :root[data-theme="light"] {
+    --ink: #1c1b18; --paper: #e7e8de; --surface: #f4f4ee;
+    --accent: #1f4d3e; --accent-ink: #eef2ee; --warm: #c1592c;
+    --warm-ink: #fdf1ea; --line: #d4cfbe; --muted: #6c6a5e;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, .display {
+    font-family: Charter, Georgia, "Iowan Old Style", serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+  .label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  img { max-width: 100%; display: block; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem; }
+  ::-webkit-scrollbar { height: 0; width: 0; }
+
+  /* ---- top nav ---- */
+  header.site {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 0.85rem 0;
+  }
+  .wordmark {
+    font-family: Charter, Georgia, serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: baseline;
+    gap: 0.15rem;
+    flex-shrink: 0;
+  }
+  .wordmark .truc { color: var(--warm); }
+  .nav-search {
+    flex: 1;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.5rem 0.7rem;
+  }
+  .nav-search input {
+    border: none; background: transparent; flex: 1;
+    font-size: 0.92rem; color: var(--ink); font-family: inherit;
+  }
+  .nav-search input:focus { outline: none; }
+  .nav-search .icon { color: var(--muted); font-size: 0.9rem; }
+  .nav-actions { display: flex; align-items: center; gap: 1.1rem; flex-shrink: 0; }
+  .nav-actions .ghost { font-size: 0.9rem; color: var(--muted); white-space: nowrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.55rem 1rem; border-radius: 3px;
+    font-size: 0.9rem; font-weight: 600; border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .btn-accent { background: var(--accent); color: var(--accent-ink); }
+  .btn-accent:hover { filter: brightness(1.08); }
+
+  /* ---- category band ---- */
+  .catband {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .catband .wrap {
+    display: flex;
+    gap: 0.3rem;
+    overflow-x: auto;
+    padding-top: 0.15rem;
+    padding-bottom: 0.15rem;
+  }
+  .cat-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  .cat-link .ic { font-size: 1rem; }
+  .cat-link:hover, .cat-link.active {
+    color: var(--ink);
+    border-bottom-color: var(--warm);
+  }
+
+  /* ---- recent searches ---- */
+  .recent {
+    padding: 1.1rem 0 0.3rem;
+  }
+  .recent .wrap { display: flex; align-items: center; gap: 0.7rem; overflow-x: auto; }
+  .recent .label { color: var(--muted); flex-shrink: 0; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: 0.84rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .chip .x { color: var(--muted); font-size: 0.78rem; }
+
+  section { padding: 1.6rem 0; }
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 1rem; gap: 1rem;
+  }
+  .section-head h2 { font-size: 1.3rem; }
+  .section-head .see-all { font-size: 0.86rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+
+  /* ---- flagship rows (auto / collection) ---- */
+  .flagship-row .wrap > .label { color: var(--warm); margin-bottom: 0.5rem; display: block; }
+  .card-strip {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.75rem;
+  }
+  @media (max-width: 980px) { .card-strip { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 620px) { .card-strip { grid-template-columns: repeat(2, 1fr); } }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .card .thumb {
+    aspect-ratio: 4/3;
+    background: linear-gradient(135deg, var(--line), var(--paper));
+    position: relative;
+  }
+  .card .fav {
+    position: absolute; top: 0.5rem; right: 0.5rem;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+  }
+  .card .fav.on { color: var(--warm); }
+  .card .body { padding: 0.65rem 0.7rem 0.75rem; }
+  .card .price { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.98rem; }
+  .card .title { font-size: 0.85rem; margin-top: 0.15rem; }
+  .card .sub { font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
+  .card .badge {
+    position: absolute; top: 0.5rem; left: 0.5rem;
+    background: var(--warm); color: var(--warm-ink);
+    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.2rem 0.45rem; border-radius: 3px;
+  }
+
+  /* ---- trust strip ---- */
+  .trust { background: var(--accent); color: var(--accent-ink); }
+  .trust-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
+  }
+  @media (max-width: 860px) { .trust-grid { grid-template-columns: repeat(2, 1fr); } }
+  .trust-item .label { color: color-mix(in srgb, var(--accent-ink) 70%, var(--warm)); margin-bottom: 0.3rem; display: block; }
+  .trust-item p { margin: 0; font-size: 0.9rem; }
+
+  /* ---- full catalog ---- */
+  .catalog-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
+  }
+  @media (max-width: 720px) { .catalog-grid { grid-template-columns: repeat(2, 1fr); } }
+  .cat-tile {
+    border: 1px solid var(--line); border-radius: 5px;
+    padding: 0.8rem 0.9rem; background: var(--surface);
+  }
+  .cat-tile .n { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cat-tile .name { font-size: 0.82rem; color: var(--muted); margin-top: 0.15rem; }
+
+  footer.site {
+    border-top: 1px solid var(--line);
+    padding: 1.8rem 0;
+    color: var(--muted);
+    font-size: 0.83rem;
+  }
+  footer.site .foot-row { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+
+  a:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--warm); outline-offset: 2px;
+  }
+</style>
+
+<header class="site">
+  <div class="wrap nav">
+    <a class="wordmark" href="#"><span>le bon</span> <span class="truc">truc</span></a>
+    <form class="nav-search" role="search">
+      <span class="icon">⌕</span>
+      <input type="search" placeholder="Une Clio, un vinyle, un utilitaire…" aria-label="Rechercher une annonce" />
+    </form>
+    <nav class="nav-actions">
+      <a class="ghost" href="#">Espace pro</a>
+      <a class="ghost" href="#">Se connecter</a>
+      <a class="btn btn-accent" href="#">Déposer une annonce</a>
+    </nav>
+  </div>
+</header>
+
+<nav class="catband" aria-label="Catégories">
+  <div class="wrap">
+    <a class="cat-link active" href="#"><span class="ic">○</span> Véhicules</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Collection &amp; brocante</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Immobilier</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Emploi</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Mode</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Maison &amp; jardin</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Électronique</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Matériel pro</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Famille</a>
+    <a class="cat-link" href="#"><span class="ic">○</span> Toutes les catégories</a>
+  </div>
+</nav>
+
+<div class="recent">
+  <div class="wrap">
+    <span class="label">Vos recherches récentes</span>
+    <a class="chip" href="#">Clio essence, Toulouse <span class="x">✕</span></a>
+    <a class="chip" href="#">Utilitaire diesel &lt; 15 000 € <span class="x">✕</span></a>
+    <a class="chip" href="#">Vinyles jazz <span class="x">✕</span></a>
+    <a class="chip" href="#">205 GTI collection <span class="x">✕</span></a>
+  </div>
+</div>
+
+<section class="flagship-row">
+  <div class="wrap">
+    <span class="label">Cœur du métier — là où on investit dans la confiance</span>
+    <div class="section-head" style="margin-top:0.4rem;">
+      <h2>Véhicules</h2>
+      <a class="see-all" href="#">Voir les 2 340 annonces →</a>
+    </div>
+    <div class="card-strip">
+      <article class="card">
+        <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav on">♥</span></div>
+        <div class="body">
+          <div class="price">18 900 €</div>
+          <div class="title">Peugeot 205 GTI — 1988</div>
+          <div class="sub">Collection · 87 000 km</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">11 400 €</div>
+          <div class="title">Renault Clio V — 2019</div>
+          <div class="sub">Particulier · 45 200 km</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="badge">Pro vérifié</span><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">14 200 €</div>
+          <div class="title">Renault Trafic utilitaire</div>
+          <div class="sub">Garage Meunier</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">6 300 €</div>
+          <div class="title">Citroën C3 — 2016</div>
+          <div class="sub">Particulier · 62 000 km</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">22 500 €</div>
+          <div class="title">Peugeot 3008 — 2021</div>
+          <div class="sub">Garage Meunier</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="flagship-row">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Collection &amp; brocante</h2>
+      <a class="see-all" href="#">Voir les 860 annonces →</a>
+    </div>
+    <div class="card-strip">
+      <article class="card">
+        <div class="thumb"><span class="fav on">♥</span></div>
+        <div class="body">
+          <div class="price">640 €</div>
+          <div class="title">Montre automatique — années 60</div>
+          <div class="sub">Révisée</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">120 €</div>
+          <div class="title">Vinyles jazz — lot de 40</div>
+          <div class="sub">Bon état</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">210 €</div>
+          <div class="title">Meuble TV teck vintage</div>
+          <div class="sub">Brocante des Minimes</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">85 €</div>
+          <div class="title">Appareil photo argentique</div>
+          <div class="sub">Fonctionnel, testé</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price">450 €</div>
+          <div class="title">Service à thé porcelaine</div>
+          <div class="sub">Collection complète</div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="trust">
+  <div class="wrap trust-grid">
+    <div class="trust-item"><span class="label">Plaques floutées</span><p>Automatiquement, sur chaque photo déposée.</p></div>
+    <div class="trust-item"><span class="label">Historique gratuit</span><p>Rapport HistoVec joint sur toutes les annonces auto.</p></div>
+    <div class="trust-item"><span class="label">Vendeurs suivis</span><p>Délai de réponse et taux de retrait affichés, pas d'étoiles achetées.</p></div>
+    <div class="trust-item"><span class="label">Communautés vérifiées</span><p>Invité par un collègue ou un proche, jamais par un inconnu.</p></div>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="wrap">
+    <div class="section-head"><h2 style="font-size:1.1rem;">Aussi sur le bon truc</h2></div>
+    <div class="catalog-grid">
+      <a class="cat-tile" href="#"><div class="n">410</div><div class="name">Immobilier</div></a>
+      <a class="cat-tile" href="#"><div class="n">190</div><div class="name">Emploi</div></a>
+      <a class="cat-tile" href="#"><div class="n">265</div><div class="name">Mode</div></a>
+      <a class="cat-tile" href="#"><div class="n">330</div><div class="name">Maison &amp; jardin</div></a>
+      <a class="cat-tile" href="#"><div class="n">140</div><div class="name">Électronique</div></a>
+      <a class="cat-tile" href="#"><div class="n">95</div><div class="name">Matériel pro</div></a>
+      <a class="cat-tile" href="#"><div class="n">70</div><div class="name">Famille</div></a>
+      <a class="cat-tile" href="#"><div class="n">58</div><div class="name">Autres</div></a>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap foot-row">
+    <span>lebontruc.fr — SASU Courlis · France entière</span>
+    <span>Dépôt gratuit · Sans engagement · CGU</span>
+  </div>
+</footer>
