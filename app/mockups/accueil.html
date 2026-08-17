@@ -4,6 +4,7 @@
     --ink: #1c1b18;
     --paper: #e7e8de;
     --surface: #f4f4ee;
+    --surface-2: #eceee2;
     --accent: #1f4d3e;
     --accent-ink: #eef2ee;
     --warm: #c1592c;
@@ -13,24 +14,18 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --ink: #ece7d9;
-      --paper: #17140f;
-      --surface: #1d1a14;
-      --accent: #7fb59e;
-      --accent-ink: #0d1f19;
-      --warm: #e0895c;
-      --warm-ink: #2a1710;
-      --line: #3a3628;
-      --muted: #a49f8c;
+      --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14; --surface-2: #221e16;
+      --accent: #7fb59e; --accent-ink: #0d1f19; --warm: #e0895c;
+      --warm-ink: #2a1710; --line: #3a3628; --muted: #a49f8c;
     }
   }
   :root[data-theme="dark"] {
-    --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14;
+    --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14; --surface-2: #221e16;
     --accent: #7fb59e; --accent-ink: #0d1f19; --warm: #e0895c;
     --warm-ink: #2a1710; --line: #3a3628; --muted: #a49f8c;
   }
   :root[data-theme="light"] {
-    --ink: #1c1b18; --paper: #e7e8de; --surface: #f4f4ee;
+    --ink: #1c1b18; --paper: #e7e8de; --surface: #f4f4ee; --surface-2: #eceee2;
     --accent: #1f4d3e; --accent-ink: #eef2ee; --warm: #c1592c;
     --warm-ink: #fdf1ea; --line: #d4cfbe; --muted: #6c6a5e;
   }
@@ -52,11 +47,11 @@
     margin: 0;
   }
   a { color: inherit; text-decoration: none; }
-  button { font-family: inherit; }
+  button { font-family: inherit; cursor: pointer; }
   .label {
     font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.13em;
     text-transform: uppercase;
     font-variant-numeric: tabular-nums;
   }
@@ -70,14 +65,14 @@
     background: var(--surface);
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 20;
   }
   .nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 0.85rem 0;
+    padding: 0.8rem 0;
   }
   .wordmark {
     font-family: Charter, Georgia, serif;
@@ -92,14 +87,14 @@
   .wordmark .truc { color: var(--warm); }
   .nav-search {
     flex: 1;
-    max-width: 480px;
+    max-width: 520px;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     background: var(--paper);
     border: 1px solid var(--line);
     border-radius: 4px;
-    padding: 0.5rem 0.7rem;
+    padding: 0.55rem 0.7rem;
   }
   .nav-search input {
     border: none; background: transparent; flex: 1;
@@ -108,77 +103,140 @@
   .nav-search input:focus { outline: none; }
   .nav-search .icon { color: var(--muted); font-size: 0.9rem; }
   .nav-actions { display: flex; align-items: center; gap: 1.1rem; flex-shrink: 0; }
-  .nav-actions .ghost { font-size: 0.9rem; color: var(--muted); white-space: nowrap; }
+  .nav-actions .ghost { font-size: 0.88rem; color: var(--muted); white-space: nowrap; }
   .btn {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.55rem 1rem; border-radius: 3px;
-    font-size: 0.9rem; font-weight: 600; border: 1px solid transparent;
+    font-size: 0.88rem; font-weight: 600; border: 1px solid transparent;
     white-space: nowrap;
   }
   .btn-accent { background: var(--accent); color: var(--accent-ink); }
   .btn-accent:hover { filter: brightness(1.08); }
 
-  /* ---- category band ---- */
-  .catband {
-    background: var(--surface);
-    border-bottom: 1px solid var(--line);
-  }
-  .catband .wrap {
+  .icon-link {
     display: flex;
-    gap: 0.3rem;
-    overflow-x: auto;
-    padding-top: 0.15rem;
-    padding-bottom: 0.15rem;
-  }
-  .cat-link {
-    display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.65rem 0.85rem;
-    font-size: 0.86rem;
-    font-weight: 600;
+    gap: 0.15rem;
+    font-size: 0.68rem;
     color: var(--muted);
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
+    position: relative;
   }
-  .cat-link .ic { font-size: 1rem; }
-  .cat-link:hover, .cat-link.active {
-    color: var(--ink);
-    border-bottom-color: var(--warm);
+  .icon-link .glyph {
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+  .icon-link:hover { color: var(--ink); }
+  .icon-link .dot {
+    position: absolute; top: -2px; right: -6px;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--warm);
   }
 
-  /* ---- recent searches ---- */
-  .recent {
-    padding: 1.1rem 0 0.3rem;
+  /* ---- category band : icon tiles, no flagship emphasis ---- */
+  .catband { background: var(--surface); border-bottom: 1px solid var(--line); position: relative; z-index: 15; }
+  .catband .wrap {
+    display: flex;
+    gap: 0.15rem;
+    overflow-x: auto;
+    padding: 0.4rem 1.5rem;
   }
-  .recent .wrap { display: flex; align-items: center; gap: 0.7rem; overflow-x: auto; }
-  .recent .label { color: var(--muted); flex-shrink: 0; }
+  .cat-tile-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+    min-width: 68px;
+  }
+  .cat-tile-link .ic {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+  }
+  .cat-tile-link .t { font-size: 0.72rem; color: var(--muted); text-align: center; line-height: 1.15; }
+  .cat-tile-link:hover .ic, .cat-tile-link.active .ic { border-color: var(--warm); }
+  .cat-tile-link.active .t, .cat-tile-link:hover .t { color: var(--ink); }
+
+  .cat-item { position: relative; flex-shrink: 0; }
+  .submenu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--warm);
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 12px 24px -10px rgba(0,0,0,0.25);
+    padding: 0.6rem 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+    z-index: 30;
+  }
+  .cat-item:hover .submenu,
+  .cat-item:focus-within .submenu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .submenu a {
+    display: block;
+    padding: 0.45rem 1rem;
+    font-size: 0.85rem;
+    color: var(--ink);
+  }
+  .submenu a:hover { background: var(--surface-2); color: var(--warm); }
+
+  /* ---- utility strip: recent searches + recently viewed, compact ---- */
+  .utility { background: var(--surface-2); border-bottom: 1px solid var(--line); }
+  .utility .wrap { padding: 0.85rem 1.5rem; display: flex; flex-direction: column; gap: 0.65rem; }
+  .u-row { display: flex; align-items: center; gap: 0.6rem; overflow-x: auto; }
+  .u-row .label { color: var(--muted); flex-shrink: 0; }
   .chip {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    padding: 0.4rem 0.75rem;
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.35rem 0.7rem;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: 999px;
-    font-size: 0.84rem;
+    font-size: 0.82rem;
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .chip .x { color: var(--muted); font-size: 0.78rem; }
+  .chip .x { color: var(--muted); font-size: 0.72rem; }
+  .mini-strip { display: flex; gap: 0.6rem; overflow-x: auto; }
+  .mini-card {
+    flex-shrink: 0;
+    width: 128px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .mini-card .thumb { aspect-ratio: 4/3; background: linear-gradient(135deg, var(--line), var(--surface)); }
+  .mini-card .body { padding: 0.4rem 0.5rem 0.55rem; }
+  .mini-card .price { font-weight: 700; font-size: 0.82rem; font-variant-numeric: tabular-nums; }
+  .mini-card .title { font-size: 0.72rem; color: var(--muted); margin-top: 0.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  section { padding: 1.6rem 0; }
+  section { padding: 1.7rem 0; }
+  section.tint { background: var(--surface-2); }
   .section-head {
     display: flex; align-items: baseline; justify-content: space-between;
     margin-bottom: 1rem; gap: 1rem;
   }
-  .section-head h2 { font-size: 1.3rem; }
-  .section-head .see-all { font-size: 0.86rem; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+  .section-head h2 { font-size: 1.25rem; }
+  .section-head .see-all { font-size: 0.85rem; font-weight: 600; color: var(--accent); flex-shrink: 0; white-space: nowrap; }
+  .eyebrow-flagship { color: var(--warm); display: block; margin-bottom: 0.4rem; }
 
-  /* ---- flagship rows (auto / collection) ---- */
-  .flagship-row .wrap > .label { color: var(--warm); margin-bottom: 0.5rem; display: block; }
   .card-strip {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;
   }
   @media (max-width: 980px) { .card-strip { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 620px) { .card-strip { grid-template-columns: repeat(2, 1fr); } }
@@ -190,44 +248,43 @@
     overflow: hidden;
     position: relative;
   }
+  section.tint .card { background: var(--paper); }
   .card .thumb {
     aspect-ratio: 4/3;
-    background: linear-gradient(135deg, var(--line), var(--paper));
+    background: linear-gradient(135deg, var(--line), var(--surface));
     position: relative;
   }
   .card .fav {
     position: absolute; top: 0.5rem; right: 0.5rem;
     width: 26px; height: 26px;
     border-radius: 50%;
-    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    background: color-mix(in srgb, var(--surface) 85%, transparent);
     display: flex; align-items: center; justify-content: center;
     font-size: 0.85rem;
   }
   .card .fav.on { color: var(--warm); }
   .card .body { padding: 0.65rem 0.7rem 0.75rem; }
+  .card .price-row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.4rem; }
   .card .price { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.98rem; }
+  .card .fresh { font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
   .card .title { font-size: 0.85rem; margin-top: 0.15rem; }
   .card .sub { font-size: 0.76rem; color: var(--muted); margin-top: 0.1rem; }
   .card .badge {
     position: absolute; top: 0.5rem; left: 0.5rem;
     background: var(--warm); color: var(--warm-ink);
-    font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
     padding: 0.2rem 0.45rem; border-radius: 3px;
   }
 
   /* ---- trust strip ---- */
   .trust { background: var(--accent); color: var(--accent-ink); }
-  .trust-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem;
-  }
+  .trust-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
   @media (max-width: 860px) { .trust-grid { grid-template-columns: repeat(2, 1fr); } }
   .trust-item .label { color: color-mix(in srgb, var(--accent-ink) 70%, var(--warm)); margin-bottom: 0.3rem; display: block; }
   .trust-item p { margin: 0; font-size: 0.9rem; }
 
   /* ---- full catalog ---- */
-  .catalog-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem;
-  }
+  .catalog-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
   @media (max-width: 720px) { .catalog-grid { grid-template-columns: repeat(2, 1fr); } }
   .cat-tile {
     border: 1px solid var(--line); border-radius: 5px;
@@ -257,7 +314,9 @@
       <input type="search" placeholder="Une Clio, un vinyle, un utilitaire…" aria-label="Rechercher une annonce" />
     </form>
     <nav class="nav-actions">
-      <a class="ghost" href="#">Espace pro</a>
+      <a class="icon-link" href="#"><span class="glyph">✉️</span>Messages<span class="dot"></span></a>
+      <a class="icon-link" href="#"><span class="glyph">♡</span>Favoris</a>
+      <a class="icon-link" href="#"><span class="glyph">☆</span>Mes recherches</a>
       <a class="ghost" href="#">Se connecter</a>
       <a class="btn btn-accent" href="#">Déposer une annonce</a>
     </nav>
@@ -266,93 +325,146 @@
 
 <nav class="catband" aria-label="Catégories">
   <div class="wrap">
-    <a class="cat-link active" href="#"><span class="ic">○</span> Véhicules</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Collection &amp; brocante</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Immobilier</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Emploi</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Mode</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Maison &amp; jardin</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Électronique</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Matériel pro</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Famille</a>
-    <a class="cat-link" href="#"><span class="ic">○</span> Toutes les catégories</a>
+    <div class="cat-item">
+      <a class="cat-tile-link active" href="#"><span class="ic">🚗</span><span class="t">Véhicules</span></a>
+      <div class="submenu">
+        <a href="#">Voitures</a><a href="#">Motos</a><a href="#">Caravaning</a><a href="#">Utilitaires</a>
+        <a href="#">Équipement auto</a><a href="#">Équipement moto</a><a href="#">Nautisme</a><a href="#">Équipement nautisme</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">🎨</span><span class="t">Loisirs</span></a>
+      <div class="submenu">
+        <a href="#">DVD - Films</a><a href="#">CD - Musique</a><a href="#">Livres</a>
+        <a href="#">Sports &amp; Hobbies</a><a href="#">Vélos</a><a href="#">Instruments de musique</a>
+        <a href="#">Collection</a><a href="#">Jeux &amp; Jouets</a><a href="#">Vins &amp; gastronomie</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">🏠</span><span class="t">Immobilier</span></a>
+      <div class="submenu">
+        <a href="#">Ventes immobilières</a><a href="#">Locations</a><a href="#">Colocations</a>
+        <a href="#">Bureaux &amp; commerces</a><a href="#">Parkings</a><a href="#">Locations de vacances</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">💼</span><span class="t">Emploi</span></a>
+      <div class="submenu">
+        <a href="#">Offres d'emploi</a><a href="#">Formations professionnelles</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">👕</span><span class="t">Mode</span></a>
+      <div class="submenu">
+        <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; bagagerie</a><a href="#">Montres &amp; bijoux</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">🛋️</span><span class="t">Maison &amp; jardin</span></a>
+      <div class="submenu">
+        <a href="#">Ameublement</a><a href="#">Électroménager</a><a href="#">Arts de la table</a>
+        <a href="#">Décoration</a><a href="#">Linge de maison</a><a href="#">Bricolage</a><a href="#">Jardinage</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">🔌</span><span class="t">Électronique</span></a>
+      <div class="submenu">
+        <a href="#">Informatique</a><a href="#">Image &amp; son</a><a href="#">Téléphonie</a><a href="#">Consoles &amp; jeux vidéo</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">🛠️</span><span class="t">Matériel pro</span></a>
+      <div class="submenu">
+        <a href="#">Matériel agricole</a><a href="#">Équipements industriels</a><a href="#">Fournitures de bureau</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <a class="cat-tile-link" href="#"><span class="ic">👪</span><span class="t">Famille</span></a>
+      <div class="submenu">
+        <a href="#">Vêtements bébé</a><a href="#">Équipement bébé</a><a href="#">Mobilier enfant</a><a href="#">Jouets</a>
+      </div>
+    </div>
+    <a class="cat-tile-link" href="#"><span class="ic">···</span><span class="t">Tout voir</span></a>
   </div>
 </nav>
 
-<div class="recent">
+<div class="utility">
   <div class="wrap">
-    <span class="label">Vos recherches récentes</span>
-    <a class="chip" href="#">Clio essence &lt; 12 000 € <span class="x">✕</span></a>
-    <a class="chip" href="#">Utilitaire diesel &lt; 15 000 € <span class="x">✕</span></a>
-    <a class="chip" href="#">Vinyles jazz <span class="x">✕</span></a>
-    <a class="chip" href="#">205 GTI collection <span class="x">✕</span></a>
+    <div class="u-row">
+      <span class="label">Recherches récentes</span>
+      <a class="chip" href="#">Clio essence &lt; 12 000 € <span class="x">✕</span></a>
+      <a class="chip" href="#">Utilitaire diesel &lt; 15 000 € <span class="x">✕</span></a>
+      <a class="chip" href="#">Vinyles jazz <span class="x">✕</span></a>
+      <a class="chip" href="#">205 GTI collection <span class="x">✕</span></a>
+    </div>
+    <div class="u-row">
+      <span class="label" style="flex-shrink:0;">Vues récemment</span>
+      <div class="mini-strip">
+        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">11 400 €</div><div class="title">Clio V — 2019</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">640 €</div><div class="title">Montre auto. 60s</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">890 €/mois</div><div class="title">T2 centre-ville</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">210 €</div><div class="title">Meuble TV teck</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">14 200 €</div><div class="title">Trafic utilitaire</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">85 €</div><div class="title">Appareil argentique</div></div></a>
+      </div>
+    </div>
   </div>
 </div>
 
-<section class="flagship-row">
+<section>
   <div class="wrap">
-    <div class="section-head" style="margin-bottom:0.7rem;">
-      <h2 style="font-size:1.1rem;">Vues récemment</h2>
-    </div>
-    <div class="card-strip">
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">11 400 €</div><div class="title">Renault Clio V — 2019</div><div class="sub">Véhicules</div></div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav on">♥</span></div>
-        <div class="body"><div class="price">640 €</div><div class="title">Montre automatique — années 60</div><div class="sub">Collection</div></div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">890 €/mois</div><div class="title">T2 mansardé, centre-ville</div><div class="sub">Immobilier</div></div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">210 €</div><div class="title">Meuble TV teck vintage</div><div class="sub">Collection</div></div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">14 200 €</div><div class="title">Renault Trafic utilitaire</div><div class="sub">Véhicules</div></div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="flagship-row">
-  <div class="wrap">
-    <div class="section-head" style="margin-bottom:0.7rem;">
-      <h2 style="font-size:1.1rem;">Parce que vous avez consulté la Peugeot 205 GTI</h2>
+    <div class="section-head">
+      <h2 style="font-size:1.05rem;">Parce que vous avez consulté la Peugeot 205 GTI</h2>
     </div>
     <div class="card-strip">
       <article class="card">
         <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav">♡</span></div>
-        <div class="body"><div class="price">21 500 €</div><div class="title">Peugeot 205 GTI — 1990</div><div class="sub">Collection · 62 000 km</div></div>
+        <div class="body">
+          <div class="price-row"><span class="price">21 500 €</span><span class="fresh">Hier</span></div>
+          <div class="title">Peugeot 205 GTI — 1990</div>
+          <div class="sub">Nantes · 62 000 km</div>
+        </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">15 800 €</div><div class="title">Peugeot 205 Rallye — 1991</div><div class="sub">Collection · 98 000 km</div></div>
+        <div class="body">
+          <div class="price-row"><span class="price">15 800 €</span><span class="fresh">3 j.</span></div>
+          <div class="title">Peugeot 205 Rallye — 1991</div>
+          <div class="sub">Reims · 98 000 km</div>
+        </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">19 900 €</div><div class="title">Renault 5 Alpine — 1987</div><div class="sub">Collection · même décennie</div></div>
+        <div class="body">
+          <div class="price-row"><span class="price">19 900 €</span><span class="fresh">5 j.</span></div>
+          <div class="title">Renault 5 Alpine — 1987</div>
+          <div class="sub">Lyon · même décennie</div>
+        </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">17 200 €</div><div class="title">Peugeot 205 GTI — 1989</div><div class="sub">Collection · 74 000 km</div></div>
+        <div class="body">
+          <div class="price-row"><span class="price">17 200 €</span><span class="fresh">1 sem.</span></div>
+          <div class="title">Peugeot 205 GTI — 1989</div>
+          <div class="sub">Metz · 74 000 km</div>
+        </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body"><div class="price">280 €</div><div class="title">Jantes origine 205 GTI</div><div class="sub">Pièces &amp; accessoires</div></div>
+        <div class="body">
+          <div class="price-row"><span class="price">280 €</span><span class="fresh">2 sem.</span></div>
+          <div class="title">Jantes origine 205 GTI</div>
+          <div class="sub">Pièces &amp; accessoires</div>
+        </div>
       </article>
     </div>
   </div>
 </section>
 
-<section class="flagship-row">
+<section class="tint">
   <div class="wrap">
-    <span class="label">Cœur du métier — là où on investit dans la confiance</span>
-    <div class="section-head" style="margin-top:0.4rem;">
+    <span class="label eyebrow-flagship">Cœur du métier — là où on investit dans la confiance</span>
+    <div class="section-head" style="margin-top:0.3rem;">
       <h2>Véhicules</h2>
       <a class="see-all" href="#">Voir les 2 340 annonces →</a>
     </div>
@@ -360,15 +472,15 @@
       <article class="card">
         <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav on">♥</span></div>
         <div class="body">
-          <div class="price">18 900 €</div>
+          <div class="price-row"><span class="price">18 900 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Peugeot 205 GTI — 1988</div>
-          <div class="sub">Collection · 87 000 km</div>
+          <div class="sub">Toulouse · 87 000 km</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">11 400 €</div>
+          <div class="price-row"><span class="price">11 400 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Renault Clio V — 2019</div>
           <div class="sub">Particulier · 45 200 km</div>
         </div>
@@ -376,15 +488,15 @@
       <article class="card">
         <div class="thumb"><span class="badge">Pro vérifié</span><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">14 200 €</div>
+          <div class="price-row"><span class="price">14 200 €</span><span class="fresh">2 j.</span></div>
           <div class="title">Renault Trafic utilitaire</div>
-          <div class="sub">Garage Meunier</div>
+          <div class="sub">Garage Meunier · Bordeaux</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">6 300 €</div>
+          <div class="price-row"><span class="price">6 300 €</span><span class="fresh">2 j.</span></div>
           <div class="title">Citroën C3 — 2016</div>
           <div class="sub">Particulier · 62 000 km</div>
         </div>
@@ -392,60 +504,61 @@
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">22 500 €</div>
+          <div class="price-row"><span class="price">22 500 €</span><span class="fresh">3 j.</span></div>
           <div class="title">Peugeot 3008 — 2021</div>
-          <div class="sub">Garage Meunier</div>
+          <div class="sub">Garage Meunier · Bordeaux</div>
         </div>
       </article>
     </div>
   </div>
 </section>
 
-<section class="flagship-row">
+<section>
   <div class="wrap">
-    <div class="section-head">
-      <h2>Collection &amp; brocante</h2>
+    <span class="label eyebrow-flagship">Spécialité collection — le reste des loisirs suit le catalogue standard</span>
+    <div class="section-head" style="margin-top:0.3rem;">
+      <h2>Loisirs</h2>
       <a class="see-all" href="#">Voir les 860 annonces →</a>
     </div>
     <div class="card-strip">
       <article class="card">
         <div class="thumb"><span class="fav on">♥</span></div>
         <div class="body">
-          <div class="price">640 €</div>
+          <div class="price-row"><span class="price">640 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Montre automatique — années 60</div>
-          <div class="sub">Révisée</div>
+          <div class="sub">Révisée · Dijon</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">120 €</div>
+          <div class="price-row"><span class="price">120 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Vinyles jazz — lot de 40</div>
-          <div class="sub">Bon état</div>
+          <div class="sub">Bon état · Lille</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">210 €</div>
+          <div class="price-row"><span class="price">210 €</span><span class="fresh">1 j.</span></div>
           <div class="title">Meuble TV teck vintage</div>
-          <div class="sub">Brocante des Minimes</div>
+          <div class="sub">Toulouse</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">85 €</div>
+          <div class="price-row"><span class="price">85 €</span><span class="fresh">4 j.</span></div>
           <div class="title">Appareil photo argentique</div>
-          <div class="sub">Fonctionnel, testé</div>
+          <div class="sub">Fonctionnel, testé · Rennes</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price">450 €</div>
+          <div class="price-row"><span class="price">450 €</span><span class="fresh">6 j.</span></div>
           <div class="title">Service à thé porcelaine</div>
-          <div class="sub">Collection complète</div>
+          <div class="sub">Collection complète · Nancy</div>
         </div>
       </article>
     </div>
@@ -461,9 +574,9 @@
   </div>
 </section>
 
-<section class="catalog">
+<section class="tint">
   <div class="wrap">
-    <div class="section-head"><h2 style="font-size:1.1rem;">Aussi sur le bon truc</h2></div>
+    <div class="section-head"><h2 style="font-size:1.05rem;">Aussi sur le bon truc</h2></div>
     <div class="catalog-grid">
       <a class="cat-tile" href="#"><div class="n">410</div><div class="name">Immobilier</div></a>
       <a class="cat-tile" href="#"><div class="n">190</div><div class="name">Emploi</div></a>
