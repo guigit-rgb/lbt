@@ -1,3 +1,4 @@
+<title>lebontruc.fr — Animaux</title>
 <title>lebontruc.fr — Accueil</title>
 <style>
   :root {
@@ -56,7 +57,7 @@
     font-variant-numeric: tabular-nums;
   }
   img { max-width: 100%; display: block; }
-  .wrap { max-width: 1072px; margin: 0 auto; padding: 0 1.5rem; } /* = 5 cartes (192px) + 4 gaps (16px) + le padding, pour que tout s'aligne sur le bord droit de la grille d'annonces */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem; }
   ::-webkit-scrollbar { height: 0; width: 0; }
 
   /* ---- top nav ---- */
@@ -214,13 +215,12 @@
     text-transform: none;
     letter-spacing: 0;
   }
-  /* grille (pas flex+wrap) : garantit 3 blocs cote a cote sans jamais repasser a la ligne */
-  .chip-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 9px; }
   .chip {
-    /* 338x124 mesuré sur une capture LBC réelle (carte "Recherches récentes") ; max-width plutôt que width fixe pour que la grille absorbe les quelques px d'écart sans jamais wrapper */
+    /* 338x124 mesuré sur une capture LBC réelle (carte "Recherches récentes") */
     position: relative;
     display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
-    max-width: 338px; height: 124px;
+    width: 338px; height: 124px;
     padding: 1rem 1.2rem;
     background: var(--surface);
     border: 1px solid var(--line);
@@ -228,6 +228,7 @@
     font-size: 1.05rem;
     font-weight: 500;
     white-space: normal;
+    flex-shrink: 0;
   }
   .chip .x { position: absolute; top: 0.9rem; right: 1rem; color: var(--muted); font-size: 0.85rem; }
   .mini-strip { display: flex; gap: 0.6rem; overflow-x: auto; }
@@ -343,7 +344,7 @@
     color: var(--muted); text-align: center; margin-top: 0.35rem;
   }
   .ad-skin {
-    position: fixed; top: 0; bottom: 0; width: calc((100% - 1072px) / 2);
+    position: fixed; top: 0; bottom: 0; width: calc((100% - 1180px) / 2);
     min-width: 0; display: none; z-index: 5; overflow: hidden;
   }
   .ad-skin.left { left: 0; } .ad-skin.right { right: 0; }
@@ -531,44 +532,29 @@
   a:focus-visible, button:focus-visible, input:focus-visible {
     outline: 2px solid var(--warm); outline-offset: 2px;
   }
+
+  /* ---- page de résultats (façon LBC) ---- */
+  .filter-bar { background: var(--surface); border-bottom: 1px solid var(--line); padding: 1rem 0 0.7rem; }
+  .filter-row { display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center; }
+  .filter-pill {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.55rem 1rem; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--paper); font-size: 0.85rem; font-weight: 600; color: var(--ink);
+    white-space: nowrap;
+  }
+  .filter-pill .chev { color: var(--muted); font-size: 0.8rem; }
+  .breadcrumb-row { margin-top: 0.6rem; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.4rem 0.85rem; border: 1px solid transparent; border-radius: 999px;
+    background: var(--accent-ink); color: var(--accent); font-size: 0.8rem; font-weight: 700;
+  }
+  .filter-chip .chev { color: var(--accent); opacity: 0.7; font-size: 0.75rem; }
+  .results-head { padding: 1.3rem 0 0.2rem; }
+  .results-head h1 { font-size: 1.3rem; }
+  .results-count { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
+  .results-grid-section { padding-bottom: 2.5rem; }
 </style>
-
-<div class="ad-skin left"><div class="pave">
-  <div class="credit-ad vertical">
-    <div class="brand">RAPIDO CRÉDIT</div>
-    <div class="headline">Un projet ?<br>On vous prête main forte.</div>
-    <div class="figure">2,90%<small>TAEG fixe dès</small></div>
-    <div class="sub">Réponse de principe immédiate</div>
-    <span class="cta">Je simule →</span>
-    <div class="legal">Crédit à la consommation soumis à conditions. Un crédit vous engage et doit être remboursé. Vérifiez vos capacités de remboursement avant de vous engager. Exemple à titre indicatif.</div>
-  </div>
-</div></div>
-<div class="ad-skin right"><div class="pave">
-  <div class="credit-ad vertical">
-    <div class="brand">RAPIDO CRÉDIT</div>
-    <div class="headline">Un projet ?<br>On vous prête main forte.</div>
-    <div class="figure">2,90%<small>TAEG fixe dès</small></div>
-    <div class="sub">Réponse de principe immédiate</div>
-    <span class="cta">Je simule →</span>
-    <div class="legal">Crédit à la consommation soumis à conditions. Un crédit vous engage et doit être remboursé. Vérifiez vos capacités de remboursement avant de vous engager. Exemple à titre indicatif.</div>
-  </div>
-</div></div>
-
-<div class="ad-top">
-  <div class="banner">
-    <div class="credit-ad horizontal">
-      <div class="brand">RAPIDO CRÉDIT</div>
-      <div class="pitch">
-        <div class="headline">Un projet ? On vous prête main forte.</div>
-        <div class="sub">Réponse de principe immédiate, sans engagement</div>
-      </div>
-      <div class="figure">2,90%<small>TAEG fixe dès</small></div>
-      <span class="cta">Je simule mon prêt →</span>
-      <div class="legal">Crédit à la consommation soumis à conditions. Un crédit vous engage et doit être remboursé. Vérifiez vos capacités de remboursement avant de vous engager. Exemple à titre indicatif, sous réserve d'acceptation du dossier par l'organisme prêteur.</div>
-    </div>
-  </div>
-  <div class="wrap"><div class="ad-note">Emplacement publicitaire — créa générique, pas la vraie pub Cofidis</div></div>
-</div>
 
 <div class="site-top">
 <header class="site">
@@ -591,7 +577,7 @@
 <nav class="catband" aria-label="Catégories">
   <div class="wrap">
     <div class="cat-item">
-      <button type="button" class="cat-tile-link active"><span class="ic">🚗</span><span class="t">Véhicules</span></button>
+      <button type="button" class="cat-tile-link"><span class="ic">🚗</span><span class="t">Véhicules</span></button>
       <div class="submenu">
         <a href="#">Voitures</a><a href="#">Motos</a><a href="#">Caravaning</a><a href="#">Utilitaires</a>
         <a href="#">Équipement auto</a><a href="#">Équipement moto</a><a href="#">Nautisme</a><a href="#">Équipement nautisme</a>
@@ -650,9 +636,9 @@
       </div>
     </div>
     <div class="cat-item">
-      <button type="button" class="cat-tile-link"><span class="ic">···</span><span class="t">Autres</span></button>
+      <button type="button" class="cat-tile-link active"><span class="ic">···</span><span class="t">Autres</span></button>
       <div class="submenu">
-        <a href="#">Services</a><a href="#">Billetterie</a><a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+        <a href="#">Services</a><a href="#">Billetterie</a><a href="#">Animaux</a>
         <a href="#">Dons (à donner)</a><a href="#">Recherche d'emploi</a>
       </div>
     </div>
@@ -660,219 +646,109 @@
 </nav>
 </div>
 
-<section class="depose-banner">
-  <span class="drift" style="left:8%; animation-duration:7s; animation-delay:0s;">🚗</span>
-  <span class="drift" style="left:22%; animation-duration:9s; animation-delay:2s;">📷</span>
-  <span class="drift" style="left:38%; animation-duration:6.5s; animation-delay:4s;">🏠</span>
-  <span class="drift" style="left:58%; animation-duration:8s; animation-delay:1s;">🎸</span>
-  <span class="drift" style="left:74%; animation-duration:7.5s; animation-delay:3s;">👕</span>
-  <span class="drift" style="left:88%; animation-duration:9.5s; animation-delay:5s;">🚲</span>
-  <div class="wrap">
-    <span class="label kicker">Ça prend 2 minutes</span>
-    <h2>Un truc à vendre ? Déposez votre annonce dès maintenant</h2>
-    <a class="btn-depose" href="#"><span>＋</span>Déposer une annonce</a>
+<section class="filter-bar">
+  <div class="wrap filter-row">
+    <button class="filter-pill"><span>📍</span>Choisir une localisation<span class="chev">›</span></button>
+    <button class="filter-pill">Prix<span class="chev">›</span></button>
+    <button class="filter-pill">Type d'animal<span class="chev">›</span></button>
+    <button class="filter-pill"><span>⚙︎</span>Filtres</button>
+  </div>
+  <div class="wrap filter-row breadcrumb-row">
+    <button class="filter-chip">Animaux<span class="chev">›</span></button>
+    <button class="filter-chip">Tri : Pertinence<span class="chev">›</span></button>
   </div>
 </section>
 
-<div class="utility">
+<section class="results-head">
   <div class="wrap">
-    <div class="recent-block">
-      <span class="recent-title">Recherches récentes</span>
-      <div class="chip-row">
-        <a class="chip" href="#">Clio essence &lt; 12 000 € <span class="x">✕</span></a>
-        <a class="chip" href="#">Utilitaire diesel &lt; 15 000 € <span class="x">✕</span></a>
-        <a class="chip" href="#">Vinyles jazz <span class="x">✕</span></a>
-      </div>
-    </div>
-    <div class="u-row">
-      <span class="label" style="flex-shrink:0;">Vues récemment</span>
-      <div class="mini-strip">
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">11 400 €</div><div class="title">Clio V — 2019</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">640 €</div><div class="title">Montre auto. 60s</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">890 €/mois</div><div class="title">T2 centre-ville</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">210 €</div><div class="title">Meuble TV teck</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">14 200 €</div><div class="title">Trafic utilitaire</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">85 €</div><div class="title">Appareil argentique</div></div></a>
-      </div>
-    </div>
-  </div>
-</div>
-
-<section>
-  <div class="wrap">
-    <div class="section-head">
-      <h2 style="font-size:1.05rem;">Parce que vous avez consulté la Peugeot 205 GTI</h2>
-    </div>
-    <div class="card-strip">
-      <article class="card">
-        <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">21 500 €</span><span class="fresh">Hier</span></div>
-          <div class="title">Peugeot 205 GTI — 1990</div>
-          <div class="sub">Nantes · 62 000 km</div>
-        </div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">15 800 €</span><span class="fresh">3 j.</span></div>
-          <div class="title">Peugeot 205 Rallye — 1991</div>
-          <div class="sub">Reims · 98 000 km</div>
-        </div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">19 900 €</span><span class="fresh">5 j.</span></div>
-          <div class="title">Renault 5 Alpine — 1987</div>
-          <div class="sub">Lyon · même décennie</div>
-        </div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">17 200 €</span><span class="fresh">1 sem.</span></div>
-          <div class="title">Peugeot 205 GTI — 1989</div>
-          <div class="sub">Metz · 74 000 km</div>
-        </div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">280 €</span><span class="fresh">2 sem.</span></div>
-          <div class="title">Jantes origine 205 GTI</div>
-          <div class="sub">Pièces &amp; accessoires</div>
-        </div>
-      </article>
-    </div>
+    <h1>Annonces Animaux, chiot, chaton</h1>
+    <p class="results-count">180 annonces</p>
   </div>
 </section>
 
-<section class="tint">
+<section class="results-grid-section">
   <div class="wrap">
-    <span class="label eyebrow-flagship">Cœur du métier — là où on investit dans la confiance</span>
-    <div class="section-head" style="margin-top:0.3rem;">
-      <h2>Véhicules</h2>
-      <a class="see-all" href="#">Voir les 2 340 annonces →</a>
-    </div>
     <div class="card-strip">
       <article class="card">
-        <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav on">♥</span></div>
+        <div class="thumb"><span class="badge">À la une</span><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price-row"><span class="price">18 900 €</span><span class="fresh">Auj.</span></div>
-          <div class="title">Peugeot 205 GTI — 1988</div>
-          <div class="sub">Toulouse · 87 000 km</div>
+          <div class="price-row"><span class="price">1 000 €</span><span class="fresh">Auj.</span></div>
+          <div class="title">Chiot Berger Américain Miniature</div>
+          <div class="sub">Vittersbourg · Pro</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="badge">À la une</span><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price-row"><span class="price">1 000 €</span><span class="fresh">Auj.</span></div>
+          <div class="title">Superbes chiots Pomchi</div>
+          <div class="sub">Poitiers · Pro</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav on">♥</span></div>
+        <div class="body">
+          <div class="price-row"><span class="price">1 000 €</span><span class="fresh">Auj.</span></div>
+          <div class="title">Maine Coon</div>
+          <div class="sub">Saint-Bauzille-de-Montmel · Pro</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price-row"><span class="price">11 400 €</span><span class="fresh">Auj.</span></div>
-          <div class="title">Renault Clio V — 2019</div>
-          <div class="sub">Particulier · 45 200 km</div>
+          <div class="price-row"><span class="price">350 €</span><span class="fresh">Hier</span></div>
+          <div class="title">Chatons européens à réserver</div>
+          <div class="sub">Nantes · Particulier</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price-row"><span class="price">450 €</span><span class="fresh">2 j.</span></div>
+          <div class="title">Cane Corso LOF, 8 semaines</div>
+          <div class="sub">Toulouse · Particulier</div>
+        </div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="body">
+          <div class="price-row"><span class="price">80 €</span><span class="fresh">2 j.</span></div>
+          <div class="title">Cage + accessoires perruche</div>
+          <div class="sub">Lyon · Particulier</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="badge">Pro vérifié</span><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price-row"><span class="price">14 200 €</span><span class="fresh">2 j.</span></div>
-          <div class="title">Renault Trafic utilitaire</div>
-          <div class="sub">Garage Meunier · Bordeaux</div>
+          <div class="price-row"><span class="price">600 €</span><span class="fresh">3 j.</span></div>
+          <div class="title">Chiots Golden Retriever LOF</div>
+          <div class="sub">Élevage du Clos · Rennes</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price-row"><span class="price">6 300 €</span><span class="fresh">2 j.</span></div>
-          <div class="title">Citroën C3 — 2016</div>
-          <div class="sub">Particulier · 62 000 km</div>
+          <div class="price-row"><span class="price">Don</span><span class="fresh">4 j.</span></div>
+          <div class="title">Cochons d'Inde à adopter (2)</div>
+          <div class="sub">Bordeaux · Particulier</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price-row"><span class="price">22 500 €</span><span class="fresh">3 j.</span></div>
-          <div class="title">Peugeot 3008 — 2021</div>
-          <div class="sub">Garage Meunier · Bordeaux</div>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <span class="label eyebrow-flagship">Spécialité collection — le reste des loisirs suit le catalogue standard</span>
-    <div class="section-head" style="margin-top:0.3rem;">
-      <h2>Loisirs</h2>
-      <a class="see-all" href="#">Voir les 860 annonces →</a>
-    </div>
-    <div class="card-strip">
-      <article class="card">
-        <div class="thumb"><span class="fav on">♥</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">640 €</span><span class="fresh">Auj.</span></div>
-          <div class="title">Montre automatique — années 60</div>
-          <div class="sub">Révisée · Dijon</div>
+          <div class="price-row"><span class="price">120 €</span><span class="fresh">5 j.</span></div>
+          <div class="title">Aquarium 200L équipé + poissons</div>
+          <div class="sub">Lille · Particulier</div>
         </div>
       </article>
       <article class="card">
         <div class="thumb"><span class="fav">♡</span></div>
         <div class="body">
-          <div class="price-row"><span class="price">120 €</span><span class="fresh">Auj.</span></div>
-          <div class="title">Vinyles jazz — lot de 40</div>
-          <div class="sub">Bon état · Lille</div>
+          <div class="price-row"><span class="price">200 €</span><span class="fresh">1 sem.</span></div>
+          <div class="title">Poneys Shetland, lot de 2</div>
+          <div class="sub">Dordogne · Particulier</div>
         </div>
       </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">210 €</span><span class="fresh">1 j.</span></div>
-          <div class="title">Meuble TV teck vintage</div>
-          <div class="sub">Toulouse</div>
-        </div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">85 €</span><span class="fresh">4 j.</span></div>
-          <div class="title">Appareil photo argentique</div>
-          <div class="sub">Fonctionnel, testé · Rennes</div>
-        </div>
-      </article>
-      <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
-        <div class="body">
-          <div class="price-row"><span class="price">450 €</span><span class="fresh">6 j.</span></div>
-          <div class="title">Service à thé porcelaine</div>
-          <div class="sub">Collection complète · Nancy</div>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section class="trust">
-  <div class="wrap trust-grid">
-    <div class="trust-item"><span class="label">Plaques floutées</span><p>Automatiquement, sur chaque photo déposée.</p></div>
-    <div class="trust-item"><span class="label">Historique gratuit</span><p>Rapport HistoVec joint sur toutes les annonces auto.</p></div>
-    <div class="trust-item"><span class="label">Vendeurs suivis</span><p>Délai de réponse et taux de retrait affichés, pas d'étoiles achetées.</p></div>
-    <div class="trust-item"><span class="label">Communautés vérifiées</span><p>Invité par un collègue ou un proche, jamais par un inconnu.</p></div>
-  </div>
-</section>
-
-<section class="tint">
-  <div class="wrap">
-    <div class="section-head"><h2 style="font-size:1.05rem;">Aussi sur le bon truc</h2></div>
-    <div class="catalog-grid">
-      <a class="cat-tile" href="#"><div class="n">410</div><div class="name">Immobilier</div></a>
-      <a class="cat-tile" href="#"><div class="n">190</div><div class="name">Emploi</div></a>
-      <a class="cat-tile" href="#"><div class="n">265</div><div class="name">Mode</div></a>
-      <a class="cat-tile" href="#"><div class="n">330</div><div class="name">Maison &amp; jardin</div></a>
-      <a class="cat-tile" href="#"><div class="n">140</div><div class="name">Électronique</div></a>
-      <a class="cat-tile" href="#"><div class="n">95</div><div class="name">Matériel pro</div></a>
-      <a class="cat-tile" href="#"><div class="n">70</div><div class="name">Famille</div></a>
-      <a class="cat-tile" href="#"><div class="n">58</div><div class="name">Autres</div></a>
     </div>
   </div>
 </section>
