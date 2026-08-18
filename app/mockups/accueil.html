@@ -11,23 +11,28 @@
     --warm-ink: #fdf1ea;
     --line: #e6e5e0;
     --muted: #6c6a5e;
+    --brand-red: #e2231a; /* approximation du rouge lacentrale.fr, site inaccessible au scraping (anti-bot) pour vérifier la valeur exacte */
+    --brand-red-ink: #ffffff;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14; --surface-2: #221e16;
       --accent: #7fb59e; --accent-ink: #0d1f19; --warm: #e0895c;
       --warm-ink: #2a1710; --line: #3a3628; --muted: #a49f8c;
+      --brand-red: #ff5347; --brand-red-ink: #1a0503;
     }
   }
   :root[data-theme="dark"] {
     --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14; --surface-2: #221e16;
     --accent: #7fb59e; --accent-ink: #0d1f19; --warm: #e0895c;
     --warm-ink: #2a1710; --line: #3a3628; --muted: #a49f8c;
+    --brand-red: #ff5347; --brand-red-ink: #1a0503;
   }
   :root[data-theme="light"] {
     --ink: #1c1b18; --paper: #ffffff; --surface: #ffffff; --surface-2: #ffffff;
     --accent: #1f4d3e; --accent-ink: #eef2ee; --warm: #c1592c;
     --warm-ink: #fdf1ea; --line: #e6e5e0; --muted: #6c6a5e;
+    --brand-red: #e2231a; --brand-red-ink: #ffffff;
   }
 
   * { box-sizing: border-box; }
@@ -66,7 +71,6 @@
     z-index: 20;
   }
   header.site {
-    border-bottom: 1px solid var(--line);
     background: var(--surface);
   }
   .nav {
@@ -79,41 +83,53 @@
   .wordmark {
     font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-weight: 800;
-    font-size: 1.7rem;
+    font-size: 2rem;
     letter-spacing: -0.02em;
     display: flex;
     align-items: baseline;
     gap: 0;
     flex-shrink: 0;
   }
-  .wordmark .truc { color: var(--warm); }
+  .wordmark, .wordmark .truc { color: var(--brand-red); }
   .nav-search {
     flex: 1;
-    max-width: 520px;
+    max-width: 482px; /* 520px - 1cm (~38px) */
     display: flex;
     align-items: center;
     gap: 0.5rem;
     background: var(--paper);
     border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 0.55rem 0.7rem;
+    border-radius: 999px;
+    padding: 0.3rem 0.3rem 0.3rem 0.9rem;
   }
   .nav-search input {
     border: none; background: transparent; flex: 1;
     font-size: 0.92rem; color: var(--ink); font-family: inherit;
   }
   .nav-search input:focus { outline: none; }
-  .nav-search .icon { color: var(--muted); font-size: 0.9rem; }
+  .nav-search-btn {
+    display: flex; align-items: center; justify-content: center;
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: var(--brand-red); color: var(--brand-red-ink);
+    border: none; font-size: 2.2rem; font-weight: 700; cursor: pointer;
+  }
+  .nav-search-btn:hover { filter: brightness(1.08); }
   .nav-actions { display: flex; align-items: center; gap: 1.1rem; flex-shrink: 0; }
-  .nav-actions .ghost { font-size: 0.88rem; color: var(--muted); white-space: nowrap; }
   .btn {
     display: inline-flex; align-items: center; gap: 0.4rem;
     padding: 0.55rem 1rem; border-radius: 3px;
     font-size: 0.88rem; font-weight: 600; border: 1px solid transparent;
     white-space: nowrap;
   }
-  .btn-accent { background: var(--accent); color: var(--accent-ink); }
+  .btn-accent { background: var(--brand-red); color: var(--brand-red-ink); }
   .btn-accent:hover { filter: brightness(1.08); }
+  .btn-plus {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid currentColor;
+    font-size: 1.05rem; font-weight: 600; line-height: 1; flex-shrink: 0;
+  }
+  .btn-plus span { transform: translateY(-0.5px); }
 
   .icon-link {
     display: flex;
@@ -121,7 +137,7 @@
     align-items: center;
     gap: 0.15rem;
     font-size: 0.68rem;
-    color: var(--muted);
+    color: #000;
     position: relative;
   }
   .icon-link .glyph {
@@ -166,7 +182,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 1rem;
   }
-  .cat-tile-link .t { font-size: 0.8rem; color: var(--muted); text-align: center; line-height: 1.15; }
+  .cat-tile-link .t { font-size: 0.8rem; color: #000; text-align: center; line-height: 1.15; }
   .cat-tile-link:hover .ic, .cat-tile-link.active .ic { border-color: var(--warm); }
   .cat-tile-link.active .t, .cat-tile-link:hover .t { color: var(--ink); }
 
@@ -200,6 +216,43 @@
     color: var(--ink);
   }
   .submenu a:hover { background: var(--surface-2); color: var(--warm); }
+
+  /* ---- mega-menu (Loisirs), mise en page calquée sur LBC : colonne latérale + 3 colonnes de sous-catégories ---- */
+  .submenu.mega {
+    display: grid;
+    grid-template-columns: 210px repeat(3, 1fr);
+    min-width: 860px;
+    padding: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 6px;
+  }
+  .mega-side {
+    background: #f5f5f3;
+    border-right: 1px solid var(--line);
+    border-left: 2px solid #9db8d8;
+    padding: 1.3rem 1rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .mega-col { padding: 1.2rem 1.4rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  .submenu.mega a { display: block; padding: 0; font-size: 0.85rem; }
+  .mega-all { font-weight: 700; }
+  .mega-group + .mega-group { margin-top: 1.2rem; }
+  .mega-group h4 { font-size: 0.9rem; font-weight: 700; margin: 0 0 0.3rem; }
+  .mega-seeall { color: var(--muted); font-size: 0.8rem; }
+  .mega-head { font-size: 0.9rem; font-weight: 700; color: var(--ink); }
+  .mega-head:hover { color: var(--warm); }
+  .ext-ic { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+  .mega-side { flex-direction: column; align-items: flex-start; gap: 0.9rem; height: 100%; }
+  .mega-side-label { display: flex; align-items: center; gap: 0.5rem; }
+  .mega-promo {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.6rem 0.9rem; font-size: 0.82rem; font-weight: 600; color: var(--ink);
+    margin-top: auto;
+  }
+  .mega-promo .chev { color: var(--muted); }
 
   /* ---- utility strip: recent searches + recently viewed, compact ---- */
   .utility { background: var(--surface-2); border-bottom: 1px solid var(--line); }
@@ -284,32 +337,72 @@
     position: relative;
     height: 100%;
     padding: 0 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    z-index: 2;
+  }
+  .banner-half {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
+    gap: 0.3rem;
     text-align: center;
-    z-index: 2;
+    padding: 0 0.75rem 15px; /* remonte le contenu et laisse ~4mm de marge basse sans changer la hauteur du bandeau */
   }
+  .banner-half + .banner-half { border-left: 1px solid rgba(255,255,255,0.25); }
   .depose-banner .kicker {
     color: rgba(255,255,255,0.85);
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    line-height: 1.2;
   }
   .depose-banner h2 {
     color: #fff;
-    font-size: 1.25rem;
-    max-width: 30rem;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    max-width: 28rem;
   }
+  .banner-pitch {
+    color: #fff;
+    font-size: 0.76rem;
+    line-height: 1.3;
+    max-width: 27rem;
+    margin: 0;
+  }
+  .banner-pitch a { color: #fff; text-decoration: underline; text-underline-offset: 2px; font-weight: 700; }
+  .share-item { position: relative; margin-top: 0.25rem; }
+  .share-trigger {
+    background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 999px; padding: 0.3rem 0.85rem; font-size: 0.7rem; font-weight: 700;
+    text-decoration: underline; text-underline-offset: 2px;
+  }
+  .share-trigger:hover { background: rgba(255,255,255,0.25); }
+  .share-menu {
+    position: fixed; left: 0; top: 0;
+    transform: translateX(-50%) translateY(-6px);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 12px 24px -10px rgba(0,0,0,0.35); padding: 0.4rem;
+    min-width: 180px; display: flex; flex-direction: column; gap: 0.15rem;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+    z-index: 40;
+  }
+  .share-item.open .share-menu { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+  .share-menu a {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.45rem 0.6rem; border-radius: 6px; font-size: 0.85rem; color: var(--ink);
+  }
+  .share-menu a:hover { background: var(--surface-2); }
   .depose-banner .btn-depose {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.6rem 1.4rem;
+    padding: 0.45rem 1.2rem;
     border-radius: 999px;
     background: #fff;
     color: var(--accent);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 700;
     box-shadow: 0 8px 22px -6px rgba(0,0,0,0.35);
     animation: pulse 2.4s ease-in-out infinite;
@@ -354,16 +447,6 @@
   }
   @media (min-width: 1620px) { .ad-skin { display: block; } }
 
-  .ad-top {
-    padding: 1.1rem 0 0.3rem; background: var(--paper);
-    border-bottom: 1px solid var(--line);
-  }
-  .ad-top .banner {
-    max-width: 970px; height: 250px; margin: 0 auto;
-    border-radius: 4px; overflow: hidden;
-    box-shadow: 0 4px 18px -4px rgba(0,0,0,0.25);
-  }
-
   /* ---- créa "crédit conso" générique (pas la vraie pub Cofidis) ---- */
   .credit-ad {
     width: 100%; height: 100%;
@@ -386,14 +469,6 @@
     background: #fff; color: #d6365a; font-weight: 700;
     border-radius: 999px; padding: 0.4rem 0.9rem;
   }
-  /* format horizontal 970x250 */
-  .credit-ad.horizontal { align-items: center; padding: 0 2rem; gap: 1.5rem; }
-  .credit-ad.horizontal .pitch { flex: 1; }
-  .credit-ad.horizontal .headline { font-size: 1.6rem; font-weight: 800; line-height: 1.1; }
-  .credit-ad.horizontal .sub { font-size: 0.85rem; opacity: 0.9; margin-top: 0.2rem; }
-  .credit-ad.horizontal .figure { font-size: 2.4rem; font-weight: 800; white-space: nowrap; }
-  .credit-ad.horizontal .figure small { font-size: 1rem; font-weight: 600; display: block; opacity: 0.85; }
-  .credit-ad.horizontal .cta { font-size: 0.85rem; }
   /* format vertical 300x600 */
   .credit-ad.vertical { flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3.5rem 1.4rem 2rem; gap: 1.1rem; }
   .credit-ad.vertical .headline { font-size: 1.4rem; font-weight: 800; line-height: 1.15; }
@@ -416,6 +491,24 @@
     aspect-ratio: 4/3;
     background: linear-gradient(135deg, var(--line), var(--surface));
     position: relative;
+  }
+  /* ---- illustrations SVG inline (pas de vraie photo possible : pas d'outil de génération d'image,
+     et la CSP des Artifacts bloque toute image externe hotlinkée) ---- */
+  .thumb.ic-car, .mini-card .thumb.ic-car { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 40l4-14a6 6 0 0 1 5.7-4h32.6a6 6 0 0 1 5.7 4l4 14v10a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3v-2H14v2a3 3 0 0 1-3 3h-2a3 3 0 0 1-3-3V40z' fill='%238a8578'/%3E%3Ccircle cx='18' cy='48' r='5' fill='%23f4f2ec'/%3E%3Ccircle cx='46' cy='48' r='5' fill='%23f4f2ec'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-van, .mini-card .thumb.ic-van { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 44V22a4 4 0 0 1 4-4h30l12 10h2a4 4 0 0 1 4 4v12a2 2 0 0 1-2 2h-2a5 5 0 0 0-10 0H20a5 5 0 0 0-10 0H8a2 2 0 0 1-2-2z' fill='%238a8578'/%3E%3Ccircle cx='15' cy='48' r='5' fill='%23f4f2ec'/%3E%3Ccircle cx='45' cy='48' r='5' fill='%23f4f2ec'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-house, .mini-card .thumb.ic-house { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 8 8 28v28h16V40h16v16h16V28z' fill='%238a8578'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-vinyl, .mini-card .thumb.ic-vinyl { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='24' fill='%238a8578'/%3E%3Ccircle cx='32' cy='32' r='16' fill='none' stroke='%23f4f2ec' stroke-width='1.5'/%3E%3Ccircle cx='32' cy='32' r='10' fill='none' stroke='%23f4f2ec' stroke-width='1.5'/%3E%3Ccircle cx='32' cy='32' r='4' fill='%23f4f2ec'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-tv, .mini-card .thumb.ic-tv { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='14' width='48' height='30' rx='3' fill='%238a8578'/%3E%3Crect x='24' y='48' width='16' height='4' fill='%238a8578'/%3E%3Crect x='18' y='44' width='4' height='6' fill='%238a8578'/%3E%3Crect x='42' y='44' width='4' height='6' fill='%238a8578'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-camera, .mini-card .thumb.ic-camera { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='8' y='20' width='48' height='32' rx='4' fill='%238a8578'/%3E%3Crect x='22' y='12' width='16' height='8' rx='2' fill='%238a8578'/%3E%3Ccircle cx='32' cy='36' r='11' fill='%23f4f2ec'/%3E%3Ccircle cx='32' cy='36' r='6' fill='%238a8578'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-teapot, .mini-card .thumb.ic-teapot { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M14 30h30a10 10 0 0 1 10 10 4 4 0 0 1-4 4h-2' fill='none' stroke='%238a8578' stroke-width='4' stroke-linecap='round'/%3E%3Cellipse cx='28' cy='40' rx='18' ry='12' fill='%238a8578'/%3E%3Cpath d='M16 30q-2-8 4-10' fill='none' stroke='%238a8578' stroke-width='4' stroke-linecap='round'/%3E%3Ccircle cx='28' cy='24' r='3' fill='%238a8578'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-watch, .mini-card .thumb.ic-watch { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='26' y='4' width='12' height='10' rx='2' fill='%238a8578'/%3E%3Crect x='26' y='50' width='12' height='10' rx='2' fill='%238a8578'/%3E%3Ccircle cx='32' cy='32' r='18' fill='%238a8578'/%3E%3Ccircle cx='32' cy='32' r='13' fill='%23f4f2ec'/%3E%3Cpath d='M32 22v10l7 5' stroke='%238a8578' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-paw, .mini-card .thumb.ic-paw { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='32' cy='42' rx='15' ry='11' fill='%238a8578'/%3E%3Ccircle cx='14' cy='26' r='6.5' fill='%238a8578'/%3E%3Ccircle cx='26' cy='16' r='6.5' fill='%238a8578'/%3E%3Ccircle cx='40' cy='16' r='6.5' fill='%238a8578'/%3E%3Ccircle cx='50' cy='27' r='6.5' fill='%238a8578'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-bird, .mini-card .thumb.ic-bird { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='30' cy='34' rx='16' ry='12' fill='%238a8578'/%3E%3Ccircle cx='44' cy='24' r='8' fill='%238a8578'/%3E%3Cpath d='M50 22l8-3-4 8z' fill='%238a8578'/%3E%3Cpath d='M18 40q-8 6-14 2' stroke='%238a8578' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb.ic-fish, .mini-card .thumb.ic-fish { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cellipse cx='28' cy='32' rx='18' ry='12' fill='%238a8578'/%3E%3Cpath d='M46 32l14-10v20z' fill='%238a8578'/%3E%3Ccircle cx='18' cy='28' r='2.5' fill='%23f4f2ec'/%3E%3C/svg%3E"), linear-gradient(135deg, var(--line), var(--surface)); }
+  .thumb[class*="ic-"], .mini-card .thumb[class*="ic-"] {
+    background-repeat: no-repeat, no-repeat;
+    background-position: center, center;
+    background-size: 44%, cover;
   }
   .card .fav {
     position: absolute; top: 0.5rem; right: 0.5rem;
@@ -554,36 +647,20 @@
   </div>
 </div></div>
 
-<div class="ad-top">
-  <div class="banner">
-    <div class="credit-ad horizontal">
-      <div class="brand">RAPIDO CRÉDIT</div>
-      <div class="pitch">
-        <div class="headline">Un projet ? On vous prête main forte.</div>
-        <div class="sub">Réponse de principe immédiate, sans engagement</div>
-      </div>
-      <div class="figure">2,90%<small>TAEG fixe dès</small></div>
-      <span class="cta">Je simule mon prêt →</span>
-      <div class="legal">Crédit à la consommation soumis à conditions. Un crédit vous engage et doit être remboursé. Vérifiez vos capacités de remboursement avant de vous engager. Exemple à titre indicatif, sous réserve d'acceptation du dossier par l'organisme prêteur.</div>
-    </div>
-  </div>
-  <div class="wrap"><div class="ad-note">Emplacement publicitaire — créa générique, pas la vraie pub Cofidis</div></div>
-</div>
-
 <div class="site-top">
 <header class="site">
   <div class="wrap nav">
     <a class="wordmark" href="#"><span>lebon</span><span class="truc">truc</span></a>
     <form class="nav-search" role="search">
-      <span class="icon">⌕</span>
       <input type="search" placeholder="Une Clio, un vinyle, un utilitaire…" aria-label="Rechercher une annonce" />
+      <button type="submit" class="nav-search-btn" aria-label="Rechercher">⌕</button>
     </form>
     <nav class="nav-actions">
       <a class="icon-link" href="#"><span class="glyph">✉️</span>Messages<span class="dot"></span></a>
       <a class="icon-link" href="#"><span class="glyph">♡</span>Favoris</a>
       <a class="icon-link" href="#"><span class="glyph">☆</span>Mes recherches</a>
-      <a class="ghost" href="#">Se connecter</a>
-      <a class="btn btn-accent" href="#">Déposer une annonce</a>
+      <a class="icon-link" href="#"><span class="glyph">👤</span>Se connecter</a>
+      <a class="btn btn-accent" href="#"><span class="btn-plus"><span>+</span></span>Déposer une annonce</a>
     </nav>
   </div>
 </header>
@@ -592,24 +669,53 @@
   <div class="wrap">
     <div class="cat-item">
       <button type="button" class="cat-tile-link active"><span class="ic">🚗</span><span class="t">Véhicules</span></button>
-      <div class="submenu">
-        <a href="#">Voitures</a><a href="#">Motos</a><a href="#">Caravaning</a><a href="#">Utilitaires</a>
-        <a href="#">Équipement auto</a><a href="#">Équipement moto</a><a href="#">Nautisme</a><a href="#">Équipement nautisme</a>
-      </div>
-    </div>
-    <div class="cat-item">
-      <button type="button" class="cat-tile-link"><span class="ic">🎨</span><span class="t">Loisirs</span></button>
-      <div class="submenu">
-        <a href="#">DVD - Films</a><a href="#">CD - Musique</a><a href="#">Livres</a>
-        <a href="#">Sports &amp; Hobbies</a><a href="#">Vélos</a><a href="#">Instruments de musique</a>
-        <a href="#">Collection</a><a href="#">Jeux &amp; Jouets</a><a href="#">Vins &amp; gastronomie</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🚗</span>Véhicules</span>
+          <a class="mega-promo" href="#"><span>🚗</span>Découvrir l'actualité automobile <span class="chev">›</span></a>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Véhicules</a>
+          <div class="mega-group">
+            <h4>Voitures</h4>
+            <a href="#">Audi</a><a href="#">BMW</a><a href="#">Mercedes</a><a href="#">Peugeot</a>
+            <a href="#">Renault</a><a href="#">Volkswagen</a>
+            <a class="mega-seeall" href="#">Voir toutes les marques</a>
+          </div>
+          <div class="mega-group">
+            <h4>Motos</h4>
+            <a href="#">BMW</a><a href="#">Honda</a><a href="#">Kawasaki</a><a href="#">Suzuki</a><a href="#">Yamaha</a>
+            <a class="mega-seeall" href="#">Voir toutes les marques</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group"><h4>Caravaning</h4></div>
+          <div class="mega-group"><h4>Utilitaires</h4></div>
+          <div class="mega-group"><h4>Camions <span class="ext-ic">↗</span></h4></div>
+          <div class="mega-group"><h4>Nautisme</h4></div>
+          <div class="mega-group"><h4>Vélos</h4></div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group"><h4>Équipement auto</h4></div>
+          <div class="mega-group"><h4>Équipement moto</h4></div>
+          <div class="mega-group"><h4>Équipement caravaning</h4></div>
+          <div class="mega-group"><h4>Équipement nautisme</h4></div>
+          <div class="mega-group"><a class="mega-head" href="#">Équipements vélos</a></div>
+          <div class="mega-group"><h4>Services de réparations mécaniques</h4></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🏠</span><span class="t">Immobilier</span></button>
       <div class="submenu">
         <a href="#">Ventes immobilières</a><a href="#">Locations</a><a href="#">Colocations</a>
-        <a href="#">Bureaux &amp; commerces</a><a href="#">Parkings</a><a href="#">Locations de vacances</a>
+        <a href="#">Bureaux &amp; Commerces</a><a href="#">Services de déménagement</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <button type="button" class="cat-tile-link"><span class="ic">🏖️</span><span class="t">Locations de vacances</span></button>
+      <div class="submenu">
+        <a href="#">Locations saisonnières</a><a href="#">Hôtels</a><a href="#">Ventes flash vacances</a><a href="#">Locations en Espagne</a>
       </div>
     </div>
     <div class="cat-item">
@@ -621,41 +727,118 @@
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">👕</span><span class="t">Mode</span></button>
       <div class="submenu">
-        <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; bagagerie</a><a href="#">Montres &amp; bijoux</a>
+        <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; Bagagerie</a><a href="#">Montres &amp; Bijoux</a>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🛋️</span><span class="t">Maison &amp; jardin</span></button>
       <div class="submenu">
-        <a href="#">Ameublement</a><a href="#">Électroménager</a><a href="#">Arts de la table</a>
-        <a href="#">Décoration</a><a href="#">Linge de maison</a><a href="#">Bricolage</a><a href="#">Jardinage</a>
+        <a href="#">Ameublement</a><a href="#">Papeterie &amp; Fournitures scolaires</a><a href="#">Électroménager</a>
+        <a href="#">Arts de la table</a><a href="#">Décoration</a><a href="#">Linge de maison</a>
+        <a href="#">Bricolage</a><a href="#">Jardin &amp; Plantes</a><a href="#">Services de jardinerie &amp; bricolage</a>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🔌</span><span class="t">Électronique</span></button>
       <div class="submenu">
-        <a href="#">Informatique</a><a href="#">Image &amp; son</a><a href="#">Téléphonie</a><a href="#">Consoles &amp; jeux vidéo</a>
+        <a href="#">Ordinateurs</a><a href="#">Accessoires informatique</a><a href="#">Tablettes &amp; Liseuses</a>
+        <a href="#">Photo, audio &amp; vidéo</a><a href="#">Téléphones &amp; Objets connectés</a>
+        <a href="#">Accessoires téléphone &amp; objets connectés</a><a href="#">Consoles</a><a href="#">Jeux vidéo</a>
+        <a href="#">Électroménager</a><a href="#">Services de réparations électroniques</a>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🛠️</span><span class="t">Matériel pro</span></button>
       <div class="submenu">
-        <a href="#">Matériel agricole</a><a href="#">Équipements industriels</a><a href="#">Fournitures de bureau</a>
+        <a href="#">Tracteurs</a><a href="#">Matériel agricole</a><a href="#">BTP - Chantier gros-œuvre</a>
+        <a href="#">Poids lourds</a><a href="#">Manutention - Levage</a><a href="#">Équipements industriels</a>
+        <a href="#">Équipements pour restaurants &amp; hôtels</a><a href="#">Équipements &amp; Fournitures de bureau</a>
+        <a href="#">Équipements pour commerces &amp; marchés</a><a href="#">Matériel médical</a>
+      </div>
+    </div>
+    <div class="cat-item">
+      <button type="button" class="cat-tile-link"><span class="ic">🎨</span><span class="t">Loisirs</span></button>
+      <div class="submenu mega">
+        <div class="mega-side"><span class="mega-side-label"><span class="mega-side-ic">🎨</span>Loisirs</span></div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Loisirs</a>
+          <a href="#">Antiquités</a>
+          <a href="#">Artistes &amp; Musiciens</a>
+          <a href="#">Billetterie</a>
+          <a href="#">Collection</a>
+          <a href="#">CD - Musique</a>
+          <a href="#">DVD - Films</a>
+          <a href="#">Instruments de musique</a>
+          <a href="#">Livres</a>
+          <a href="#">Modélisme</a>
+          <a href="#">Vins &amp; Gastronomie</a>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Jeux &amp; Jouets</h4>
+            <a href="#">Jeux de société</a>
+            <a href="#">Poupées et accessoires</a>
+            <a href="#">Porteurs, trotteurs et draisiennes</a>
+            <a href="#">Jouets d'éveil</a>
+            <a href="#">Cuisines et dînettes</a>
+            <a href="#">Jeux de construction</a>
+            <a href="#">Voitures et circuits</a>
+            <a href="#">Puzzle</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group">
+            <a class="mega-head" href="#">Loisirs créatifs</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <a class="mega-head" href="#">Sport &amp; Plein air</a>
+          </div>
+          <div class="mega-group">
+            <h4>Vélos</h4>
+            <a href="#">Vélo de route</a>
+            <a href="#">VTT</a>
+            <a href="#">Vélo électrique</a>
+            <a href="#">Vélo enfant</a>
+            <a href="#">VTC</a>
+            <a href="#">Vélo de ville</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group">
+            <a class="mega-head" href="#">Équipements vélos</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cat-item">
+      <button type="button" class="cat-tile-link"><span class="ic">🐾</span><span class="t">Animaux</span></button>
+      <div class="submenu">
+        <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+        <a href="#">Accessoires animaux</a><a href="#">Animaux perdus</a><a href="#">Services aux animaux</a>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">👪</span><span class="t">Famille</span></button>
       <div class="submenu">
-        <a href="#">Vêtements bébé</a><a href="#">Équipement bébé</a><a href="#">Mobilier enfant</a><a href="#">Jouets</a>
+        <a href="#">Mobilier enfant</a><a href="#">Équipement bébé</a><a href="#">Vêtements bébé</a>
+        <a href="#">Vêtements enfants</a><a href="#">Vêtements maternité</a><a href="#">Chaussures enfants</a>
+        <a href="#">Montres &amp; bijoux enfants</a><a href="#">Accessoires &amp; bagagerie enfants</a>
+        <a href="#">Jeux &amp; Jouets</a><a href="#">Baby-Sitting</a>
       </div>
     </div>
     <div class="cat-item">
-      <button type="button" class="cat-tile-link"><span class="ic">···</span><span class="t">Autres</span></button>
+      <button type="button" class="cat-tile-link"><span class="ic">🛎️</span><span class="t">Services</span></button>
       <div class="submenu">
-        <a href="#">Services</a><a href="#">Billetterie</a><a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
-        <a href="#">Dons (à donner)</a><a href="#">Recherche d'emploi</a>
+        <a href="#">Artistes &amp; Musiciens</a><a href="#">Baby-Sitting</a><a href="#">Billetterie</a>
+        <a href="#">Covoiturage</a><a href="#">Cours particuliers</a><a href="#">Entraide entre voisins</a>
+        <a href="#">Évènements</a><a href="#">Services à la personne</a><a href="#">Services aux animaux</a>
+        <a href="#">Services de déménagement</a><a href="#">Services de réparations électroniques</a>
+        <a href="#">Services de réparations mécaniques</a><a href="#">Services de jardinerie &amp; bricolage</a>
+        <a href="#">Services évènementiels</a><a href="#">Autres services</a>
       </div>
     </div>
+    <a class="cat-tile-link" href="#"><span class="ic">🎁</span><span class="t">Dons</span></a>
+    <a class="cat-tile-link" href="#"><span class="ic">···</span><span class="t">Autres</span></a>
   </div>
 </nav>
 </div>
@@ -668,9 +851,33 @@
   <span class="drift" style="left:74%; animation-duration:7.5s; animation-delay:3s;">👕</span>
   <span class="drift" style="left:88%; animation-duration:9.5s; animation-delay:5s;">🚲</span>
   <div class="wrap">
-    <span class="label kicker">Ça prend 2 minutes</span>
-    <h2>Un truc à vendre ? Déposez votre annonce dès maintenant</h2>
-    <a class="btn-depose" href="#"><span>＋</span>Déposer une annonce</a>
+    <div class="banner-half">
+      <span class="label kicker">Ça prend 2 minutes</span>
+      <h2>Un truc à vendre ? Déposez votre annonce dès maintenant</h2>
+      <a class="btn-depose" href="#"><span>＋</span>Déposer une annonce</a>
+    </div>
+    <div class="banner-half">
+      <p class="banner-pitch"><svg class="tricolor-bulb" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" style="vertical-align:-7px; margin-right:0.3em;">
+        <defs><clipPath id="bulbClip"><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v1h6v-1c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></clipPath></defs>
+        <g clip-path="url(#bulbClip)">
+          <rect x="0" y="0" width="8" height="20" fill="#0055A4"/>
+          <rect x="8" y="0" width="8" height="20" fill="#ffffff"/>
+          <rect x="16" y="0" width="8" height="20" fill="#EF4135"/>
+        </g>
+        <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v1h6v-1c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z" fill="none" stroke="#ffffff" stroke-width="1"/>
+        <rect x="9.3" y="18.8" width="5.4" height="1.3" rx="0.35" fill="#ffffff"/>
+        <rect x="9.6" y="20.6" width="4.8" height="1.3" rx="0.35" fill="#ffffff"/>
+      </svg>LeBonTruc, c'est comme l'autre — mais 100% français, et moins cher (pas besoin de financer des milliards d'€ aux fonds américains) <a href="https://siecledigital.fr/2023/11/22/adevinta-maison-mere-de-leboncoin-bientot-rachetee-pour-12-milliards-deuros/" target="_blank" rel="noopener">(en savoir plus)</a></p>
+      <div class="share-item">
+        <button type="button" class="share-trigger">Donnez lui un coup de pouce, recommandez Lebontruc</button>
+        <div class="share-menu">
+          <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Flebontruc.fr" target="_blank" rel="noopener">📘 Facebook</a>
+          <a href="https://wa.me/?text=Un%20site%20d%27annonces%20100%25%20fran%C3%A7ais%20%C3%A0%20d%C3%A9couvrir%20%3A%20lebontruc.fr" target="_blank" rel="noopener">💬 WhatsApp</a>
+          <a href="sms:?body=Un%20site%20d%27annonces%20100%25%20fran%C3%A7ais%20%C3%A0%20d%C3%A9couvrir%20%3A%20lebontruc.fr">💬 SMS</a>
+          <a href="mailto:?subject=Un%20site%20%C3%A0%20d%C3%A9couvrir&body=Salut%2C%20je%20te%20recommande%20lebontruc.fr%20!">📧 Email</a>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -687,12 +894,12 @@
     <div class="u-row">
       <span class="label" style="flex-shrink:0;">Vues récemment</span>
       <div class="mini-strip">
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">11 400 €</div><div class="title">Clio V — 2019</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">640 €</div><div class="title">Montre auto. 60s</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">890 €/mois</div><div class="title">T2 centre-ville</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">210 €</div><div class="title">Meuble TV teck</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">14 200 €</div><div class="title">Trafic utilitaire</div></div></a>
-        <a class="mini-card" href="#"><div class="thumb"></div><div class="body"><div class="price">85 €</div><div class="title">Appareil argentique</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb ic-car"></div><div class="body"><div class="price">11 400 €</div><div class="title">Clio V — 2019</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb ic-watch"></div><div class="body"><div class="price">640 €</div><div class="title">Montre auto. 60s</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb ic-house"></div><div class="body"><div class="price">890 €/mois</div><div class="title">T2 centre-ville</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb ic-tv"></div><div class="body"><div class="price">210 €</div><div class="title">Meuble TV teck</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb ic-van"></div><div class="body"><div class="price">14 200 €</div><div class="title">Trafic utilitaire</div></div></a>
+        <a class="mini-card" href="#"><div class="thumb ic-camera"></div><div class="body"><div class="price">85 €</div><div class="title">Appareil argentique</div></div></a>
       </div>
     </div>
   </div>
@@ -705,7 +912,7 @@
     </div>
     <div class="card-strip">
       <article class="card">
-        <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="badge">Plaque floutée</span><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">21 500 €</span><span class="fresh">Hier</span></div>
           <div class="title">Peugeot 205 GTI — 1990</div>
@@ -713,7 +920,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">15 800 €</span><span class="fresh">3 j.</span></div>
           <div class="title">Peugeot 205 Rallye — 1991</div>
@@ -721,7 +928,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">19 900 €</span><span class="fresh">5 j.</span></div>
           <div class="title">Renault 5 Alpine — 1987</div>
@@ -729,7 +936,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">17 200 €</span><span class="fresh">1 sem.</span></div>
           <div class="title">Peugeot 205 GTI — 1989</div>
@@ -737,7 +944,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">280 €</span><span class="fresh">2 sem.</span></div>
           <div class="title">Jantes origine 205 GTI</div>
@@ -757,7 +964,7 @@
     </div>
     <div class="card-strip">
       <article class="card">
-        <div class="thumb"><span class="badge">Plaque floutée</span><span class="fav on">♥</span></div>
+        <div class="thumb ic-car"><span class="badge">Plaque floutée</span><span class="fav on">♥</span></div>
         <div class="body">
           <div class="price-row"><span class="price">18 900 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Peugeot 205 GTI — 1988</div>
@@ -765,7 +972,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">11 400 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Renault Clio V — 2019</div>
@@ -773,7 +980,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="badge">Pro vérifié</span><span class="fav">♡</span></div>
+        <div class="thumb ic-van"><span class="badge">Pro vérifié</span><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">14 200 €</span><span class="fresh">2 j.</span></div>
           <div class="title">Renault Trafic utilitaire</div>
@@ -781,7 +988,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">6 300 €</span><span class="fresh">2 j.</span></div>
           <div class="title">Citroën C3 — 2016</div>
@@ -789,7 +996,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-car"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">22 500 €</span><span class="fresh">3 j.</span></div>
           <div class="title">Peugeot 3008 — 2021</div>
@@ -809,7 +1016,7 @@
     </div>
     <div class="card-strip">
       <article class="card">
-        <div class="thumb"><span class="fav on">♥</span></div>
+        <div class="thumb ic-watch"><span class="fav on">♥</span></div>
         <div class="body">
           <div class="price-row"><span class="price">640 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Montre automatique — années 60</div>
@@ -817,7 +1024,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-vinyl"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">120 €</span><span class="fresh">Auj.</span></div>
           <div class="title">Vinyles jazz — lot de 40</div>
@@ -825,7 +1032,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-tv"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">210 €</span><span class="fresh">1 j.</span></div>
           <div class="title">Meuble TV teck vintage</div>
@@ -833,7 +1040,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-camera"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">85 €</span><span class="fresh">4 j.</span></div>
           <div class="title">Appareil photo argentique</div>
@@ -841,7 +1048,7 @@
         </div>
       </article>
       <article class="card">
-        <div class="thumb"><span class="fav">♡</span></div>
+        <div class="thumb ic-teapot"><span class="fav">♡</span></div>
         <div class="body">
           <div class="price-row"><span class="price">450 €</span><span class="fresh">6 j.</span></div>
           <div class="title">Service à thé porcelaine</div>
@@ -866,12 +1073,16 @@
     <div class="section-head"><h2 style="font-size:1.05rem;">Aussi sur le bon truc</h2></div>
     <div class="catalog-grid">
       <a class="cat-tile" href="#"><div class="n">410</div><div class="name">Immobilier</div></a>
+      <a class="cat-tile" href="#"><div class="n">35</div><div class="name">Locations de vacances</div></a>
       <a class="cat-tile" href="#"><div class="n">190</div><div class="name">Emploi</div></a>
       <a class="cat-tile" href="#"><div class="n">265</div><div class="name">Mode</div></a>
       <a class="cat-tile" href="#"><div class="n">330</div><div class="name">Maison &amp; jardin</div></a>
       <a class="cat-tile" href="#"><div class="n">140</div><div class="name">Électronique</div></a>
       <a class="cat-tile" href="#"><div class="n">95</div><div class="name">Matériel pro</div></a>
+      <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6" class="cat-tile"><div class="n">180</div><div class="name">Animaux</div></a>
       <a class="cat-tile" href="#"><div class="n">70</div><div class="name">Famille</div></a>
+      <a class="cat-tile" href="#"><div class="n">85</div><div class="name">Services</div></a>
+      <a class="cat-tile" href="#"><div class="n">40</div><div class="name">Dons</div></a>
       <a class="cat-tile" href="#"><div class="n">58</div><div class="name">Autres</div></a>
     </div>
   </div>
@@ -883,23 +1094,21 @@
       <div class="seo-block">
         <h3>Véhicules</h3>
         <div class="seo-tags">
-          <a href="#">Voitures</a><a href="#">Motos</a><a href="#">Caravaning</a><a href="#">Utilitaires</a>
-          <a href="#">Équipement auto</a><a href="#">Équipement moto</a><a href="#">Nautisme</a><a href="#">Équipement nautisme</a>
-        </div>
-      </div>
-      <div class="seo-block">
-        <h3>Loisirs</h3>
-        <div class="seo-tags">
-          <a href="#">DVD - Films</a><a href="#">CD - Musique</a><a href="#">Livres</a>
-          <a href="#">Sports &amp; Hobbies</a><a href="#">Vélos</a><a href="#">Instruments de musique</a>
-          <a href="#">Collection</a><a href="#">Jeux &amp; Jouets</a><a href="#">Vins &amp; gastronomie</a>
+          <a href="#">Voitures</a><a href="#">Motos</a><a href="#">Caravaning</a><a href="#">Utilitaires</a><a href="#">Camions</a>
+          <a href="#">Nautisme</a><a href="#">Vélos</a><a href="#">Équipement auto</a><a href="#">Équipement moto</a>
         </div>
       </div>
       <div class="seo-block">
         <h3>Immobilier</h3>
         <div class="seo-tags">
           <a href="#">Ventes immobilières</a><a href="#">Locations</a><a href="#">Colocations</a>
-          <a href="#">Bureaux &amp; commerces</a><a href="#">Parkings</a><a href="#">Locations de vacances</a>
+          <a href="#">Bureaux &amp; Commerces</a><a href="#">Services de déménagement</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Locations de vacances</h3>
+        <div class="seo-tags">
+          <a href="#">Locations saisonnières</a><a href="#">Hôtels</a><a href="#">Ventes flash vacances</a>
         </div>
       </div>
       <div class="seo-block">
@@ -911,32 +1120,64 @@
       <div class="seo-block">
         <h3>Mode</h3>
         <div class="seo-tags">
-          <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; bagagerie</a><a href="#">Montres &amp; bijoux</a>
+          <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; Bagagerie</a><a href="#">Montres &amp; Bijoux</a>
         </div>
       </div>
       <div class="seo-block">
         <h3>Maison &amp; jardin</h3>
         <div class="seo-tags">
-          <a href="#">Ameublement</a><a href="#">Électroménager</a><a href="#">Arts de la table</a>
-          <a href="#">Décoration</a><a href="#">Linge de maison</a><a href="#">Bricolage</a><a href="#">Jardinage</a>
+          <a href="#">Ameublement</a><a href="#">Papeterie &amp; Fournitures scolaires</a><a href="#">Électroménager</a>
+          <a href="#">Arts de la table</a><a href="#">Décoration</a><a href="#">Linge de maison</a>
+          <a href="#">Bricolage</a><a href="#">Jardin &amp; Plantes</a>
         </div>
       </div>
       <div class="seo-block">
         <h3>Électronique</h3>
         <div class="seo-tags">
-          <a href="#">Informatique</a><a href="#">Image &amp; son</a><a href="#">Téléphonie</a><a href="#">Consoles &amp; jeux vidéo</a>
+          <a href="#">Ordinateurs</a><a href="#">Tablettes &amp; Liseuses</a><a href="#">Photo, audio &amp; vidéo</a>
+          <a href="#">Téléphones &amp; Objets connectés</a><a href="#">Consoles</a><a href="#">Jeux vidéo</a>
         </div>
       </div>
       <div class="seo-block">
         <h3>Matériel pro</h3>
         <div class="seo-tags">
-          <a href="#">Matériel agricole</a><a href="#">Équipements industriels</a><a href="#">Fournitures de bureau</a>
+          <a href="#">Tracteurs</a><a href="#">Matériel agricole</a><a href="#">BTP - Chantier gros-œuvre</a>
+          <a href="#">Poids lourds</a><a href="#">Équipements industriels</a><a href="#">Matériel médical</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Loisirs</h3>
+        <div class="seo-tags">
+          <a href="#">Antiquités</a><a href="#">Collection</a><a href="#">DVD - Films</a><a href="#">CD - Musique</a>
+          <a href="#">Livres</a><a href="#">Modélisme</a><a href="#">Vins &amp; Gastronomie</a>
+          <a href="#">Sport &amp; Plein air</a><a href="#">Billetterie</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Animaux</h3>
+        <div class="seo-tags">
+          <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+          <a href="#">Accessoires animaux</a><a href="#">Services aux animaux</a>
         </div>
       </div>
       <div class="seo-block">
         <h3>Famille</h3>
         <div class="seo-tags">
-          <a href="#">Vêtements bébé</a><a href="#">Équipement bébé</a><a href="#">Mobilier enfant</a><a href="#">Jouets</a>
+          <a href="#">Mobilier enfant</a><a href="#">Équipement bébé</a><a href="#">Vêtements bébé</a>
+          <a href="#">Vêtements enfants</a><a href="#">Jeux &amp; Jouets</a><a href="#">Baby-Sitting</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Services</h3>
+        <div class="seo-tags">
+          <a href="#">Covoiturage</a><a href="#">Cours particuliers</a><a href="#">Services à la personne</a>
+          <a href="#">Services de déménagement</a><a href="#">Évènements</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Dons</h3>
+        <div class="seo-tags">
+          <a href="#">Objets à donner</a>
         </div>
       </div>
     </div>
@@ -1047,7 +1288,12 @@
     if (!link || !submenu) return;
     var rect = link.getBoundingClientRect();
     submenu.style.top = rect.bottom + 'px';
-    submenu.style.left = rect.left + 'px';
+    if (submenu.classList.contains('mega')) {
+      var w = submenu.offsetWidth;
+      submenu.style.left = Math.max(16, (window.innerWidth - w) / 2) + 'px';
+    } else {
+      submenu.style.left = rect.left + 'px';
+    }
   }
   document.querySelectorAll('.cat-item').forEach(function (item) {
     var link = item.querySelector('.cat-tile-link');
@@ -1070,5 +1316,23 @@
         item.classList.remove('open');
       });
     }
+    if (!e.target.closest('.share-item')) {
+      document.querySelectorAll('.share-item.open').forEach(function (item) {
+        item.classList.remove('open');
+      });
+    }
+  });
+  document.querySelectorAll('.share-trigger').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var item = btn.closest('.share-item');
+      var menu = item.querySelector('.share-menu');
+      var rect = btn.getBoundingClientRect();
+      menu.style.left = (rect.left + rect.width / 2) + 'px';
+      menu.style.top = (rect.bottom + 8) + 'px';
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.share-item.open').forEach(function (other) { other.classList.remove('open'); });
+      item.classList.toggle('open', !isOpen);
+    });
   });
 </script>
