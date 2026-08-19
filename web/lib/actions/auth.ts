@@ -57,13 +57,19 @@ export async function signup(formData: FormData): Promise<AuthActionResult> {
     displayName: displayName.trim(),
   });
 
-  await signIn("credentials", {
-    email: email.trim(),
-    password,
-    redirectTo: "/compte/annonces",
-  });
-
-  return { success: true };
+  try {
+    await signIn("credentials", {
+      email: email.trim(),
+      password,
+      redirectTo: "/compte/annonces",
+    });
+    return { success: true };
+  } catch (err) {
+    if (err instanceof CredentialsSignin) {
+      return { error: "Compte créé, mais la connexion automatique a échoué. Connectez-vous manuellement." };
+    }
+    throw err;
+  }
 }
 
 export async function login(formData: FormData): Promise<AuthActionResult> {
