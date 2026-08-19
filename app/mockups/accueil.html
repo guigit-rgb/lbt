@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>lebontruc.fr — Accueil</title>
 <style>
   @font-face {
@@ -685,7 +690,34 @@
     .wordmark { font-size: 1.6rem; }
     .nav-search { max-width: 140px; }
   }
+
+  /* ---- aller-retour rapide accueil mobile (le detail complet viendra dans un passage dedie) ---- */
+  @media (max-width: 480px) {
+    .nav-actions .icon-link:nth-child(1) { display: none; }
+    .nav-search { max-width: none; }
+    .wordmark { font-size: 1.4rem; }
+
+    .depose-banner { height: auto; }
+    .depose-banner .wrap {
+      grid-template-columns: 1fr;
+      padding: 1.3rem 1.2rem;
+      gap: 1.1rem;
+    }
+    .banner-half { padding: 0; }
+    .banner-half + .banner-half {
+      border-left: none;
+      border-top: 1px solid rgba(255,255,255,0.25);
+      padding-top: 1.1rem;
+    }
+
+    .chip-row { grid-template-columns: 1fr; }
+    .chip { max-width: none; }
+
+    .card-strip { justify-content: center; }
+  }
 </style>
+</head>
+<body>
 
 <div class="ad-skin left"><div class="pave">
   <div class="credit-ad vertical">
@@ -1042,7 +1074,7 @@
         <div class="mega-col">
           <div class="mega-group">
             <h4>Animaux</h4>
-            <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+            <a href="#">Animaux</a>
             <a href="#">Accessoires animaux</a><a href="#">Animaux perdus</a>
           </div>
         </div>
@@ -1235,7 +1267,7 @@
     <span class="label eyebrow-flagship">Cœur du métier — là où on investit dans la confiance</span>
     <div class="section-head" style="margin-top:0.3rem;">
       <h2>Véhicules</h2>
-      <a class="see-all" href="https://claude.ai/code/artifact/bc59478e-79f7-4ecc-a49c-419527ab2d66">Voir les 2 340 annonces →</a>
+      <a class="see-all" href="#">Voir les 2 340 annonces →</a>
     </div>
     <div class="card-strip">
       <article class="card">
@@ -1295,7 +1327,7 @@
     <span class="label eyebrow-flagship">Spécialité collection — le reste des loisirs suit le catalogue standard</span>
     <div class="section-head" style="margin-top:0.3rem;">
       <h2>Loisirs</h2>
-      <a class="see-all" href="https://claude.ai/code/artifact/a44b5f1c-699b-4967-b411-24f3cd7051f3">Voir les 860 annonces →</a>
+      <a class="see-all" href="#">Voir les 860 annonces →</a>
     </div>
     <div class="card-strip">
       <article class="card">
@@ -1362,7 +1394,7 @@
       <a class="cat-tile" href="#"><div class="n">330</div><div class="name">Maison &amp; jardin</div></a>
       <a class="cat-tile" href="#"><div class="n">140</div><div class="name">Électronique</div></a>
       <a class="cat-tile" href="#"><div class="n">95</div><div class="name">Matériel pro</div></a>
-      <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6" class="cat-tile"><div class="n">180</div><div class="name">Animaux</div></a>
+      <a href="#" class="cat-tile"><div class="n">180</div><div class="name">Animaux</div></a>
       <a class="cat-tile" href="#"><div class="n">70</div><div class="name">Famille</div></a>
       <a class="cat-tile" href="#"><div class="n">85</div><div class="name">Services</div></a>
       <a class="cat-tile" href="#"><div class="n">58</div><div class="name">Autres</div></a>
@@ -1446,7 +1478,7 @@
       <div class="seo-block">
         <h3>Animaux</h3>
         <div class="seo-tags">
-          <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+          <a href="#">Animaux</a>
           <a href="#">Accessoires animaux</a><a href="#">Services aux animaux</a>
         </div>
       </div>
@@ -1612,3 +1644,5 @@
     });
   });
 </script>
+</body>
+</html>
