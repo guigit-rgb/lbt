@@ -1,10 +1,38 @@
 import Link from "next/link";
+import { and, count, desc, eq } from "drizzle-orm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SeoLinks from "@/components/SeoLinks";
 import AdCard from "@/components/AdCard";
-import { HOMEPAGE_VEHICULES, HOMEPAGE_LOISIRS, CATALOG_COUNTS } from "@/lib/fake-data";
-import type { Categorie } from "@/lib/db/schema";
+import { db } from "@/lib/db/client";
+import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
+import { annonceToCardData } from "@/lib/annonce-display";
+
+export const dynamic = "force-dynamic";
+
+async function latestAds(categorie: Categorie, limit: number) {
+  const rows = await db
+    .select()
+    .from(annonces)
+    .where(and(eq(annonces.categorie, categorie), eq(annonces.etat, "en_ligne")))
+    .orderBy(desc(annonces.createdAt))
+    .limit(limit);
+  return rows.map(annonceToCardData);
+}
+
+async function countsByCategorie(): Promise<Record<Categorie, number>> {
+  const rows = await db
+    .select({ categorie: annonces.categorie, total: count() })
+    .from(annonces)
+    .where(eq(annonces.etat, "en_ligne"))
+    .groupBy(annonces.categorie);
+
+  const counts = Object.fromEntries(CATEGORIES.map((categorie) => [categorie, 0])) as Record<Categorie, number>;
+  for (const row of rows) {
+    counts[row.categorie] = row.total;
+  }
+  return counts;
+}
 
 const CATALOG_TILES: { categorie: Categorie; label: string }[] = [
   { categorie: "immobilier", label: "Immobilier" },
@@ -20,7 +48,13 @@ const CATALOG_TILES: { categorie: Categorie; label: string }[] = [
   { categorie: "autres", label: "Autres" },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [vehicules, loisirs, counts] = await Promise.all([
+    latestAds("vehicules", 6),
+    latestAds("loisirs", 5),
+    countsByCategorie(),
+  ]);
+
   return (
     <>
       <SiteHeader />
@@ -67,12 +101,12 @@ export default function HomePage() {
           <div className="section-head" style={{ marginTop: "0.3rem" }}>
             <h2>Véhicules</h2>
             <Link className="see-all" href="/vehicules">
-              Voir les {CATALOG_COUNTS.vehicules?.toLocaleString("fr-FR")} annonces →
+              Voir les {counts.vehicules.toLocaleString("fr-FR")} annonces →
             </Link>
           </div>
           <div className="card-strip">
-            {HOMEPAGE_VEHICULES.map((ad) => (
-              <AdCard key={ad.id} ad={ad} />
+            {vehicules.map((ad) => (
+              <AdCard key={ad.id} ad={ad} href={`/annonces/${ad.id}`} />
             ))}
           </div>
         </div>
@@ -86,12 +120,12 @@ export default function HomePage() {
           <div className="section-head" style={{ marginTop: "0.3rem" }}>
             <h2>Loisirs</h2>
             <Link className="see-all" href="/loisirs">
-              Voir les {CATALOG_COUNTS.loisirs?.toLocaleString("fr-FR")} annonces →
+              Voir les {counts.loisirs.toLocaleString("fr-FR")} annonces →
             </Link>
           </div>
           <div className="card-strip">
-            {HOMEPAGE_LOISIRS.map((ad) => (
-              <AdCard key={ad.id} ad={ad} />
+            {loisirs.map((ad) => (
+              <AdCard key={ad.id} ad={ad} href={`/annonces/${ad.id}`} />
             ))}
           </div>
         </div>
@@ -126,7 +160,7 @@ export default function HomePage() {
           <div className="catalog-grid">
             {CATALOG_TILES.map((tile) => (
               <Link className="cat-tile" href={`/${tile.categorie}`} key={tile.categorie}>
-                <div className="n">{CATALOG_COUNTS[tile.categorie]}</div>
+                <div className="n">{counts[tile.categorie]}</div>
                 <div className="name">{tile.label}</div>
               </Link>
             ))}

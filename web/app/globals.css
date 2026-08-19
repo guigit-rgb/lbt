@@ -1,4 +1,5 @@
   :root {
+    color-scheme: light;
     --ink: #1c1b18;
     --paper: #ffffff;
     --surface: #ffffff;
@@ -12,6 +13,11 @@
     --brand-red: #e2231a; /* approximation du rouge lacentrale.fr, site inaccessible au scraping (anti-bot) pour vérifier la valeur exacte */
     --brand-red-ink: #ffffff;
   }
+  /* Mode sombre volontairement désactivé pour la V0 (recette) : forcer un thème clair
+     unique réduit la surface à tester pendant cette phase. Réactivable en retirant ce
+     commentaire — les blocs [data-theme] ci-dessous restent disponibles pour un bouton
+     de bascule manuel plus tard si besoin. */
+  /*
   @media (prefers-color-scheme: dark) {
     :root {
       --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14; --surface-2: #221e16;
@@ -20,6 +26,7 @@
       --brand-red: #ff5347; --brand-red-ink: #1a0503;
     }
   }
+  */
   :root[data-theme="dark"] {
     --ink: #ece7d9; --paper: #17140f; --surface: #1d1a14; --surface-2: #221e16;
     --accent: #7fb59e; --accent-ink: #0d1f19; --warm: #e0895c;
@@ -91,6 +98,7 @@
   .wordmark, .wordmark .truc { color: var(--brand-red); }
   .nav-search {
     flex: 1;
+    min-width: 0;
     max-width: 482px; /* 520px - 1cm (~38px) */
     display: flex;
     align-items: center;
@@ -135,7 +143,7 @@
     align-items: center;
     gap: 0.15rem;
     font-size: 0.68rem;
-    color: #000;
+    color: var(--ink);
     position: relative;
   }
   .icon-link .glyph {
@@ -156,6 +164,18 @@
     gap: 0.15rem;
     overflow-x: auto;
     padding: 0.4rem 1.5rem;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .catband .wrap::-webkit-scrollbar { display: none; }
+  @media (max-width: 900px) {
+    /* Sans indice visuel, la ligne de categories a l'air de s'arreter net au bord de
+       l'ecran (trouve en testant sur viewport iPhone reel via Playwright/WebKit) alors
+       qu'elle defile bien horizontalement — ce fondu signale qu'il y a plus a voir. */
+    .catband .wrap {
+      -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+      mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+    }
   }
   .cat-tile-link {
     display: flex;
@@ -180,7 +200,7 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 1rem;
   }
-  .cat-tile-link .t { font-size: 0.8rem; color: #000; text-align: center; line-height: 1.15; }
+  .cat-tile-link .t { font-size: 0.8rem; color: var(--ink); text-align: center; line-height: 1.15; }
   .cat-highlight .t { font-weight: 700; color: var(--brand-red); }
   .cat-highlight .ic { border-color: var(--brand-red); }
   .cat-tile-link:hover .ic, .cat-tile-link.active .ic { border-color: var(--warm); }
@@ -189,6 +209,8 @@
   .cat-item { position: relative; flex-shrink: 0; }
   .submenu {
     position: fixed;
+    top: 0;
+    left: 0;
     min-width: 220px;
     background: var(--surface);
     border: 1px solid var(--line);
@@ -643,16 +665,65 @@
     .mega-side { height: auto; }
     .mega-promo { margin-top: 0.6rem; }
   }
+  .nav-burger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .nav-burger span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: var(--ink);
+    border-radius: 2px;
+  }
+  .nav-mobile-panel {
+    display: none;
+    flex-direction: column;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    padding: 0.5rem 1.5rem 0.75rem;
+  }
+  .nav-mobile-panel .icon-link {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--line);
+    justify-content: flex-start;
+    font-size: 0.95rem;
+  }
+  .nav-mobile-panel .icon-link .glyph { font-size: 1.15rem; }
+  .nav-mobile-panel .icon-link .dot { position: static; margin-left: 0.3rem; }
+  .nav-mobile-panel .icon-link:last-child { border-bottom: none; }
+  .nav-mobile-panel .btn-accent { margin-bottom: 0.75rem; align-self: flex-start; }
+
   @media (max-width: 640px) {
-    .nav-actions .icon-link:nth-child(4) { display: none; }
-    .wordmark { font-size: 1.6rem; }
-    .nav-search { max-width: 140px; }
+    /* Tous les liens (Messages/Favoris/Mes recherches/Se connecter) passent dans le menu
+       hamburger plutot que d'etre masques sans alternative — corrige un vrai bug d'acces
+       (aucun moyen de se connecter depuis un telephone avant ce correctif). */
+    .nav-actions { display: none; }
+    .nav-burger { display: flex; }
+    .nav-mobile-panel { display: flex; }
+    .wordmark { font-size: 1.6rem; order: 1; }
+    .nav-burger { order: 2; }
+    /* La barre de recherche ne tient pas sur la meme ligne que le logo + le bouton menu
+       en dessous de 640px (bug reel trouve en verifiant au navigateur : sans "flex-wrap"
+       et cet ordre, elle se compressait a quelques pixels et debordait la page) — elle
+       passe donc sur sa propre ligne, pleine largeur. */
+    .nav { flex-wrap: wrap; row-gap: 0.6rem; }
+    .nav-search { order: 3; flex: 1 1 100%; max-width: none; }
   }
 
   /* ---- aller-retour rapide accueil mobile (le detail complet viendra dans un passage dedie) ---- */
   @media (max-width: 480px) {
-    .nav-actions .icon-link:nth-child(1) { display: none; }
-    .nav-search { max-width: none; }
     .wordmark { font-size: 1.4rem; }
 
     .depose-banner { height: auto; }

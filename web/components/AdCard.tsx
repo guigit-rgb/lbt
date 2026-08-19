@@ -1,13 +1,15 @@
+import Link from "next/link";
 import type { FakeAd } from "@/lib/fake-data";
 
 interface AdCardProps {
   ad: FakeAd;
   showSeller?: boolean;
+  href?: string;
 }
 
-export default function AdCard({ ad, showSeller = false }: AdCardProps) {
-  return (
-    <article className="card">
+export default function AdCard({ ad, showSeller = false, href }: AdCardProps) {
+  const content = (
+    <>
       {showSeller && ad.vendeur && (
         <div className="card-seller">
           <span className="avatar" style={{ background: ad.vendeur.couleur }}>
@@ -32,6 +34,16 @@ export default function AdCard({ ad, showSeller = false }: AdCardProps) {
         <div className="title">{ad.titre}</div>
         <div className="sub">{ad.sousLigne}</div>
       </div>
-    </article>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="card">
+        {content}
+      </Link>
+    );
+  }
+
+  return <article className="card">{content}</article>;
 }

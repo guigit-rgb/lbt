@@ -1,15 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { desc, eq, and } from "drizzle-orm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AdCard from "@/components/AdCard";
-import { CATEGORIES, type Categorie } from "@/lib/db/schema";
+import { db } from "@/lib/db/client";
+import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { getFakeAdsForCategory, CATALOG_COUNTS } from "@/lib/fake-data";
+import { annonceToCardData } from "@/lib/annonce-display";
 
-export function generateStaticParams() {
-  return CATEGORIES.map((categorie) => ({ categorie }));
-}
+// Les annonces changent à chaque dépôt (Server Function, pas de revalidation
+// ciblée en V0) : la page doit se recalculer à chaque requête, pas être
+// générée statiquement au build.
+export const dynamic = "force-dynamic";
 
 function isCategorie(value: string): value is Categorie {
   return (CATEGORIES as readonly string[]).includes(value);
@@ -27,8 +30,13 @@ export default async function CategorieListingPage({
   }
 
   const config = getFiltersForCategory(categorie);
-  const ads = getFakeAdsForCategory(categorie);
-  const count = CATALOG_COUNTS[categorie] ?? ads.length;
+  const rows = await db
+    .select()
+    .from(annonces)
+    .where(and(eq(annonces.categorie, categorie), eq(annonces.etat, "en_ligne")))
+    .orderBy(desc(annonces.createdAt));
+  const ads = rows.map(annonceToCardData);
+  const count = ads.length;
 
   return (
     <>
@@ -75,9 +83,10 @@ export default async function CategorieListingPage({
 
       <section className="results-grid-section">
         <div className="wrap">
+          {ads.length === 0 && <p className="empty-state">Aucune annonce dans cette catégorie pour le moment.</p>}
           <div className="card-strip">
             {ads.map((ad) => (
-              <AdCard key={ad.id} ad={ad} showSeller />
+              <AdCard key={ad.id} ad={ad} href={`/annonces/${ad.id}`} showSeller />
             ))}
           </div>
         </div>

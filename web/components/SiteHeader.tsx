@@ -87,6 +87,8 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
 }
 
 export default function SiteHeader({ activeCategorie }: { activeCategorie?: Categorie }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="site-top">
       <header className="site">
@@ -121,7 +123,40 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
               Déposer une annonce
             </Link>
           </nav>
+          <button
+            type="button"
+            className="nav-burger"
+            aria-label="Ouvrir le menu"
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
         </div>
+        {mobileMenuOpen && (
+          <nav className="nav-mobile-panel" aria-label="Menu">
+            <Link className="btn btn-accent" href="/compte/annonces/nouvelle" onClick={() => setMobileMenuOpen(false)}>
+              <span className="btn-plus">
+                <span>+</span>
+              </span>
+              Déposer une annonce
+            </Link>
+            <Link className="icon-link" href="/compte/connexion" onClick={() => setMobileMenuOpen(false)}>
+              <span className="glyph">👤</span>Se connecter
+            </Link>
+            <Link className="icon-link" href="/compte/messages" onClick={() => setMobileMenuOpen(false)}>
+              <span className="glyph">✉️</span>Messages
+            </Link>
+            <Link className="icon-link" href="#" onClick={() => setMobileMenuOpen(false)}>
+              <span className="glyph">♡</span>Favoris
+            </Link>
+            <Link className="icon-link" href="#" onClick={() => setMobileMenuOpen(false)}>
+              <span className="glyph">☆</span>Mes recherches
+            </Link>
+          </nav>
+        )}
       </header>
 
       <nav className="catband" aria-label="Catégories">

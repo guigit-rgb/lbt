@@ -132,6 +132,14 @@ export const travaux = pgTable(
   (table) => [index("travaux_etat_disponible_idx").on(table.etat, table.disponibleA)]
 );
 
+export const feedback = pgTable("feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  contexte: text("contexte").notNull(),
+  reponse: text("reponse").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const favoris = pgTable(
   "favoris",
   {
