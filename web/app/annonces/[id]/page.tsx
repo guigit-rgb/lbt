@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -42,6 +42,16 @@ export default async function AnnonceDetailPage({
     notFound();
   }
 
+  if (!isOwner) {
+    // Comptage des vues pour le vendeur — on n'incrémente pas ses propres
+    // consultations pour ne pas gonfler artificiellement le compteur affiché
+    // sur "Mes annonces".
+    await db
+      .update(annonces)
+      .set({ vues: sql`${annonces.vues} + 1` })
+      .where(eq(annonces.id, id));
+  }
+
   const config = getFiltersForCategory(row.annonce.categorie);
   const details: { label: string; value: string }[] = [];
   if (row.annonce.categorie === "vehicules") {
@@ -69,8 +79,13 @@ export default async function AnnonceDetailPage({
           {config.label}
           {row.annonce.etat !== "en_ligne" && (
             <strong style={{ marginLeft: "0.5rem" }}>
-              (annonce {row.annonce.etat === "retiree" ? "retirée" : row.annonce.etat} — visible uniquement par
-              vous)
+              (annonce{" "}
+              {row.annonce.etat === "retiree"
+                ? "retirée"
+                : row.annonce.etat === "en_pause"
+                  ? "en pause"
+                  : row.annonce.etat}{" "}
+              — visible uniquement par vous)
             </strong>
           )}
         </p>

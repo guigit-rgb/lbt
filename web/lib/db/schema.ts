@@ -62,9 +62,11 @@ export const annonces = pgTable(
     prixCents: integer("prix_cents"),
     ville: text("ville"),
     codePostal: text("code_postal"),
-    etat: text("etat", { enum: ["brouillon", "en_ligne", "retiree"] })
+    etat: text("etat", { enum: ["brouillon", "en_ligne", "en_pause", "retiree"] })
       .notNull()
       .default("brouillon"),
+    vues: integer("vues").notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
     // Véhicules
     marque: text("marque"),
     modele: text("modele"),
