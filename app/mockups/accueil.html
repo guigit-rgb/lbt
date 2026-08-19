@@ -183,6 +183,8 @@
     font-size: 1rem;
   }
   .cat-tile-link .t { font-size: 0.8rem; color: #000; text-align: center; line-height: 1.15; }
+  .cat-highlight .t { font-weight: 700; color: var(--brand-red); }
+  .cat-highlight .ic { border-color: var(--brand-red); }
   .cat-tile-link:hover .ic, .cat-tile-link.active .ic { border-color: var(--warm); }
   .cat-tile-link.active .t, .cat-tile-link:hover .t { color: var(--ink); }
 
@@ -224,8 +226,10 @@
     min-width: 860px;
     padding: 0;
     border-top: 1px solid var(--line);
-    border-radius: 6px;
+    border-radius: 16px;
+    overflow: hidden;
   }
+  .submenu.mega.cols-4 { grid-template-columns: 210px repeat(4, 1fr); min-width: 1040px; }
   .mega-side {
     background: #f5f5f3;
     border-right: 1px solid var(--line);
@@ -366,6 +370,7 @@
   .banner-pitch {
     color: #fff;
     font-size: 0.76rem;
+    font-weight: 700;
     line-height: 1.3;
     max-width: 27rem;
     margin: 0;
@@ -672,7 +677,6 @@
       <div class="submenu mega">
         <div class="mega-side">
           <span class="mega-side-label"><span class="mega-side-ic">🚗</span>Véhicules</span>
-          <a class="mega-promo" href="#"><span>🚗</span>Découvrir l'actualité automobile <span class="chev">›</span></a>
         </div>
         <div class="mega-col">
           <a class="mega-all" href="#">Tout Véhicules</a>
@@ -707,53 +711,216 @@
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🏠</span><span class="t">Immobilier</span></button>
-      <div class="submenu">
-        <a href="#">Ventes immobilières</a><a href="#">Locations</a><a href="#">Colocations</a>
-        <a href="#">Bureaux &amp; Commerces</a><a href="#">Services de déménagement</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🏠</span>Immobilier</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Immobilier</a>
+          <div class="mega-group">
+            <h4>Ventes immobilières</h4>
+            <a href="#">Appartement</a><a href="#">Maison</a><a href="#">Terrain</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group">
+            <h4>Immobilier Neuf</h4>
+            <a href="#">Appartement</a><a href="#">Maison</a>
+            <a href="#">Programmes logements neufs <span class="ext-ic">↗</span></a>
+            <a href="#">Promoteurs immobiliers <span class="ext-ic">↗</span></a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Locations</h4>
+            <a href="#">Appartement</a><a href="#">Maison</a><a href="#">Parking</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group"><a class="mega-head" href="#">Colocations</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Bureaux &amp; Commerces</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Services de déménagement</a></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🏖️</span><span class="t">Locations de vacances</span></button>
-      <div class="submenu">
-        <a href="#">Locations saisonnières</a><a href="#">Hôtels</a><a href="#">Ventes flash vacances</a><a href="#">Locations en Espagne</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🏖️</span>Locations de vacances</span>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Types d'hébergements</h4>
+            <a href="#">Maisons et villas</a><a href="#">Appartements</a><a href="#">Chalets</a>
+            <a href="#">Chambres d'hôtes</a><a href="#">Campings</a>
+          </div>
+          <div class="mega-group">
+            <h4>Caractéristiques recherchées</h4>
+            <a href="#">Piscine</a><a href="#">Jardin</a><a href="#">Animaux acceptés</a>
+          </div>
+          <div class="mega-group">
+            <h4>Nombre de voyageurs</h4>
+            <a href="#">Solo</a><a href="#">À deux</a><a href="#">À quatre</a><a href="#">À six</a><a href="#">Plus de six</a>
+          </div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">💼</span><span class="t">Emploi</span></button>
-      <div class="submenu">
-        <a href="#">Offres d'emploi</a><a href="#">Formations professionnelles</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">💼</span>Emploi</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Emploi</a>
+          <div class="mega-group">
+            <h4>Offres d'emploi</h4>
+            <a href="#">Intérim</a><a href="#">CDI</a><a href="#">CDD</a><a href="#">Bénévolat</a>
+            <a href="#">Autre (indépendant, apprentissage, stage...)</a>
+          </div>
+          <div class="mega-group"><a class="mega-head" href="#">Formations professionnelles</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Profil Candidat</a></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">👕</span><span class="t">Mode</span></button>
-      <div class="submenu">
-        <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; Bagagerie</a><a href="#">Montres &amp; Bijoux</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">👕</span>Mode</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Mode</a>
+          <div class="mega-group">
+            <h4>Vêtements</h4>
+            <a href="#">Femme</a><a href="#">Maternité</a><a href="#">Homme</a><a href="#">Enfant</a>
+          </div>
+          <div class="mega-group">
+            <h4>Chaussures</h4>
+            <a href="#">Femme</a><a href="#">Homme</a><a href="#">Enfant</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Montres &amp; Bijoux</h4>
+            <a href="#">Femme</a><a href="#">Homme</a><a href="#">Enfant</a><a href="#">Mixte</a>
+          </div>
+          <div class="mega-group">
+            <h4>Accessoires &amp; Bagagerie</h4>
+            <a href="#">Femme</a><a href="#">Homme</a><a href="#">Enfant</a><a href="#">Mixte</a>
+          </div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🛋️</span><span class="t">Maison &amp; jardin</span></button>
-      <div class="submenu">
-        <a href="#">Ameublement</a><a href="#">Papeterie &amp; Fournitures scolaires</a><a href="#">Électroménager</a>
-        <a href="#">Arts de la table</a><a href="#">Décoration</a><a href="#">Linge de maison</a>
-        <a href="#">Bricolage</a><a href="#">Jardin &amp; Plantes</a><a href="#">Services de jardinerie &amp; bricolage</a>
+      <div class="submenu mega cols-4">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🛋️</span>Maison &amp; Jardin</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Maison &amp; Jardin</a>
+          <div class="mega-group">
+            <h4>Ameublement</h4>
+            <a href="#">Armoire</a><a href="#">Buffet</a><a href="#">Canapé</a>
+            <a href="#">Chaise, tabouret et banc</a><a href="#">Fauteuil</a><a href="#">Lit</a>
+            <a href="#">Meuble de cuisine</a><a href="#">Table de salle à manger</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group"><a class="mega-head" href="#">Papeterie &amp; Fournitures scolaires</a></div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Électroménager</h4>
+            <a href="#">Aspirateur</a><a href="#">Congélateur</a><a href="#">Four</a>
+            <a href="#">Lave-linge</a><a href="#">Lave-vaisselle</a><a href="#">Micro-ondes</a>
+            <a href="#">Réfrigérateur</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group">
+            <h4>Arts de la table</h4>
+            <a href="#">Assiette</a><a href="#">Service de vaisselle</a><a href="#">Verre</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Décoration</h4>
+            <a href="#">Applique</a><a href="#">Horloge, pendule et réveil</a><a href="#">Lampadaire</a>
+            <a href="#">Lampe à poser</a><a href="#">Lustre</a><a href="#">Miroir</a>
+            <a href="#">Rideaux, voilage et store</a><a href="#">Sculpture et statue</a>
+            <a href="#">Suspension</a><a href="#">Tableau et toile</a><a href="#">Tapis</a>
+            <a href="#">Vase, cache pot et céramique</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Linge de maison</h4>
+            <a href="#">Équipement du lit</a><a href="#">Déco textile</a><a href="#">Linge de bain</a>
+            <a href="#">Linge de lit</a><a href="#">Linge de table</a><a href="#">Autre</a>
+          </div>
+          <div class="mega-group"><a class="mega-head" href="#">Bricolage</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Jardin &amp; Plantes</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Services de jardinerie &amp; bricolage</a></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🔌</span><span class="t">Électronique</span></button>
-      <div class="submenu">
-        <a href="#">Ordinateurs</a><a href="#">Accessoires informatique</a><a href="#">Tablettes &amp; Liseuses</a>
-        <a href="#">Photo, audio &amp; vidéo</a><a href="#">Téléphones &amp; Objets connectés</a>
-        <a href="#">Accessoires téléphone &amp; objets connectés</a><a href="#">Consoles</a><a href="#">Jeux vidéo</a>
-        <a href="#">Électroménager</a><a href="#">Services de réparations électroniques</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🔌</span>Électronique</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Électronique</a>
+          <div class="mega-group"><a class="mega-head" href="#">Ordinateurs</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Accessoires informatique</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Tablettes &amp; Liseuses</a></div>
+          <div class="mega-group">
+            <h4>Photo, audio &amp; vidéo</h4>
+            <a href="#">Télévision</a><a href="#">Enceintes</a><a href="#">Appareil photo</a>
+            <a href="#">Casque</a><a href="#">Vidéoprojecteur</a><a href="#">Accessoires</a><a href="#">Écouteurs</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Téléphones &amp; Objets connectés</h4>
+            <a href="#">Apple</a><a href="#">Samsung</a><a href="#">Huawei</a><a href="#">Sony</a>
+            <a href="#">One plus</a><a href="#">Google</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group"><a class="mega-head" href="#">Accessoires téléphone &amp; Objets connectés</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Consoles</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Jeux vidéo</a></div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group"><a class="mega-head" href="#">Électroménager</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Services de réparations électroniques</a></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🛠️</span><span class="t">Matériel pro</span></button>
-      <div class="submenu">
-        <a href="#">Tracteurs</a><a href="#">Matériel agricole</a><a href="#">BTP - Chantier gros-œuvre</a>
-        <a href="#">Poids lourds</a><a href="#">Manutention - Levage</a><a href="#">Équipements industriels</a>
-        <a href="#">Équipements pour restaurants &amp; hôtels</a><a href="#">Équipements &amp; Fournitures de bureau</a>
-        <a href="#">Équipements pour commerces &amp; marchés</a><a href="#">Matériel médical</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🛠️</span>Matériel pro</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Matériel professionnel</a>
+          <div class="mega-group"><a class="mega-head" href="#">Tracteurs</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Matériel agricole</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">BTP - Chantier gros-œuvre</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Poids lourds</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Manutention - Levage</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Matériel médical</a></div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group"><a class="mega-head" href="#">Équipements industriels</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Équipements pour restaurants &amp; hôtels</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Équipements &amp; Fournitures de bureau</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Équipements pour commerces &amp; marchés</a></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
@@ -812,33 +979,85 @@
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🐾</span><span class="t">Animaux</span></button>
-      <div class="submenu">
-        <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
-        <a href="#">Accessoires animaux</a><a href="#">Animaux perdus</a><a href="#">Services aux animaux</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🐾</span>Animaux</span>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Animaux</h4>
+            <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+            <a href="#">Accessoires animaux</a><a href="#">Animaux perdus</a>
+          </div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">👪</span><span class="t">Famille</span></button>
-      <div class="submenu">
-        <a href="#">Mobilier enfant</a><a href="#">Équipement bébé</a><a href="#">Vêtements bébé</a>
-        <a href="#">Vêtements enfants</a><a href="#">Vêtements maternité</a><a href="#">Chaussures enfants</a>
-        <a href="#">Montres &amp; bijoux enfants</a><a href="#">Accessoires &amp; bagagerie enfants</a>
-        <a href="#">Jeux &amp; Jouets</a><a href="#">Baby-Sitting</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">👪</span>Famille</span>
+        </div>
+        <div class="mega-col">
+          <a class="mega-all" href="#">Tout Famille</a>
+          <div class="mega-group">
+            <h4>Équipement bébé</h4>
+            <a href="#">Poussette</a><a href="#">Siège auto</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group">
+            <h4>Mobilier enfant</h4>
+            <a href="#">Baignoire</a><a href="#">Chaise haute</a><a href="#">Lit bébé</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group">
+            <h4>Vêtements bébé</h4>
+            <a href="#">0 mois à 3 mois</a><a href="#">3 mois à 6 mois</a><a href="#">6 mois à 9 mois</a>
+            <a href="#">9 mois à 12 mois</a><a href="#">12 mois à 18 mois</a><a href="#">18 mois à 24 mois</a>
+            <a href="#">Plus de 24 mois</a>
+            <a class="mega-seeall" href="#">Voir tout</a>
+          </div>
+          <div class="mega-group"><a class="mega-head" href="#">Vêtements enfants</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Vêtements maternité</a></div>
+        </div>
+        <div class="mega-col">
+          <div class="mega-group"><a class="mega-head" href="#">Chaussures enfants</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Montres &amp; bijoux enfants</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Accessoires &amp; bagagerie enfants</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Jeux &amp; Jouets</a></div>
+          <div class="mega-group"><a class="mega-head" href="#">Baby-Sitting</a></div>
+        </div>
       </div>
     </div>
     <div class="cat-item">
       <button type="button" class="cat-tile-link"><span class="ic">🛎️</span><span class="t">Services</span></button>
-      <div class="submenu">
-        <a href="#">Artistes &amp; Musiciens</a><a href="#">Baby-Sitting</a><a href="#">Billetterie</a>
-        <a href="#">Covoiturage</a><a href="#">Cours particuliers</a><a href="#">Entraide entre voisins</a>
-        <a href="#">Évènements</a><a href="#">Services à la personne</a><a href="#">Services aux animaux</a>
-        <a href="#">Services de déménagement</a><a href="#">Services de réparations électroniques</a>
-        <a href="#">Services de réparations mécaniques</a><a href="#">Services de jardinerie &amp; bricolage</a>
-        <a href="#">Services évènementiels</a><a href="#">Autres services</a>
+      <div class="submenu mega">
+        <div class="mega-side">
+          <span class="mega-side-label"><span class="mega-side-ic">🛎️</span>Services</span>
+        </div>
+        <div class="mega-col">
+          <a href="#">Services de déménagement</a>
+          <a href="#">Services de réparations mécaniques</a>
+          <a href="#">Services de jardinerie &amp; bricolage</a>
+          <a href="#">Services à la personne</a>
+          <a href="#">Services aux animaux</a>
+          <a href="#">Baby-Sitting</a>
+          <a href="#">Artistes &amp; Musiciens</a>
+          <a href="#">Services évènementiels</a>
+          <a href="#">Services de réparations électroniques</a>
+          <a href="#">Entraide entre voisins</a>
+          <a href="#">Billetterie</a>
+          <a href="#">Évènements</a>
+          <a href="#">Covoiturage</a>
+          <a href="#">Cours particuliers</a>
+          <a href="#">Autres services</a>
+        </div>
       </div>
     </div>
-    <a class="cat-tile-link" href="#"><span class="ic">🎁</span><span class="t">Dons</span></a>
     <a class="cat-tile-link" href="#"><span class="ic">···</span><span class="t">Autres</span></a>
+    <a class="cat-tile-link cat-highlight" href="#"><span class="ic">🎁</span><span class="t">Dons</span></a>
   </div>
 </nav>
 </div>
@@ -857,7 +1076,7 @@
       <a class="btn-depose" href="#"><span>＋</span>Déposer une annonce</a>
     </div>
     <div class="banner-half">
-      <p class="banner-pitch"><svg class="tricolor-bulb" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" style="vertical-align:-7px; margin-right:0.3em;">
+      <p class="banner-pitch"><svg class="tricolor-bulb" viewBox="0 0 24 24" width="34" height="34" aria-hidden="true" style="vertical-align:-11px; margin-right:0.3em;">
         <defs><clipPath id="bulbClip"><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v1h6v-1c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></clipPath></defs>
         <g clip-path="url(#bulbClip)">
           <rect x="0" y="0" width="8" height="20" fill="#0055A4"/>
@@ -867,9 +1086,9 @@
         <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1v1h6v-1c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z" fill="none" stroke="#ffffff" stroke-width="1"/>
         <rect x="9.3" y="18.8" width="5.4" height="1.3" rx="0.35" fill="#ffffff"/>
         <rect x="9.6" y="20.6" width="4.8" height="1.3" rx="0.35" fill="#ffffff"/>
-      </svg>LeBonTruc, c'est comme l'autre — mais 100% français, et moins cher (pas besoin de financer des milliards d'€ aux fonds américains) <a href="https://siecledigital.fr/2023/11/22/adevinta-maison-mere-de-leboncoin-bientot-rachetee-pour-12-milliards-deuros/" target="_blank" rel="noopener">(en savoir plus)</a></p>
+      </svg>LeBonTruc, c'est comme l'autre — mais 100% français, et moins cher (pas besoin de financer des milliards d'€ aux fonds américains)<br><a href="https://siecledigital.fr/2023/11/22/adevinta-maison-mere-de-leboncoin-bientot-rachetee-pour-12-milliards-deuros/" target="_blank" rel="noopener">(en savoir plus)</a></p>
       <div class="share-item">
-        <button type="button" class="share-trigger">Donnez lui un coup de pouce, recommandez Lebontruc</button>
+        <button type="button" class="share-trigger">Donnez un coup de pouce, recommandez Lebontruc</button>
         <div class="share-menu">
           <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Flebontruc.fr" target="_blank" rel="noopener">📘 Facebook</a>
           <a href="https://wa.me/?text=Un%20site%20d%27annonces%20100%25%20fran%C3%A7ais%20%C3%A0%20d%C3%A9couvrir%20%3A%20lebontruc.fr" target="_blank" rel="noopener">💬 WhatsApp</a>
@@ -1082,7 +1301,6 @@
       <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6" class="cat-tile"><div class="n">180</div><div class="name">Animaux</div></a>
       <a class="cat-tile" href="#"><div class="n">70</div><div class="name">Famille</div></a>
       <a class="cat-tile" href="#"><div class="n">85</div><div class="name">Services</div></a>
-      <a class="cat-tile" href="#"><div class="n">40</div><div class="name">Dons</div></a>
       <a class="cat-tile" href="#"><div class="n">58</div><div class="name">Autres</div></a>
     </div>
   </div>
@@ -1099,28 +1317,11 @@
         </div>
       </div>
       <div class="seo-block">
-        <h3>Immobilier</h3>
+        <h3>Loisirs</h3>
         <div class="seo-tags">
-          <a href="#">Ventes immobilières</a><a href="#">Locations</a><a href="#">Colocations</a>
-          <a href="#">Bureaux &amp; Commerces</a><a href="#">Services de déménagement</a>
-        </div>
-      </div>
-      <div class="seo-block">
-        <h3>Locations de vacances</h3>
-        <div class="seo-tags">
-          <a href="#">Locations saisonnières</a><a href="#">Hôtels</a><a href="#">Ventes flash vacances</a>
-        </div>
-      </div>
-      <div class="seo-block">
-        <h3>Emploi</h3>
-        <div class="seo-tags">
-          <a href="#">Offres d'emploi</a><a href="#">Formations professionnelles</a>
-        </div>
-      </div>
-      <div class="seo-block">
-        <h3>Mode</h3>
-        <div class="seo-tags">
-          <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; Bagagerie</a><a href="#">Montres &amp; Bijoux</a>
+          <a href="#">Antiquités</a><a href="#">Collection</a><a href="#">DVD - Films</a><a href="#">CD - Musique</a>
+          <a href="#">Livres</a><a href="#">Modélisme</a><a href="#">Vins &amp; Gastronomie</a>
+          <a href="#">Sport &amp; Plein air</a><a href="#">Billetterie</a>
         </div>
       </div>
       <div class="seo-block">
@@ -1146,25 +1347,17 @@
         </div>
       </div>
       <div class="seo-block">
-        <h3>Loisirs</h3>
-        <div class="seo-tags">
-          <a href="#">Antiquités</a><a href="#">Collection</a><a href="#">DVD - Films</a><a href="#">CD - Musique</a>
-          <a href="#">Livres</a><a href="#">Modélisme</a><a href="#">Vins &amp; Gastronomie</a>
-          <a href="#">Sport &amp; Plein air</a><a href="#">Billetterie</a>
-        </div>
-      </div>
-      <div class="seo-block">
-        <h3>Animaux</h3>
-        <div class="seo-tags">
-          <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
-          <a href="#">Accessoires animaux</a><a href="#">Services aux animaux</a>
-        </div>
-      </div>
-      <div class="seo-block">
         <h3>Famille</h3>
         <div class="seo-tags">
           <a href="#">Mobilier enfant</a><a href="#">Équipement bébé</a><a href="#">Vêtements bébé</a>
           <a href="#">Vêtements enfants</a><a href="#">Jeux &amp; Jouets</a><a href="#">Baby-Sitting</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Immobilier</h3>
+        <div class="seo-tags">
+          <a href="#">Ventes immobilières</a><a href="#">Locations</a><a href="#">Colocations</a>
+          <a href="#">Bureaux &amp; Commerces</a><a href="#">Services de déménagement</a>
         </div>
       </div>
       <div class="seo-block">
@@ -1175,9 +1368,28 @@
         </div>
       </div>
       <div class="seo-block">
-        <h3>Dons</h3>
+        <h3>Mode</h3>
         <div class="seo-tags">
-          <a href="#">Objets à donner</a>
+          <a href="#">Vêtements</a><a href="#">Chaussures</a><a href="#">Accessoires &amp; Bagagerie</a><a href="#">Montres &amp; Bijoux</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Locations de vacances</h3>
+        <div class="seo-tags">
+          <a href="#">Locations saisonnières</a><a href="#">Hôtels</a><a href="#">Ventes flash vacances</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Animaux</h3>
+        <div class="seo-tags">
+          <a href="https://claude.ai/code/artifact/e4b667c9-a515-4f01-b52c-679554e200e6">Animaux</a>
+          <a href="#">Accessoires animaux</a><a href="#">Services aux animaux</a>
+        </div>
+      </div>
+      <div class="seo-block">
+        <h3>Emploi</h3>
+        <div class="seo-tags">
+          <a href="#">Offres d'emploi</a><a href="#">Formations professionnelles</a>
         </div>
       </div>
     </div>
