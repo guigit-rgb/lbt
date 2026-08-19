@@ -868,3 +868,89 @@
   .ma-card { flex-direction: column; }
   .ma-stats { flex-direction: row; justify-content: space-around; border-left: none; border-top: 1px solid var(--line); padding: 0.6rem 0 0; }
 }
+
+/* ---- Dépôt d'annonce (compte/annonces/nouvelle) ---- */
+.depot-page { min-height: 100vh; background: #f4f5f7; }
+.depot-top { background: var(--surface); border-bottom: 1px solid var(--line); }
+.depot-top-inner {
+  max-width: 1072px; margin: 0 auto; padding: 0.9rem 1.5rem;
+  display: flex; align-items: center; gap: 1rem;
+}
+.depot-top .wordmark { font-size: 1.5rem; margin-right: 0.5rem; }
+.depot-top-title { font-weight: 600; color: var(--ink); flex: 1; }
+.depot-quit {
+  border: 1px solid var(--line); border-radius: 999px; padding: 0.55rem 1.3rem;
+  font-weight: 600; font-size: 0.9rem; background: transparent; color: var(--ink);
+}
+.depot-quit:hover { background: var(--surface-2); }
+
+.depot-body {
+  max-width: 1072px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem;
+  display: flex; gap: 2rem; align-items: flex-start;
+}
+.depot-step-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.6rem; }
+.depot-card {
+  flex: 1; min-width: 0; background: var(--surface); border-radius: 16px;
+  padding: 2.25rem 2.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.depot-card h1 { font-size: 1.4rem; margin-bottom: 0.9rem; }
+.depot-required-note { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.4rem; }
+.depot-question { font-size: 1.02rem; font-weight: 600; display: block; margin-bottom: 0.7rem; }
+.depot-question .req { color: var(--brand-red); margin-left: 0.15rem; }
+.depot-input, .depot-select, .depot-textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: 12px;
+  padding: 0.85rem 1.1rem; font-size: 0.95rem; font-family: inherit; color: var(--ink); background: var(--surface);
+}
+.depot-input:focus, .depot-select:focus, .depot-textarea:focus { outline: none; border-color: var(--brand-red); }
+.depot-textarea { resize: vertical; }
+.depot-counter { text-align: right; font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem; }
+.depot-divider { border: none; border-top: 1px solid var(--line); margin: 1.75rem 0; }
+.depot-suggestions-heading { font-weight: 700; margin-bottom: 0.9rem; }
+.depot-suggestion-list { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.75rem; }
+.depot-suggestion-item {
+  display: flex; align-items: center; gap: 0.75rem; font-size: 0.98rem; cursor: pointer;
+}
+.depot-suggestion-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--brand-red); }
+.depot-suggestion-icon { font-size: 1.1rem; }
+.depot-suggestion-item .path-sep { color: var(--muted); margin: 0 0.15rem; }
+.depot-fallback-label { display: block; margin-bottom: 1.5rem; }
+.depot-legal { font-size: 0.85rem; color: var(--muted); }
+.depot-legal a { text-decoration: underline; color: var(--muted); }
+.depot-actions { display: flex; gap: 0.75rem; margin-top: 2rem; }
+.depot-chip-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
+.depot-chip {
+  padding: 0.5rem 1.1rem; border: 1px solid var(--line); border-radius: 999px;
+  font-size: 0.9rem; background: var(--surface); color: var(--ink);
+}
+.depot-chip.active { border-color: var(--brand-red); background: var(--brand-red); color: var(--brand-red-ink); font-weight: 600; }
+.depot-radio-group { display: flex; gap: 1.5rem; margin-bottom: 1.5rem; }
+.depot-radio-group label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.95rem; }
+.depot-offer-options { display: flex; flex-direction: column; gap: 1.1rem; margin: 0.75rem 0 0.5rem; }
+.depot-offer-option { display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; }
+.depot-offer-option input[type="radio"] { width: 20px; height: 20px; margin-top: 0.15rem; accent-color: var(--brand-red); flex-shrink: 0; }
+.depot-offer-option .title { font-weight: 600; }
+.depot-offer-option .sub { color: var(--muted); font-size: 0.88rem; }
+.depot-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
+.depot-ai-btn {
+  background: var(--accent-ink); color: var(--accent); border: none; border-radius: 999px;
+  padding: 0.55rem 1.1rem; font-size: 0.88rem; font-weight: 600; margin-bottom: 1rem;
+}
+.depot-recap-list { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 0.6rem; }
+.depot-recap-list li { font-size: 0.95rem; }
+
+.depot-sidebar { width: 300px; flex-shrink: 0; text-align: center; padding-top: 0.5rem; }
+.depot-sidebar-rule { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.25rem; }
+.depot-sidebar-rule .line { flex: 1; height: 1px; background: var(--line); }
+.depot-sidebar-icon {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-ink); color: var(--brand-red); font-size: 1.1rem;
+}
+.depot-sidebar-title { font-weight: 600; margin-bottom: 0.75rem; }
+.depot-sidebar-text { color: var(--muted); font-size: 0.92rem; line-height: 1.5; }
+
+@media (max-width: 860px) {
+  .depot-body { flex-direction: column; }
+  .depot-sidebar { display: none; }
+  .depot-card { padding: 1.5rem; width: 100%; }
+}

@@ -105,6 +105,11 @@ export async function creerAnnonce(formData: FormData): Promise<CreerAnnonceResu
     return { error: "Catégorie invalide." };
   }
 
+  const typeAnnonce = formData.get("typeAnnonce");
+  if (typeAnnonce !== "offre" && typeAnnonce !== "demande") {
+    return { error: "Merci de préciser s'il s'agit d'une offre ou d'une demande." };
+  }
+
   const titre = optionalString(formData, "titre");
   const description = optionalString(formData, "description");
   const ville = optionalString(formData, "ville");
@@ -163,6 +168,7 @@ export async function creerAnnonce(formData: FormData): Promise<CreerAnnonceResu
     .values({
       userId: session.user.id,
       categorie,
+      typeAnnonce,
       titre,
       description,
       prixCents,

@@ -57,6 +57,9 @@ export const annonces = pgTable(
       .notNull()
       .references(() => users.id),
     categorie: text("categorie", { enum: CATEGORIES }).notNull(),
+    typeAnnonce: text("type_annonce", { enum: ["offre", "demande"] })
+      .notNull()
+      .default("offre"),
     titre: text("titre").notNull(),
     description: text("description").notNull(),
     prixCents: integer("prix_cents"),

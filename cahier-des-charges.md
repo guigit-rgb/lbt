@@ -6506,3 +6506,21 @@ Nicolas a partagé une capture de sa page "Mes annonces" leboncoin (une Porsche 
 Petite amélioration de robustesse conservée malgré tout (sans lien avec un bug réel) : `signup()` enveloppe désormais son appel `signIn()` dans un `try/catch` symétrique à celui de `login()`, pour afficher un message clair au lieu de laisser planter la page si l'auto-connexion échouait un jour pour une vraie raison (ex. identifiants entre-temps invalidés).
 
 **How to apply :** ne pas rouvrir l'action n°186, elle est annulée. Avant de re-décrire la page "Mes annonces" comme minimale dans une future session, relire l'entrée précédente — elle est maintenant fonctionnelle (pause/réactivation/modification/suppression réelles, compteurs réels).
+
+## Session n°29 (2026-08-20, suite) — Refonte visuelle du dépôt d'annonce + champ Offre/Demande
+
+Après avoir déployé "Mes annonces" sur Vercel (`https://lbt-eight.vercel.app`, projet Vercel `lbt` sans intégration Git — déploiement manuel via `vercel deploy --prod` depuis cette session), Nicolas a partagé 3 captures de l'écran de dépôt leboncoin réel et demandé que `/compte/annonces/nouvelle` s'en rapproche visuellement :
+
+- **Écran 1** (titre seul) → **écran 2** (titre rempli + suggestions de catégorie apparaissent sous forme de radios + select de secours "Ou choisissez une autre catégorie") → **écran 3** (une fois la catégorie choisie, la vue se réduit à un simple select "Catégorie" + un nouveau champ obligatoire **"Type d'annonce" : Offre / Demande**, avec un bouton "Continuer" qui apparaît).
+
+**Changements** :
+- **Schéma** : nouvelle colonne `annonces.type_annonce` (enum `offre`/`demande`, défaut `offre`). Poussée sur Neon.
+- **`creerAnnonce`** (`lib/actions/annonces.ts`) : lit et valide `typeAnnonce`, l'enregistre. (`modifierAnnonce` ne le gère pas encore — non demandé, catégorie déjà non modifiable là aussi.)
+- **`components/NouvelleAnnonceForm.tsx`** : refonte complète. Les anciennes étapes 1 (titre) et 2 (catégorie) sont **fusionnées en une seule étape** avec un comportement en 3 états (rien → suggestions+select → collapse en select unique + Offre/Demande), fidèle aux 3 captures. Nouvelle coquille visuelle sur tout le tunnel (habillage `depot-*` dans `globals.css`) : bandeau "lebontruc / Déposer une annonce / Quitter", carte blanche arrondie sur fond gris clair, compteur de caractères, encart conseil à droite (icône 💡 + texte contextuel par étape). Total d'étapes recalculé (6 avec détail catégorie, 5 sans) : la logique de saut d'étape existante a été décalée en conséquence, pas réécrite from scratch.
+- Icônes de catégorie réutilisées depuis `lib/categories.ts` (celles déjà utilisées dans le header) plutôt que d'en recréer — cohérence avec le reste du site plutôt que copie pixel des icônes LBC.
+
+**Validation** : lint + `next build` OK, puis test bout-en-bout au navigateur (Playwright) sur un compte jetable — dépôt complet d'une annonce véhicule en "Demande", vérifié à la fois par capture d'écran (comparée visuellement aux 3 références) et par lecture directe de la base (`type_annonce = 'demande'` bien enregistré). Comptes/annonces de test nettoyés après coup.
+
+**Point de process noté** : le mode auto a bloqué un test Playwright automatisé visant l'URL Vercel `https://lbt-eight.vercel.app` taguée "Production" (création de compte réel dessus), alors que le même test en local ne pose pas de souci — Nicolas a préféré vérifier ce déploiement-là manuellement plutôt que d'insister. Pas d'action requise, juste à anticiper si une future session veut re-tester automatiquement contre l'URL Vercel plutôt qu'en local.
+
+**How to apply :** si une future session doit ajouter la possibilité de changer la catégorie ou le type Offre/Demande après publication (dans `ModifierAnnonceForm.tsx`), ce n'est pas encore fait — actuellement seuls titre/description/prix/ville/CP (+ champs véhicule) sont éditables.

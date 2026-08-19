@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
@@ -17,6 +18,12 @@ const CATEGORY_OPTIONS: { categorie: Categorie; label: string }[] = [
   { categorie: DONS_ENTRY.categorie, label: DONS_ENTRY.label },
 ];
 
+const CATEGORY_ICONS: Partial<Record<Categorie, string>> = Object.fromEntries([
+  ...MEGA_MENU.map((entry) => [entry.categorie, entry.icon] as const),
+  [AUTRES_ENTRY.categorie, AUTRES_ENTRY.icon] as const,
+  [DONS_ENTRY.categorie, DONS_ENTRY.icon] as const,
+]);
+
 const LOISIRS_SOUS_CATEGORIES = MEGA_MENU.find((e) => e.categorie === "loisirs")!.columns.flatMap((col) =>
   col.flatMap((group) => group.links.map((l) => l.label))
 );
@@ -27,6 +34,55 @@ const TYPES_ANIMAUX = ["Chien", "Chat", "Oiseau", "Rongeur", "Autre"];
 
 const initialState: CreerAnnonceResult = { success: true, id: "" };
 
+function renderSuggestionLabel(label: string) {
+  const parts = label.split(">").map((p) => p.trim());
+  if (parts.length < 2) {
+    return <strong>{parts[0]}</strong>;
+  }
+  return (
+    <>
+      {parts[0]}
+      <span className="path-sep">›</span>
+      <strong>{parts.slice(1).join(" › ")}</strong>
+    </>
+  );
+}
+
+const CARD_TITLES: Record<number, string> = {
+  1: "Commençons par l'essentiel !",
+  3: "Décrivez votre annonce",
+  4: "Fixons un prix",
+  5: "Où se trouve votre annonce ?",
+  6: "Vérifiez avant de publier",
+};
+
+const TIPS: Record<number, { title: string; text: string }> = {
+  1: {
+    title: "Votre annonce sera trouvée plus facilement !",
+    text: "Vous aurez 50% de chances en plus d'être contacté si votre annonce est dans la bonne catégorie.",
+  },
+  2: {
+    title: "Plus de détails, plus de contacts sérieux.",
+    text: "Les acheteurs filtrent souvent sur des caractéristiques précises avant de vous contacter.",
+  },
+  3: {
+    title: "Une description honnête inspire confiance.",
+    text: "Mentionnez l'état réel et ce qui est inclus : vous limiterez les questions et les déceptions.",
+  },
+  4: {
+    title: "Un prix juste attire plus vite.",
+    text: "Regardez ce qui se vend pour un bien similaire avant de fixer votre prix.",
+  },
+  5: {
+    title: "La proximité compte.",
+    text: "Les acheteurs près de chez vous sont prioritaires dans les résultats de recherche.",
+  },
+  6: {
+    title: "Vérifiez avant de publier.",
+    text: "Vous pourrez modifier ou retirer votre annonce à tout moment depuis « Mes annonces ».",
+  },
+};
+
 export default function NouvelleAnnonceForm() {
   const [step, setStep] = useState(1);
 
@@ -34,6 +90,7 @@ export default function NouvelleAnnonceForm() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [categorie, setCategorie] = useState<Categorie | "">("");
+  const [typeAnnonce, setTypeAnnonce] = useState<"offre" | "demande">("offre");
 
   const [marque, setMarque] = useState("");
   const [modele, setModele] = useState("");
@@ -120,331 +177,516 @@ export default function NouvelleAnnonceForm() {
   }
 
   const hasDetailStep = categorie === "vehicules" || categorie === "loisirs" || categorie === "animaux";
-  const totalSteps = hasDetailStep ? 7 : 6;
-  const detailStepIndex = 3;
+  const totalSteps = hasDetailStep ? 6 : 5;
+  const displayStep = hasDetailStep || step < 2 ? step : step - 1;
 
   function next() {
-    setStep((s) => (hasDetailStep ? s + 1 : s === 2 ? s + 2 : s + 1));
+    setStep((s) => (hasDetailStep ? s + 1 : s === 1 ? s + 2 : s + 1));
   }
   function back() {
-    setStep((s) => (hasDetailStep ? s - 1 : s === 4 ? s - 2 : s - 1));
+    setStep((s) => (hasDetailStep ? s - 1 : s === 3 ? s - 2 : s - 1));
   }
 
+  function choisirCategorie(value: Categorie | "") {
+    setCategorie(value);
+  }
+
+  const cardTitle =
+    step === 2
+      ? categorie === "vehicules"
+        ? "Les caractéristiques du véhicule"
+        : categorie === "loisirs"
+          ? "Parlez-nous de votre objet"
+          : "Quelques précisions"
+      : CARD_TITLES[step];
+
+  const tip = TIPS[Math.min(step, 6)];
+  const peutContinuerEssentiel = titre.trim().length >= 3 && categorie !== "";
+
   return (
-    <div style={{ maxWidth: 560, margin: "2rem auto", padding: "0 1rem" }}>
-      <p style={{ color: "var(--muted, #666)" }}>
-        Étape {hasDetailStep || step < 3 ? step : step - 1} / {totalSteps}
-      </p>
+    <div className="depot-page">
+      <div className="depot-top">
+        <div className="depot-top-inner">
+          <Link className="wordmark" href="/">
+            <span>lebon</span>
+            <span className="truc">truc</span>
+          </Link>
+          <span className="depot-top-title">Déposer une annonce</span>
+          <Link href="/compte/annonces" className="depot-quit">
+            Quitter
+          </Link>
+        </div>
+      </div>
 
-      {step === 1 && (
-        <section>
-          <h1>Quel est le titre de l&apos;annonce ?</h1>
-          <input
-            type="text"
-            value={titre}
-            onChange={(e) => setTitre(e.target.value)}
-            maxLength={200}
-            style={{ width: "100%", padding: "0.6rem" }}
-            autoFocus
-          />
-          <p style={{ fontSize: "0.85rem", color: "var(--muted, #666)" }}>{titre.length}/200</p>
+      <div className="depot-body">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p className="depot-step-label">
+            Étape {displayStep} / {totalSteps}
+          </p>
 
-          {loadingSuggestions && <p>Recherche de catégories…</p>}
-          {titre.trim().length >= 3 && suggestions.length > 0 && (
-            <div style={{ margin: "1rem 0" }}>
-              <p>Choisissez une catégorie suggérée</p>
-              <div style={{ display: "grid", gap: "0.4rem" }}>
-                {suggestions.map((s) => (
-                  <button
-                    key={`${s.categorie}-${s.sousCategorie ?? ""}`}
-                    onClick={() => {
-                      setCategorie(s.categorie);
-                      if (s.categorie === "loisirs" && s.sousCategorie) setSousCategorie(s.sousCategorie);
-                      setStep(2);
-                    }}
-                    style={{ textAlign: "left", padding: "0.5rem 0.75rem" }}
-                  >
-                    {s.label}
+          <div className="depot-card">
+            <h1>{cardTitle}</h1>
+
+            {step === 1 && (
+              <section>
+                <p className="depot-required-note">* champs obligatoires</p>
+                <label className="depot-question" htmlFor="titre-annonce">
+                  Quel est le titre de l&apos;annonce ?<span className="req">*</span>
+                </label>
+                <input
+                  id="titre-annonce"
+                  type="text"
+                  className="depot-input"
+                  value={titre}
+                  onChange={(e) => setTitre(e.target.value)}
+                  maxLength={200}
+                  autoFocus
+                />
+                <p className="depot-counter">{titre.length}/200</p>
+
+                {titre.trim().length >= 3 && (
+                  <>
+                    <hr className="depot-divider" />
+
+                    {categorie === "" ? (
+                      <>
+                        {loadingSuggestions && <p style={{ color: "var(--muted)" }}>Recherche de catégories…</p>}
+                        {suggestions.length > 0 && (
+                          <>
+                            <p className="depot-suggestions-heading">Choisissez une catégorie suggérée</p>
+                            <div className="depot-suggestion-list">
+                              {suggestions.map((s) => (
+                                <label
+                                  key={`${s.categorie}-${s.sousCategorie ?? ""}`}
+                                  className="depot-suggestion-item"
+                                >
+                                  <input
+                                    type="radio"
+                                    name="categorie-suggeree"
+                                    // Sélectionner une suggestion fixe `categorie` à une valeur non vide,
+                                    // ce qui fait immédiatement basculer vers la vue "catégorie choisie" —
+                                    // ce radio ne peut donc jamais être rendu déjà coché.
+                                    checked={false}
+                                    onChange={() => {
+                                      choisirCategorie(s.categorie);
+                                      if (s.categorie === "loisirs" && s.sousCategorie) setSousCategorie(s.sousCategorie);
+                                    }}
+                                  />
+                                  <span className="depot-suggestion-icon">{CATEGORY_ICONS[s.categorie]}</span>
+                                  <span>{renderSuggestionLabel(s.label)}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </>
+                        )}
+                        <label className="depot-fallback-label" htmlFor="categorie-select">
+                          <span className="depot-question">
+                            Ou choisissez une autre catégorie<span className="req">*</span>
+                          </span>
+                          <select
+                            id="categorie-select"
+                            className="depot-select"
+                            value=""
+                            onChange={(e) => choisirCategorie(e.target.value as Categorie)}
+                          >
+                            <option value="">Choisissez</option>
+                            {CATEGORY_OPTIONS.map((c) => (
+                              <option key={c.categorie} value={c.categorie}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </>
+                    ) : (
+                      <>
+                        <label className="depot-fallback-label" htmlFor="categorie-select-2">
+                          <span className="depot-question">
+                            Catégorie<span className="req">*</span>
+                          </span>
+                          <select
+                            id="categorie-select-2"
+                            className="depot-select"
+                            value={categorie}
+                            onChange={(e) => choisirCategorie(e.target.value as Categorie | "")}
+                          >
+                            <option value="">Choisissez</option>
+                            {CATEGORY_OPTIONS.map((c) => (
+                              <option key={c.categorie} value={c.categorie}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <span className="depot-question">
+                          Type d&apos;annonce<span className="req">*</span>
+                        </span>
+                        <div className="depot-offer-options">
+                          <label className="depot-offer-option">
+                            <input
+                              type="radio"
+                              name="type-annonce"
+                              checked={typeAnnonce === "offre"}
+                              onChange={() => setTypeAnnonce("offre")}
+                            />
+                            <span>
+                              <span className="title">Offre</span>
+                              <br />
+                              <span className="sub">Vous vendez ou proposez un bien.</span>
+                            </span>
+                          </label>
+                          <label className="depot-offer-option">
+                            <input
+                              type="radio"
+                              name="type-annonce"
+                              checked={typeAnnonce === "demande"}
+                              onChange={() => setTypeAnnonce("demande")}
+                            />
+                            <span>
+                              <span className="title">Demande</span>
+                              <br />
+                              <span className="sub">Vous recherchez ce type de bien.</span>
+                            </span>
+                          </label>
+                        </div>
+
+                        <div className="depot-actions" style={{ justifyContent: "flex-end" }}>
+                          <button
+                            type="button"
+                            className="btn btn-accent"
+                            disabled={!peutContinuerEssentiel}
+                            onClick={next}
+                          >
+                            Continuer
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </>
+                )}
+
+                <p className="depot-legal" style={{ marginTop: "1.75rem" }}>
+                  <a href="#">En savoir plus</a> sur le traitement de vos données et exercer vos droits.
+                </p>
+              </section>
+            )}
+
+            {step === 2 && hasDetailStep && categorie === "vehicules" && (
+              <section>
+                <div className="depot-field-row">
+                  <label>
+                    <span className="depot-question">Marque</span>
+                    <input className="depot-input" value={marque} onChange={(e) => setMarque(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Modèle</span>
+                    <input className="depot-input" value={modele} onChange={(e) => setModele(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Année</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={annee}
+                      onChange={(e) => setAnnee(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Kilométrage</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={kilometrage}
+                      onChange={(e) => setKilometrage(e.target.value)}
+                    />
+                  </label>
+                </div>
+
+                <span className="depot-question">Carburant</span>
+                <div className="depot-chip-row">
+                  {CARBURANTS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`depot-chip${carburant === c ? " active" : ""}`}
+                      onClick={() => setCarburant(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+
+                <span className="depot-question">Boîte</span>
+                <div className="depot-radio-group">
+                  <label>
+                    <input type="radio" name="boite" checked={boite === "Manuelle"} onChange={() => setBoite("Manuelle")} />
+                    Manuelle
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="boite"
+                      checked={boite === "Automatique"}
+                      onChange={() => setBoite("Automatique")}
+                    />
+                    Automatique
+                  </label>
+                </div>
+
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <button disabled={titre.trim().length < 3} onClick={() => setStep(2)} style={{ marginTop: "1rem" }}>
-            Continuer
-          </button>
-        </section>
-      )}
-
-      {step === 2 && (
-        <section>
-          <h1>Choisissez une catégorie</h1>
-          <select value={categorie} onChange={(e) => setCategorie(e.target.value as Categorie)} style={{ padding: "0.5rem", width: "100%" }}>
-            <option value="">Choisissez</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c.categorie} value={c.categorie}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={() => setStep(1)}>Retour</button>
-            <button disabled={!categorie} onClick={next}>
-              Continuer
-            </button>
-          </div>
-        </section>
-      )}
-
-      {step === detailStepIndex && hasDetailStep && categorie === "vehicules" && (
-        <section>
-          <h1>Détails du véhicule</h1>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Marque
-            <input value={marque} onChange={(e) => setMarque(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem" }} />
-          </label>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Modèle
-            <input value={modele} onChange={(e) => setModele(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem" }} />
-          </label>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Année
-            <input type="number" value={annee} onChange={(e) => setAnnee(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem" }} />
-          </label>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Kilométrage
-            <input
-              type="number"
-              value={kilometrage}
-              onChange={(e) => setKilometrage(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
-            />
-          </label>
-          <p>Carburant</p>
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.75rem" }}>
-            {CARBURANTS.map((c) => (
-              <button
-                key={c}
-                onClick={() => setCarburant(c)}
-                style={{ padding: "0.3rem 0.7rem", fontWeight: carburant === c ? 700 : 400 }}
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-          <p>Boîte</p>
-          <label style={{ marginRight: "1rem" }}>
-            <input type="radio" name="boite" checked={boite === "Manuelle"} onChange={() => setBoite("Manuelle")} /> Manuelle
-          </label>
-          <label>
-            <input type="radio" name="boite" checked={boite === "Automatique"} onChange={() => setBoite("Automatique")} /> Automatique
-          </label>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={back}>Retour</button>
-            <button onClick={next}>Continuer</button>
-          </div>
-        </section>
-      )}
-
-      {step === detailStepIndex && hasDetailStep && categorie === "loisirs" && (
-        <section>
-          <h1>Détails de l&apos;objet</h1>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Sous-catégorie
-            <select
-              value={sousCategorie}
-              onChange={(e) => setSousCategorie(e.target.value)}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
-            >
-              <option value="">Choisissez</option>
-              {LOISIRS_SOUS_CATEGORIES.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </label>
-          <p>État</p>
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-            {ETATS_PRODUIT.map((e) => (
-              <button
-                key={e}
-                onClick={() => setEtatProduit(e)}
-                style={{ padding: "0.3rem 0.7rem", fontWeight: etatProduit === e ? 700 : 400 }}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={back}>Retour</button>
-            <button onClick={next}>Continuer</button>
-          </div>
-        </section>
-      )}
-
-      {step === detailStepIndex && hasDetailStep && categorie === "animaux" && (
-        <section>
-          <h1>Détails</h1>
-          <p>Type d&apos;animal</p>
-          <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-            {TYPES_ANIMAUX.map((t) => (
-              <button
-                key={t}
-                onClick={() => setTypeAnimal(t)}
-                style={{ padding: "0.3rem 0.7rem", fontWeight: typeAnimal === t ? 700 : 400 }}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={back}>Retour</button>
-            <button onClick={next}>Continuer</button>
-          </div>
-        </section>
-      )}
-
-      {step === 4 && (
-        <section>
-          <h1>Décrivez votre bien</h1>
-          <button onClick={genererDescription} disabled={generatingDescription} style={{ marginBottom: "0.75rem" }}>
-            {generatingDescription ? "Génération…" : "✨ Générer une description"}
-          </button>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={6}
-            maxLength={4000}
-            style={{ width: "100%", padding: "0.6rem" }}
-          />
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={back}>Retour</button>
-            <button onClick={next}>Continuer</button>
-          </div>
-        </section>
-      )}
-
-      {step === 5 && (
-        <section>
-          <h1>Quel est votre prix ?</h1>
-          <input
-            type="number"
-            value={prix}
-            onChange={(e) => setPrix(e.target.value)}
-            placeholder="€"
-            style={{ width: "100%", padding: "0.6rem" }}
-          />
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={back}>Retour</button>
-            <button onClick={next}>Continuer</button>
-          </div>
-        </section>
-      )}
-
-      {step === 6 && (
-        <section>
-          <h1>Où se situe votre bien ?</h1>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Ville
-            <input value={ville} onChange={(e) => setVille(e.target.value)} style={{ display: "block", width: "100%", padding: "0.5rem" }} />
-          </label>
-          <label style={{ display: "block", marginBottom: "0.5rem" }}>
-            Code postal
-            <input
-              value={codePostal}
-              onChange={(e) => setCodePostal(e.target.value)}
-              maxLength={5}
-              style={{ display: "block", width: "100%", padding: "0.5rem" }}
-            />
-          </label>
-          <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-            <button onClick={back}>Retour</button>
-            <button onClick={next}>Continuer</button>
-          </div>
-        </section>
-      )}
-
-      {step === 7 && (
-        <section>
-          <h1>Récapitulatif</h1>
-          <ul>
-            <li>
-              <strong>Titre :</strong> {titre}
-            </li>
-            <li>
-              <strong>Catégorie :</strong> {categorieLabel}
-            </li>
-            {categorie === "vehicules" && (
-              <li>
-                <strong>Véhicule :</strong> {marque} {modele} {annee && `(${annee})`} — {kilometrage} km,{" "}
-                {carburant}, {boite}
-              </li>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
             )}
-            {categorie === "loisirs" && (
-              <li>
-                <strong>Détails :</strong> {sousCategorie} — {etatProduit}
-              </li>
-            )}
-            {categorie === "animaux" && (
-              <li>
-                <strong>Type :</strong> {typeAnimal}
-              </li>
-            )}
-            <li>
-              <strong>Description :</strong> {description}
-            </li>
-            <li>
-              <strong>Prix :</strong> {prix} €
-            </li>
-            <li>
-              <strong>Localisation :</strong> {ville} ({codePostal})
-            </li>
-          </ul>
 
-          <form action={formAction}>
-            <input type="hidden" name="categorie" value={categorie} />
-            <input type="hidden" name="titre" value={titre} />
-            <input type="hidden" name="description" value={description} />
-            <input type="hidden" name="prix" value={prix} />
-            <input type="hidden" name="ville" value={ville} />
-            <input type="hidden" name="codePostal" value={codePostal} />
-            {categorie === "vehicules" && (
-              <>
-                <input type="hidden" name="marque" value={marque} />
-                <input type="hidden" name="modele" value={modele} />
-                <input type="hidden" name="annee" value={annee} />
-                <input type="hidden" name="kilometrage" value={kilometrage} />
-                <input type="hidden" name="carburant" value={carburant} />
-                <input type="hidden" name="boite" value={boite} />
-              </>
-            )}
-            {categorie === "loisirs" && (
-              <>
-                <input type="hidden" name="sousCategorie" value={sousCategorie} />
-                <input type="hidden" name="etatProduit" value={etatProduit} />
-              </>
-            )}
-            {categorie === "animaux" && <input type="hidden" name="typeAnimal" value={typeAnimal} />}
+            {step === 2 && hasDetailStep && categorie === "loisirs" && (
+              <section>
+                <label>
+                  <span className="depot-question">Sous-catégorie</span>
+                  <select
+                    className="depot-select"
+                    value={sousCategorie}
+                    onChange={(e) => setSousCategorie(e.target.value)}
+                    style={{ marginBottom: "1.25rem" }}
+                  >
+                    <option value="">Choisissez</option>
+                    {LOISIRS_SOUS_CATEGORIES.map((l) => (
+                      <option key={l} value={l}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-            {"error" in state && state.error ? (
-              <p role="alert" style={{ color: "var(--brand-red, #e2231a)" }}>
-                {state.error}
-              </p>
-            ) : null}
+                <span className="depot-question">État</span>
+                <div className="depot-chip-row">
+                  {ETATS_PRODUIT.map((e) => (
+                    <button
+                      key={e}
+                      type="button"
+                      className={`depot-chip${etatProduit === e ? " active" : ""}`}
+                      onClick={() => setEtatProduit(e)}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
 
-            <div style={{ marginTop: "1rem", display: "flex", gap: "0.5rem" }}>
-              <button type="button" onClick={back}>
-                Retour
-              </button>
-              <button type="submit" disabled={pending}>
-                {pending ? "Publication…" : "Publier"}
-              </button>
-            </div>
-          </form>
-        </section>
-      )}
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {step === 2 && hasDetailStep && categorie === "animaux" && (
+              <section>
+                <span className="depot-question">Type d&apos;animal</span>
+                <div className="depot-chip-row">
+                  {TYPES_ANIMAUX.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`depot-chip${typeAnimal === t ? " active" : ""}`}
+                      onClick={() => setTypeAnimal(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {step === 3 && (
+              <section>
+                <button
+                  type="button"
+                  className="depot-ai-btn"
+                  onClick={genererDescription}
+                  disabled={generatingDescription}
+                >
+                  {generatingDescription ? "Génération…" : "✨ Générer une description"}
+                </button>
+                <textarea
+                  className="depot-textarea"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={6}
+                  maxLength={4000}
+                />
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {step === 4 && (
+              <section>
+                <input
+                  type="number"
+                  className="depot-input"
+                  value={prix}
+                  onChange={(e) => setPrix(e.target.value)}
+                  placeholder="€"
+                />
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {step === 5 && (
+              <section>
+                <div className="depot-field-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
+                  <label>
+                    <span className="depot-question">Ville</span>
+                    <input className="depot-input" value={ville} onChange={(e) => setVille(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Code postal</span>
+                    <input
+                      className="depot-input"
+                      value={codePostal}
+                      onChange={(e) => setCodePostal(e.target.value)}
+                      maxLength={5}
+                    />
+                  </label>
+                </div>
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {step === 6 && (
+              <section>
+                <ul className="depot-recap-list">
+                  <li>
+                    <strong>Titre :</strong> {titre}
+                  </li>
+                  <li>
+                    <strong>Catégorie :</strong> {categorieLabel}
+                  </li>
+                  <li>
+                    <strong>Type :</strong> {typeAnnonce === "offre" ? "Offre" : "Demande"}
+                  </li>
+                  {categorie === "vehicules" && (
+                    <li>
+                      <strong>Véhicule :</strong> {marque} {modele} {annee && `(${annee})`} — {kilometrage} km,{" "}
+                      {carburant}, {boite}
+                    </li>
+                  )}
+                  {categorie === "loisirs" && (
+                    <li>
+                      <strong>Détails :</strong> {sousCategorie} — {etatProduit}
+                    </li>
+                  )}
+                  {categorie === "animaux" && (
+                    <li>
+                      <strong>Type :</strong> {typeAnimal}
+                    </li>
+                  )}
+                  <li>
+                    <strong>Description :</strong> {description}
+                  </li>
+                  <li>
+                    <strong>Prix :</strong> {prix} €
+                  </li>
+                  <li>
+                    <strong>Localisation :</strong> {ville} ({codePostal})
+                  </li>
+                </ul>
+
+                <form action={formAction}>
+                  <input type="hidden" name="categorie" value={categorie} />
+                  <input type="hidden" name="typeAnnonce" value={typeAnnonce} />
+                  <input type="hidden" name="titre" value={titre} />
+                  <input type="hidden" name="description" value={description} />
+                  <input type="hidden" name="prix" value={prix} />
+                  <input type="hidden" name="ville" value={ville} />
+                  <input type="hidden" name="codePostal" value={codePostal} />
+                  {categorie === "vehicules" && (
+                    <>
+                      <input type="hidden" name="marque" value={marque} />
+                      <input type="hidden" name="modele" value={modele} />
+                      <input type="hidden" name="annee" value={annee} />
+                      <input type="hidden" name="kilometrage" value={kilometrage} />
+                      <input type="hidden" name="carburant" value={carburant} />
+                      <input type="hidden" name="boite" value={boite} />
+                    </>
+                  )}
+                  {categorie === "loisirs" && (
+                    <>
+                      <input type="hidden" name="sousCategorie" value={sousCategorie} />
+                      <input type="hidden" name="etatProduit" value={etatProduit} />
+                    </>
+                  )}
+                  {categorie === "animaux" && <input type="hidden" name="typeAnimal" value={typeAnimal} />}
+
+                  {"error" in state && state.error ? (
+                    <p role="alert" style={{ color: "var(--brand-red)" }}>
+                      {state.error}
+                    </p>
+                  ) : null}
+
+                  <div className="depot-actions">
+                    <button type="button" className="btn btn-outline" onClick={back}>
+                      Retour
+                    </button>
+                    <button type="submit" className="btn btn-accent" disabled={pending}>
+                      {pending ? "Publication…" : "Publier"}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            )}
+          </div>
+        </div>
+
+        <div className="depot-sidebar">
+          <div className="depot-sidebar-rule">
+            <span className="line" />
+            <span className="depot-sidebar-icon">💡</span>
+            <span className="line" />
+          </div>
+          <p className="depot-sidebar-title">{tip.title}</p>
+          <p className="depot-sidebar-text">{tip.text}</p>
+        </div>
+      </div>
     </div>
   );
 }
