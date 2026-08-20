@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { and, eq, sql } from "drizzle-orm";
@@ -8,10 +7,7 @@ import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, CATEGORIES, type Categorie } from "@/lib/db/schema";
-import { uploadToR2, deleteFromR2 } from "@/lib/storage/r2";
-
-const MAX_PHOTOS = 12;
-const MAX_TAILLE_PHOTO_OCTETS = 8 * 1024 * 1024;
+import { deleteFromR2 } from "@/lib/storage/r2";
 
 const DUREE_PUBLICATION_JOURS = 60;
 
@@ -27,7 +23,7 @@ type Possession =
   | { ok: false; error: string }
   | { ok: true; session: Session; annonce: Annonce };
 
-async function chargerAnnoncePossedee(id: string): Promise<Possession> {
+export async function chargerAnnoncePossedee(id: string): Promise<Possession> {
   const session = await auth();
   if (!session) {
     return { ok: false, error: "Vous devez être connecté." };
@@ -89,51 +85,10 @@ export async function enregistrerBrouillon(input: BrouillonInput): Promise<Creer
 
 export type PhotoResult = { error: string } | { success: true; id: string; url: string };
 
-export async function televerserPhoto(annonceId: string, formData: FormData): Promise<PhotoResult> {
-  const result = await chargerAnnoncePossedee(annonceId);
-  if (!result.ok) return { error: result.error };
-
-  const fichier = formData.get("fichier");
-  if (!(fichier instanceof File)) {
-    return { error: "Aucun fichier reçu." };
-  }
-  if (!fichier.type.startsWith("image/")) {
-    return { error: "Le fichier doit être une image." };
-  }
-  if (fichier.size > MAX_TAILLE_PHOTO_OCTETS) {
-    return { error: "L'image dépasse 8 Mo." };
-  }
-
-  const [{ n: nombreActuel }] = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(annonceImages)
-    .where(eq(annonceImages.annonceId, annonceId));
-  if (nombreActuel >= MAX_PHOTOS) {
-    return { error: `Vous ne pouvez pas ajouter plus de ${MAX_PHOTOS} photos.` };
-  }
-
-  const extension = fichier.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
-  const cle = `annonces/${annonceId}/${randomUUID()}.${extension}`;
-  const buffer = Buffer.from(await fichier.arrayBuffer());
-  await uploadToR2(cle, buffer, fichier.type);
-
-  const [image] = await db
-    .insert(annonceImages)
-    .values({ annonceId, storageKeyOriginal: cle, position: nombreActuel, status: "ready" })
-    .returning({ id: annonceImages.id });
-
-  const url = `/api/uploads/annonces/${image.id}`;
-  // `urlThumb/Medium/Large` pointent toutes vers la même image d'origine pour
-  // l'instant — pas de pipeline de redimensionnement (pas de worker `travaux`
-  // pour ça à ce stade) ; on garde les 3 colonnes pour rester compatible avec
-  // la lecture déjà faite dans app/compte/annonces/page.tsx.
-  await db
-    .update(annonceImages)
-    .set({ urlThumb: url, urlMedium: url, urlLarge: url })
-    .where(eq(annonceImages.id, image.id));
-
-  return { success: true, id: image.id, url };
-}
+// Le téléversement se fait via une route API classique
+// (app/api/uploads/photos/[annonceId]/route.ts), pas via une Server Action —
+// c'est la seule façon d'exposer une vraie progression d'upload (XHR
+// `upload.onprogress`) au navigateur, cf. journal du cahier des charges.
 
 export async function supprimerPhoto(imageId: string): Promise<{ error: string } | { success: true }> {
   const session = await auth();

@@ -1,8 +1,8 @@
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
-import { annonces } from "@/lib/db/schema";
+import { annonces, annonceImages } from "@/lib/db/schema";
 import ModifierAnnonceForm from "@/components/ModifierAnnonceForm";
 
 export default async function ModifierAnnoncePage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,5 +18,16 @@ export default async function ModifierAnnoncePage({ params }: { params: Promise<
     notFound();
   }
 
-  return <ModifierAnnonceForm annonce={annonce} />;
+  const photos = await db
+    .select({ id: annonceImages.id, url: annonceImages.urlThumb })
+    .from(annonceImages)
+    .where(eq(annonceImages.annonceId, id))
+    .orderBy(asc(annonceImages.position));
+
+  return (
+    <ModifierAnnonceForm
+      annonce={annonce}
+      photosInitiales={photos.map((p) => ({ id: p.id, url: p.url ?? `/api/uploads/annonces/${p.id}` }))}
+    />
+  );
 }

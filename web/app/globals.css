@@ -953,6 +953,13 @@
 }
 @keyframes depot-photo-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 0.7; } }
 .depot-photo-failed { font-size: 0.72rem; color: var(--muted); text-align: center; padding: 0.5rem; }
+.depot-photo-pending {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem;
+  background: var(--surface-2); cursor: default;
+}
+.depot-photo-percent { font-size: 1.1rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.depot-photo-progress-track { width: 72%; height: 5px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.depot-photo-progress-fill { height: 100%; background: var(--brand-red); transition: width 0.15s ease; }
 .depot-photo-add {
   border: 1px solid var(--line); background: transparent; flex-direction: column; gap: 0.4rem;
   color: var(--ink); font-size: 0.78rem; font-weight: 600; text-align: center; cursor: pointer; padding: 0.5rem;

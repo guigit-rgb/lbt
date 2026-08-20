@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
+import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
+import PhotoGrid, { type Photo } from "@/components/PhotoGrid";
+import { getFiltersForCategory } from "@/lib/listing-config";
 import type { annonces } from "@/lib/db/schema";
 import { modifierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
 
@@ -11,145 +15,230 @@ const CARBURANTS = ["Essence", "Diesel", "Hybride", "Électrique", "Autre"];
 
 const initialState: CreerAnnonceResult = { success: true, id: "" };
 
-export default function ModifierAnnonceForm({ annonce }: { annonce: Annonce }) {
+function formatPrix(prixCents: number | null): string {
+  if (prixCents == null) return "Prix sur demande";
+  return `${(prixCents / 100).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`;
+}
+
+export default function ModifierAnnonceForm({
+  annonce,
+  photosInitiales,
+}: {
+  annonce: Annonce;
+  photosInitiales: Photo[];
+}) {
   const attributs = annonce.attributs as Record<string, string>;
 
   const [carburant, setCarburant] = useState(attributs.carburant ?? "");
   const [boite, setBoite] = useState(attributs.boite ?? "");
+  const [photos, setPhotos] = useState<Photo[]>(photosInitiales);
+  const [prix, setPrix] = useState(annonce.prixCents != null ? (annonce.prixCents / 100).toString() : "");
+  const [ville, setVille] = useState(annonce.ville ?? "");
+  const [codePostal, setCodePostal] = useState(annonce.codePostal ?? "");
+  const [titre, setTitre] = useState(annonce.titre);
 
   const [state, formAction, pending] = useActionState(
     async (_prev: CreerAnnonceResult, formData: FormData) => modifierAnnonce(annonce.id, formData),
     initialState
   );
 
-  const inputStyle = { display: "block", width: "100%", padding: "0.5rem", marginTop: "0.25rem" };
+  const categorieLabel = getFiltersForCategory(annonce.categorie).label;
+  const prixCentsAffiche = prix ? Math.round(Number.parseFloat(prix.replace(",", ".")) * 100) : null;
 
   return (
-    <main style={{ maxWidth: 560, margin: "3rem auto", padding: "0 1rem" }}>
-      <h1>Modifier l&apos;annonce</h1>
+    <>
+      <SiteHeader activeCategorie={annonce.categorie} />
 
-      <form action={formAction} style={{ display: "grid", gap: "1rem", marginTop: "1.5rem" }}>
-        <label>
-          Titre
-          <input name="titre" defaultValue={annonce.titre} style={inputStyle} required minLength={3} />
-        </label>
+      <main className="wrap" style={{ maxWidth: 900, paddingTop: "2rem", paddingBottom: "3rem" }}>
+        <h1 style={{ marginBottom: "1.5rem" }}>Modifiez votre annonce</h1>
 
-        <label>
-          Description
-          <textarea
-            name="description"
-            defaultValue={annonce.description}
-            rows={5}
-            style={inputStyle}
-            required
-            minLength={10}
-          />
-        </label>
-
-        <label>
-          Prix (€)
-          <input
-            name="prix"
-            type="text"
-            defaultValue={annonce.prixCents != null ? (annonce.prixCents / 100).toString() : ""}
-            style={inputStyle}
-          />
-        </label>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-          <label>
-            Ville
-            <input name="ville" defaultValue={annonce.ville ?? ""} style={inputStyle} required />
-          </label>
-          <label>
-            Code postal
-            <input
-              name="codePostal"
-              defaultValue={annonce.codePostal ?? ""}
-              style={inputStyle}
-              required
-              pattern="\d{5}"
-            />
-          </label>
+        <div className="depot-card" style={{ maxWidth: "none", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
+            <div className="depot-photo-tile" style={{ width: 110, height: 110, cursor: "default" }}>
+              {photos[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={photos[0].url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <span style={{ fontSize: "0.72rem", color: "var(--muted)", textAlign: "center", padding: "0.5rem" }}>
+                  {categorieLabel}
+                </span>
+              )}
+            </div>
+            <div>
+              <p style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.25rem" }}>{titre}</p>
+              <p style={{ fontWeight: 700, marginBottom: "0.35rem" }}>{formatPrix(prixCentsAffiche)}</p>
+              <p style={{ color: "var(--muted)" }}>
+                {categorieLabel}
+                {ville && (
+                  <>
+                    {" · "}
+                    {ville} {codePostal && `(${codePostal})`}
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
         </div>
 
-        {annonce.categorie === "vehicules" && (
-          <fieldset style={{ border: "1px solid var(--line, #ddd)", borderRadius: 8, padding: "1rem" }}>
-            <legend>Véhicule</legend>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <label>
-                Marque
-                <input name="marque" defaultValue={annonce.marque ?? ""} style={inputStyle} />
-              </label>
-              <label>
-                Modèle
-                <input name="modele" defaultValue={annonce.modele ?? ""} style={inputStyle} />
-              </label>
-              <label>
-                Année
-                <input name="annee" type="number" defaultValue={annonce.annee ?? ""} style={inputStyle} />
-              </label>
-              <label>
-                Kilométrage
-                <input name="kilometrage" type="number" defaultValue={annonce.kilometrage ?? ""} style={inputStyle} />
-              </label>
-            </div>
-
-            <div style={{ marginTop: "0.75rem" }}>
-              Carburant
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
-                {CARBURANTS.map((c) => (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => setCarburant(c)}
-                    style={{ padding: "0.3rem 0.7rem", fontWeight: carburant === c ? 700 : 400 }}
-                  >
-                    {c}
-                  </button>
-                ))}
-              </div>
-              <input type="hidden" name="carburant" value={carburant} />
-            </div>
-
-            <div style={{ marginTop: "0.75rem" }}>
-              Boîte
-              <div style={{ display: "flex", gap: "1rem", marginTop: "0.25rem" }}>
-                <label>
-                  <input
-                    type="radio"
-                    name="boite-radio"
-                    checked={boite === "Manuelle"}
-                    onChange={() => setBoite("Manuelle")}
-                  />{" "}
-                  Manuelle
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="boite-radio"
-                    checked={boite === "Automatique"}
-                    onChange={() => setBoite("Automatique")}
-                  />{" "}
-                  Automatique
-                </label>
-              </div>
-              <input type="hidden" name="boite" value={boite} />
-            </div>
-          </fieldset>
-        )}
-
-        {state && "error" in state && <p style={{ color: "var(--warm, #c1592c)" }}>{state.error}</p>}
-
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button type="submit" className="btn btn-accent" disabled={pending}>
-            {pending ? "Enregistrement…" : "Enregistrer"}
-          </button>
-          <Link href="/compte/annonces" className="btn btn-outline">
-            Annuler
-          </Link>
+        <div className="depot-card" style={{ maxWidth: "none", marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.2rem", marginBottom: "0.5rem" }}>Ajoutez des photos</h2>
+          <PhotoGrid
+            annonceId={annonce.id}
+            categorie={annonce.categorie}
+            initialPhotos={photosInitiales}
+            onPhotosChange={setPhotos}
+          />
         </div>
-      </form>
-    </main>
+
+        <div className="depot-card" style={{ maxWidth: "none" }}>
+          <h2 style={{ fontSize: "1.2rem", marginBottom: "1.25rem" }}>Dites-nous en plus</h2>
+
+          <form action={formAction}>
+            <label className="depot-fallback-label" htmlFor="modifier-titre">
+              <span className="depot-question">Titre</span>
+              <input
+                id="modifier-titre"
+                name="titre"
+                className="depot-input"
+                value={titre}
+                onChange={(e) => setTitre(e.target.value)}
+                required
+                minLength={3}
+              />
+            </label>
+
+            <label className="depot-fallback-label" htmlFor="modifier-description">
+              <span className="depot-question">Description</span>
+              <textarea
+                id="modifier-description"
+                name="description"
+                className="depot-textarea"
+                defaultValue={annonce.description}
+                rows={5}
+                required
+                minLength={10}
+              />
+            </label>
+
+            <label className="depot-fallback-label" htmlFor="modifier-prix">
+              <span className="depot-question">Prix (€)</span>
+              <input
+                id="modifier-prix"
+                name="prix"
+                type="text"
+                className="depot-input"
+                value={prix}
+                onChange={(e) => setPrix(e.target.value)}
+              />
+            </label>
+
+            <div className="depot-field-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
+              <label>
+                <span className="depot-question">Ville</span>
+                <input
+                  name="ville"
+                  className="depot-input"
+                  value={ville}
+                  onChange={(e) => setVille(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                <span className="depot-question">Code postal</span>
+                <input
+                  name="codePostal"
+                  className="depot-input"
+                  value={codePostal}
+                  onChange={(e) => setCodePostal(e.target.value)}
+                  required
+                  pattern="\d{5}"
+                  maxLength={5}
+                />
+              </label>
+            </div>
+
+            {annonce.categorie === "vehicules" && (
+              <fieldset style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "1.25rem", marginBottom: "1.25rem" }}>
+                <legend style={{ padding: "0 0.5rem", fontWeight: 600 }}>Véhicule</legend>
+                <div className="depot-field-row">
+                  <label>
+                    <span className="depot-question">Marque</span>
+                    <input name="marque" className="depot-input" defaultValue={annonce.marque ?? ""} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Modèle</span>
+                    <input name="modele" className="depot-input" defaultValue={annonce.modele ?? ""} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Année</span>
+                    <input name="annee" type="number" className="depot-input" defaultValue={annonce.annee ?? ""} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Kilométrage</span>
+                    <input
+                      name="kilometrage"
+                      type="number"
+                      className="depot-input"
+                      defaultValue={annonce.kilometrage ?? ""}
+                    />
+                  </label>
+                </div>
+
+                <span className="depot-question">Carburant</span>
+                <div className="depot-chip-row">
+                  {CARBURANTS.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      className={`depot-chip${carburant === c ? " active" : ""}`}
+                      onClick={() => setCarburant(c)}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <input type="hidden" name="carburant" value={carburant} />
+
+                <span className="depot-question">Boîte</span>
+                <div className="depot-radio-group">
+                  <label>
+                    <input
+                      type="radio"
+                      name="boite-radio"
+                      checked={boite === "Manuelle"}
+                      onChange={() => setBoite("Manuelle")}
+                    />
+                    Manuelle
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="boite-radio"
+                      checked={boite === "Automatique"}
+                      onChange={() => setBoite("Automatique")}
+                    />
+                    Automatique
+                  </label>
+                </div>
+                <input type="hidden" name="boite" value={boite} />
+              </fieldset>
+            )}
+
+            {state && "error" in state && <p style={{ color: "var(--brand-red)" }}>{state.error}</p>}
+
+            <div className="depot-actions" style={{ marginTop: annonce.categorie === "vehicules" ? 0 : "0.5rem" }}>
+              <button type="submit" className="btn btn-accent" disabled={pending}>
+                {pending ? "Enregistrement…" : "Enregistrer"}
+              </button>
+              <Link href="/compte/annonces" className="btn btn-outline">
+                Annuler
+              </Link>
+            </div>
+          </form>
+        </div>
+      </main>
+
+      <SiteFooter />
+    </>
   );
 }

@@ -1,34 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
-import {
-  enregistrerBrouillon,
-  televerserPhoto,
-  supprimerPhoto,
-  reordonnerPhotos,
-  publierAnnonce,
-  type CreerAnnonceResult,
-} from "@/lib/actions/annonces";
-
-interface Photo {
-  id: string;
-  url: string;
-}
-
-const MAX_PHOTOS = 12;
-
-// Emplacements suggérés pour les 3 premières photos d'un véhicule (repris de
-// l'ordre habituel d'une annonce auto) — reprend les mêmes icônes emoji que le
-// reste du site (cf. lib/categories.ts) plutôt que des pictos dessinés
-// spécifiquement, pour rester cohérent avec l'iconographie déjà en place.
-const VEHICULE_PHOTO_SLOTS = [
-  { label: "3/4 avant gauche", icon: "🚙" },
-  { label: "3/4 arrière droit", icon: "🚙" },
-  { label: "Intérieur conducteur", icon: "💺" },
-];
+import { enregistrerBrouillon, publierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
+import PhotoGrid, { type Photo } from "@/components/PhotoGrid";
 
 interface Suggestion {
   categorie: Categorie;
@@ -112,51 +89,6 @@ const TIPS: Record<number, { title: string; text: string }> = {
   },
 };
 
-function PhotoTile({
-  photo,
-  index,
-  onDragStart,
-  onDrop,
-  onRemove,
-}: {
-  photo: Photo;
-  index: number;
-  onDragStart: () => void;
-  onDrop: () => void;
-  onRemove: () => void;
-}) {
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div
-      className="depot-photo-tile"
-      draggable
-      onDragStart={onDragStart}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={onDrop}
-    >
-      {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
-      {!loaded && !failed && <span className="depot-photo-loading" aria-hidden="true" />}
-      {failed ? (
-        <span className="depot-photo-failed">Échec du chargement</span>
-      ) : (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={photo.url}
-          alt=""
-          style={{ opacity: loaded ? 1 : 0 }}
-          onLoad={() => setLoaded(true)}
-          onError={() => setFailed(true)}
-        />
-      )}
-      <button type="button" className="depot-photo-remove" onClick={onRemove} aria-label="Supprimer cette photo">
-        ×
-      </button>
-    </div>
-  );
-}
-
 export default function NouvelleAnnonceForm() {
   const [step, setStep] = useState(1);
 
@@ -170,9 +102,7 @@ export default function NouvelleAnnonceForm() {
   const [essentielError, setEssentielError] = useState("");
 
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [uploadingCount, setUploadingCount] = useState(0);
-  const [photoError, setPhotoError] = useState("");
-  const dragIndexRef = useRef<number | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [marque, setMarque] = useState("");
   const [modele, setModele] = useState("");
@@ -287,43 +217,6 @@ export default function NouvelleAnnonceForm() {
     next();
   }
 
-  async function handleFichiers(e: ChangeEvent<HTMLInputElement>) {
-    const fichiers = Array.from(e.target.files ?? []);
-    e.target.value = "";
-    if (!annonceId || fichiers.length === 0) return;
-    setPhotoError("");
-    for (const fichier of fichiers) {
-      if (photos.length + 1 > MAX_PHOTOS) break;
-      setUploadingCount((n) => n + 1);
-      const formData = new FormData();
-      formData.set("fichier", fichier);
-      const res = await televerserPhoto(annonceId, formData);
-      setUploadingCount((n) => n - 1);
-      if ("error" in res) {
-        setPhotoError(res.error);
-        continue;
-      }
-      setPhotos((prev) => [...prev, { id: res.id, url: res.url }]);
-    }
-  }
-
-  function handleSupprimerPhoto(id: string) {
-    setPhotos((prev) => prev.filter((p) => p.id !== id));
-    void supprimerPhoto(id);
-  }
-
-  function handleDrop(index: number) {
-    const from = dragIndexRef.current;
-    dragIndexRef.current = null;
-    if (from === null || from === index || !annonceId) return;
-    setPhotos((prev) => {
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(index, 0, moved);
-      void reordonnerPhotos(annonceId, next.map((p) => p.id));
-      return next;
-    });
-  }
 
   const cardTitle =
     step === 3
@@ -506,67 +399,14 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 2 && (
+            {step === 2 && annonceId && (
               <section>
-                <p className="depot-photo-hint">Faites glisser vos photos pour changer leur ordre.</p>
-                <span className="depot-question">
-                  Vos photos<span className="req">*</span>
-                </span>
-                <div className="depot-photo-grid">
-                  {photos.length < MAX_PHOTOS && (
-                    <label className={`depot-photo-add${uploadingCount > 0 ? " disabled" : ""}`}>
-                      <input type="file" accept="image/*" multiple onChange={handleFichiers} />
-                      <span className="add-icon">＋📷</span>
-                      {uploadingCount > 0 ? "Envoi…" : "Ajouter des photos"}
-                    </label>
-                  )}
-
-                  {/* Pour les véhicules, les 3 premiers emplacements affichent une
-                      suggestion d'angle (icône + libellé) tant qu'aucune photo n'y
-                      a été déposée — reprend les 3 vignettes guidées du modèle
-                      leboncoin. Les autres catégories n'ont pas cette notion
-                      d'angle et affichent simplement les photos au fur et à mesure. */}
-                  {categorie === "vehicules"
-                    ? VEHICULE_PHOTO_SLOTS.map((slot, index) =>
-                        photos[index] ? (
-                          <PhotoTile
-                            key={photos[index].id}
-                            photo={photos[index]}
-                            index={index}
-                            onDragStart={() => {
-                              dragIndexRef.current = index;
-                            }}
-                            onDrop={() => handleDrop(index)}
-                            onRemove={() => handleSupprimerPhoto(photos[index].id)}
-                          />
-                        ) : (
-                          <label key={slot.label} className={`depot-photo-add${uploadingCount > 0 ? " disabled" : ""}`}>
-                            <input type="file" accept="image/*" onChange={handleFichiers} />
-                            {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
-                            <span className="add-icon">{slot.icon}</span>
-                            {slot.label}
-                          </label>
-                        )
-                      )
-                    : null}
-
-                  {photos.map((photo, index) => {
-                    if (categorie === "vehicules" && index < VEHICULE_PHOTO_SLOTS.length) return null;
-                    return (
-                      <PhotoTile
-                        key={photo.id}
-                        photo={photo}
-                        index={index}
-                        onDragStart={() => {
-                          dragIndexRef.current = index;
-                        }}
-                        onDrop={() => handleDrop(index)}
-                        onRemove={() => handleSupprimerPhoto(photo.id)}
-                      />
-                    );
-                  })}
-                </div>
-                {photoError && <p style={{ color: "var(--brand-red)" }}>{photoError}</p>}
+                <PhotoGrid
+                  annonceId={annonceId}
+                  categorie={categorie}
+                  onPhotosChange={setPhotos}
+                  onUploadingChange={setUploading}
+                />
 
                 <div className="depot-actions">
                   <button type="button" className="btn btn-outline" onClick={back}>
@@ -575,7 +415,7 @@ export default function NouvelleAnnonceForm() {
                   <button
                     type="button"
                     className="btn btn-accent"
-                    disabled={photos.length === 0 || uploadingCount > 0}
+                    disabled={photos.length === 0 || uploading}
                     onClick={next}
                   >
                     Continuer
