@@ -203,7 +203,7 @@ export default function PhotoGrid({
       <div className="depot-photo-grid">
         {photos.length + enCours.length < MAX_PHOTOS && (
           <label className="depot-photo-add">
-            <input type="file" accept="image/*" multiple onChange={handleFichiers} />
+            <input type="file" accept="image/*,.heic,.heif" multiple onChange={handleFichiers} />
             <span className="add-icon">＋📷</span>
             Ajouter des photos
           </label>
@@ -242,7 +242,7 @@ export default function PhotoGrid({
               }
               return (
                 <label key={slot.label} className="depot-photo-add">
-                  <input type="file" accept="image/*" onChange={handleFichiers} />
+                  <input type="file" accept="image/*,.heic,.heif" onChange={handleFichiers} />
                   {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
                   <span className="add-icon">{slot.icon}</span>
                   {slot.label}

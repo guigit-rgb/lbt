@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import convert from "heic-convert";
 import { NextResponse } from "next/server";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
@@ -6,6 +7,19 @@ import { annonceImages } from "@/lib/db/schema";
 import { uploadToR2 } from "@/lib/storage/r2";
 import { chargerAnnoncePossedee } from "@/lib/actions/annonces";
 import { MAX_PHOTOS, MAX_TAILLE_PHOTO_OCTETS } from "@/lib/photos-constants";
+
+// Les photos iPhone sont en HEIC par défaut — aucun navigateur ne sait
+// afficher ce format dans une balise <img>, et son type MIME signalé par le
+// navigateur est peu fiable (souvent vide ou "application/octet-stream" hors
+// Safari). On détecte donc aussi par extension, et on convertit toujours en
+// JPEG côté serveur avant stockage.
+function estHeic(fichier: File): boolean {
+  return (
+    fichier.type === "image/heic" ||
+    fichier.type === "image/heif" ||
+    /\.(heic|heif)$/i.test(fichier.name)
+  );
+}
 
 // Route API classique (pas une Server Action) : c'est la seule façon d'obtenir
 // une vraie progression d'upload côté navigateur (XHR `upload.onprogress`),
@@ -23,7 +37,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ ann
   if (!(fichier instanceof File)) {
     return NextResponse.json({ error: "Aucun fichier reçu." }, { status: 400 });
   }
-  if (!fichier.type.startsWith("image/")) {
+  const heic = estHeic(fichier);
+  if (!heic && !fichier.type.startsWith("image/")) {
     return NextResponse.json({ error: "Le fichier doit être une image." }, { status: 400 });
   }
   if (fichier.size > MAX_TAILLE_PHOTO_OCTETS) {
@@ -38,10 +53,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ ann
     return NextResponse.json({ error: `Vous ne pouvez pas ajouter plus de ${MAX_PHOTOS} photos.` }, { status: 400 });
   }
 
-  const extension = fichier.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
+  let buffer = Buffer.from(await fichier.arrayBuffer());
+  let contentType = fichier.type || "image/jpeg";
+  let extension = fichier.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
+
+  if (heic) {
+    try {
+      const converti = await convert({ buffer, format: "JPEG", quality: 0.92 });
+      buffer = Buffer.from(converti);
+      contentType = "image/jpeg";
+      extension = "jpg";
+    } catch {
+      return NextResponse.json(
+        { error: "Impossible de convertir cette photo HEIC. Essayez un autre format (JPEG, PNG)." },
+        { status: 400 }
+      );
+    }
+  }
+
   const cle = `annonces/${annonceId}/${randomUUID()}.${extension}`;
-  const buffer = Buffer.from(await fichier.arrayBuffer());
-  await uploadToR2(cle, buffer, fichier.type);
+  await uploadToR2(cle, buffer, contentType);
 
   const [image] = await db
     .insert(annonceImages)
