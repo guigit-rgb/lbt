@@ -1,10 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState, type ChangeEvent } from "react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
-import { creerAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
+import {
+  enregistrerBrouillon,
+  televerserPhoto,
+  supprimerPhoto,
+  reordonnerPhotos,
+  publierAnnonce,
+  type CreerAnnonceResult,
+} from "@/lib/actions/annonces";
+
+interface Photo {
+  id: string;
+  url: string;
+}
+
+const MAX_PHOTOS = 12;
 
 interface Suggestion {
   categorie: Categorie;
@@ -50,10 +64,11 @@ function renderSuggestionLabel(label: string) {
 
 const CARD_TITLES: Record<number, string> = {
   1: "Démarrons cette annonce",
-  3: "Décrivez votre annonce",
-  4: "Fixons un prix",
-  5: "Où se trouve votre annonce ?",
-  6: "Vérifiez avant de publier",
+  2: "Ajoutez des photos",
+  4: "Décrivez votre annonce",
+  5: "Fixons un prix",
+  6: "Où se trouve votre annonce ?",
+  7: "Vérifiez avant de publier",
 };
 
 const TIPS: Record<number, { title: string; text: string }> = {
@@ -62,22 +77,26 @@ const TIPS: Record<number, { title: string; text: string }> = {
     text: "Vous aurez 50% de chances en plus d'être contacté si votre annonce est dans la bonne catégorie.",
   },
   2: {
+    title: "Ajoutez un maximum de photos",
+    text: "pour augmenter le nombre de contacts.",
+  },
+  3: {
     title: "Plus de détails, plus de contacts sérieux.",
     text: "Les acheteurs filtrent souvent sur des caractéristiques précises avant de vous contacter.",
   },
-  3: {
+  4: {
     title: "Une description honnête inspire confiance.",
     text: "Mentionnez l'état réel et ce qui est inclus : vous limiterez les questions et les déceptions.",
   },
-  4: {
+  5: {
     title: "Un prix juste attire plus vite.",
     text: "Regardez ce qui se vend pour un bien similaire avant de fixer votre prix.",
   },
-  5: {
+  6: {
     title: "La proximité compte.",
     text: "Les acheteurs près de chez vous sont prioritaires dans les résultats de recherche.",
   },
-  6: {
+  7: {
     title: "Vérifiez avant de publier.",
     text: "Vous pourrez modifier ou retirer votre annonce à tout moment depuis « Mes annonces ».",
   },
@@ -91,6 +110,14 @@ export default function NouvelleAnnonceForm() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [categorie, setCategorie] = useState<Categorie | "">("");
   const [typeAnnonce, setTypeAnnonce] = useState<"offre" | "demande">("offre");
+  const [annonceId, setAnnonceId] = useState<string | null>(null);
+  const [savingBrouillon, setSavingBrouillon] = useState(false);
+  const [essentielError, setEssentielError] = useState("");
+
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
+  const [photoError, setPhotoError] = useState("");
+  const dragIndexRef = useRef<number | null>(null);
 
   const [marque, setMarque] = useState("");
   const [modele, setModele] = useState("");
@@ -111,7 +138,8 @@ export default function NouvelleAnnonceForm() {
   const [codePostal, setCodePostal] = useState("");
 
   const [state, formAction, pending] = useActionState(
-    async (_prev: CreerAnnonceResult, formData: FormData) => creerAnnonce(formData),
+    async (_prev: CreerAnnonceResult, formData: FormData) =>
+      annonceId ? publierAnnonce(annonceId, formData) : { error: "Brouillon manquant, revenez à l'étape 1." },
     initialState
   );
 
@@ -177,22 +205,73 @@ export default function NouvelleAnnonceForm() {
   }
 
   const hasDetailStep = categorie === "vehicules" || categorie === "loisirs" || categorie === "animaux";
-  const totalSteps = hasDetailStep ? 6 : 5;
-  const displayStep = hasDetailStep || step < 2 ? step : step - 1;
+  const totalSteps = hasDetailStep ? 7 : 6;
+  const displayStep = hasDetailStep || step < 3 ? step : step - 1;
 
   function next() {
-    setStep((s) => (hasDetailStep ? s + 1 : s === 1 ? s + 2 : s + 1));
+    setStep((s) => (hasDetailStep ? s + 1 : s === 2 ? s + 2 : s + 1));
   }
   function back() {
-    setStep((s) => (hasDetailStep ? s - 1 : s === 3 ? s - 2 : s - 1));
+    setStep((s) => (hasDetailStep ? s - 1 : s === 4 ? s - 2 : s - 1));
   }
 
   function choisirCategorie(value: Categorie | "") {
     setCategorie(value);
   }
 
+  async function continuerEssentiel() {
+    setEssentielError("");
+    setSavingBrouillon(true);
+    const res = await enregistrerBrouillon({ id: annonceId ?? undefined, titre, categorie, typeAnnonce });
+    setSavingBrouillon(false);
+    if ("error" in res) {
+      setEssentielError(res.error);
+      return;
+    }
+    setAnnonceId(res.id);
+    next();
+  }
+
+  async function handleFichiers(e: ChangeEvent<HTMLInputElement>) {
+    const fichiers = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!annonceId || fichiers.length === 0) return;
+    setPhotoError("");
+    for (const fichier of fichiers) {
+      if (photos.length + 1 > MAX_PHOTOS) break;
+      setUploadingCount((n) => n + 1);
+      const formData = new FormData();
+      formData.set("fichier", fichier);
+      const res = await televerserPhoto(annonceId, formData);
+      setUploadingCount((n) => n - 1);
+      if ("error" in res) {
+        setPhotoError(res.error);
+        continue;
+      }
+      setPhotos((prev) => [...prev, { id: res.id, url: res.url }]);
+    }
+  }
+
+  function handleSupprimerPhoto(id: string) {
+    setPhotos((prev) => prev.filter((p) => p.id !== id));
+    void supprimerPhoto(id);
+  }
+
+  function handleDrop(index: number) {
+    const from = dragIndexRef.current;
+    dragIndexRef.current = null;
+    if (from === null || from === index || !annonceId) return;
+    setPhotos((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(index, 0, moved);
+      void reordonnerPhotos(annonceId, next.map((p) => p.id));
+      return next;
+    });
+  }
+
   const cardTitle =
-    step === 2
+    step === 3
       ? categorie === "vehicules"
         ? "Les caractéristiques du véhicule"
         : categorie === "loisirs"
@@ -200,8 +279,8 @@ export default function NouvelleAnnonceForm() {
           : "Quelques précisions"
       : CARD_TITLES[step];
 
-  const tip = TIPS[Math.min(step, 6)];
-  const peutContinuerEssentiel = titre.trim().length >= 3 && categorie !== "";
+  const tip = TIPS[Math.min(step, 7)];
+  const peutContinuerEssentiel = titre.trim().length >= 3 && categorie !== "" && !savingBrouillon;
 
   return (
     <div className="depot-page">
@@ -350,14 +429,15 @@ export default function NouvelleAnnonceForm() {
                           </label>
                         </div>
 
+                        {essentielError && <p style={{ color: "var(--brand-red)" }}>{essentielError}</p>}
                         <div className="depot-actions" style={{ justifyContent: "flex-end" }}>
                           <button
                             type="button"
                             className="btn btn-accent"
                             disabled={!peutContinuerEssentiel}
-                            onClick={next}
+                            onClick={continuerEssentiel}
                           >
-                            Continuer
+                            {savingBrouillon ? "…" : "Continuer"}
                           </button>
                         </div>
                       </>
@@ -371,7 +451,64 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 2 && hasDetailStep && categorie === "vehicules" && (
+            {step === 2 && (
+              <section>
+                <p className="depot-photo-hint">Faites glisser vos photos pour changer leur ordre.</p>
+                <span className="depot-question">
+                  Vos photos<span className="req">*</span>
+                </span>
+                <div className="depot-photo-grid">
+                  {photos.map((photo, index) => (
+                    <div
+                      key={photo.id}
+                      className="depot-photo-tile"
+                      draggable
+                      onDragStart={() => {
+                        dragIndexRef.current = index;
+                      }}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleDrop(index)}
+                    >
+                      {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={photo.url} alt="" />
+                      <button
+                        type="button"
+                        className="depot-photo-remove"
+                        onClick={() => handleSupprimerPhoto(photo.id)}
+                        aria-label="Supprimer cette photo"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                  {photos.length < MAX_PHOTOS && (
+                    <label className={`depot-photo-add${uploadingCount > 0 ? " disabled" : ""}`}>
+                      <input type="file" accept="image/*" multiple onChange={handleFichiers} />
+                      <span className="add-icon">＋📷</span>
+                      {uploadingCount > 0 ? "Envoi…" : "Ajouter des photos"}
+                    </label>
+                  )}
+                </div>
+                {photoError && <p style={{ color: "var(--brand-red)" }}>{photoError}</p>}
+
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-accent"
+                    disabled={photos.length === 0 || uploadingCount > 0}
+                    onClick={next}
+                  >
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {step === 3 && hasDetailStep && categorie === "vehicules" && (
               <section>
                 <div className="depot-field-row">
                   <label>
@@ -444,7 +581,7 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 2 && hasDetailStep && categorie === "loisirs" && (
+            {step === 3 && hasDetailStep && categorie === "loisirs" && (
               <section>
                 <label>
                   <span className="depot-question">Sous-catégorie</span>
@@ -488,7 +625,7 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 2 && hasDetailStep && categorie === "animaux" && (
+            {step === 3 && hasDetailStep && categorie === "animaux" && (
               <section>
                 <span className="depot-question">Type d&apos;animal</span>
                 <div className="depot-chip-row">
@@ -515,7 +652,7 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <section>
                 <button
                   type="button"
@@ -543,7 +680,7 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
               <section>
                 <input
                   type="number"
@@ -563,7 +700,7 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 5 && (
+            {step === 6 && (
               <section>
                 <div className="depot-field-row" style={{ gridTemplateColumns: "1fr 1fr" }}>
                   <label>
@@ -591,7 +728,7 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 6 && (
+            {step === 7 && (
               <section>
                 <ul className="depot-recap-list">
                   <li>
@@ -602,6 +739,9 @@ export default function NouvelleAnnonceForm() {
                   </li>
                   <li>
                     <strong>Type :</strong> {typeAnnonce === "offre" ? "Offre" : "Demande"}
+                  </li>
+                  <li>
+                    <strong>Photos :</strong> {photos.length}
                   </li>
                   {categorie === "vehicules" && (
                     <li>

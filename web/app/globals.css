@@ -938,6 +938,33 @@
 .depot-recap-list { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: 0.6rem; }
 .depot-recap-list li { font-size: 0.95rem; }
 
+.depot-photo-hint { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.1rem; }
+.depot-photo-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+.depot-photo-tile, .depot-photo-add {
+  width: 128px; height: 128px; border-radius: 10px; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.depot-photo-tile { border: 1px solid var(--line); background: var(--surface-2); cursor: grab; }
+.depot-photo-tile.dragging { opacity: 0.4; }
+.depot-photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.depot-photo-add {
+  border: 1.5px dashed var(--line); background: transparent; flex-direction: column; gap: 0.4rem;
+  color: var(--ink); font-size: 0.8rem; font-weight: 600; text-align: center; cursor: pointer; padding: 0.5rem;
+}
+.depot-photo-add:hover { border-color: var(--brand-red); color: var(--brand-red); }
+.depot-photo-add.disabled { opacity: 0.5; pointer-events: none; }
+.depot-photo-add .add-icon { font-size: 1.5rem; }
+.depot-photo-add input { display: none; }
+.depot-photo-cover {
+  position: absolute; top: 0.4rem; left: 0.4rem; background: rgba(28,27,24,0.82); color: #fff;
+  font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; z-index: 1;
+}
+.depot-photo-remove {
+  position: absolute; top: 0.3rem; right: 0.3rem; width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(28,27,24,0.7); color: #fff; border: none; font-size: 0.85rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1;
+}
+
 .depot-sidebar { width: 300px; flex-shrink: 0; text-align: center; padding-top: 0.5rem; }
 .depot-sidebar-rule { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.25rem; }
 .depot-sidebar-rule .line { flex: 1; height: 1px; background: var(--line); }

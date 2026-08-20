@@ -1,12 +1,17 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
-import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
+import { annonces, annonceImages, CATEGORIES, type Categorie } from "@/lib/db/schema";
+import { uploadToR2, deleteFromR2 } from "@/lib/storage/r2";
+
+const MAX_PHOTOS = 12;
+const MAX_TAILLE_PHOTO_OCTETS = 8 * 1024 * 1024;
 
 const DUREE_PUBLICATION_JOURS = 60;
 
@@ -32,6 +37,143 @@ async function chargerAnnoncePossedee(id: string): Promise<Possession> {
     return { ok: false, error: "Annonce introuvable." };
   }
   return { ok: true, session, annonce };
+}
+
+export type BrouillonInput = { id?: string; titre: string; categorie: string; typeAnnonce: string };
+
+// Crée (ou met à jour, si `id` est fourni) une annonce à l'état "brouillon" —
+// nécessaire dès l'étape Photos car `annonce_images.annonce_id` référence une
+// annonce existante : on ne peut plus attendre la toute fin du tunnel pour
+// créer la ligne en base, contrairement à l'ancien `creerAnnonce` (cf. journal
+// du cahier des charges, session photos).
+export async function enregistrerBrouillon(input: BrouillonInput): Promise<CreerAnnonceResult> {
+  const session = await auth();
+  if (!session) {
+    return { error: "Vous devez être connecté." };
+  }
+  if (!isCategorie(input.categorie)) {
+    return { error: "Catégorie invalide." };
+  }
+  if (input.typeAnnonce !== "offre" && input.typeAnnonce !== "demande") {
+    return { error: "Merci de préciser s'il s'agit d'une offre ou d'une demande." };
+  }
+  const titre = input.titre.trim();
+  if (titre.length < 3) {
+    return { error: "Le titre doit contenir au moins 3 caractères." };
+  }
+
+  if (input.id) {
+    const result = await chargerAnnoncePossedee(input.id);
+    if (!result.ok) return { error: result.error };
+    await db
+      .update(annonces)
+      .set({ titre, categorie: input.categorie, typeAnnonce: input.typeAnnonce, updatedAt: new Date() })
+      .where(eq(annonces.id, input.id));
+    return { success: true, id: input.id };
+  }
+
+  const [inserted] = await db
+    .insert(annonces)
+    .values({
+      userId: session.user.id,
+      categorie: input.categorie,
+      typeAnnonce: input.typeAnnonce,
+      titre,
+      description: "",
+      etat: "brouillon",
+    })
+    .returning({ id: annonces.id });
+
+  return { success: true, id: inserted.id };
+}
+
+export type PhotoResult = { error: string } | { success: true; id: string; url: string };
+
+export async function televerserPhoto(annonceId: string, formData: FormData): Promise<PhotoResult> {
+  const result = await chargerAnnoncePossedee(annonceId);
+  if (!result.ok) return { error: result.error };
+
+  const fichier = formData.get("fichier");
+  if (!(fichier instanceof File)) {
+    return { error: "Aucun fichier reçu." };
+  }
+  if (!fichier.type.startsWith("image/")) {
+    return { error: "Le fichier doit être une image." };
+  }
+  if (fichier.size > MAX_TAILLE_PHOTO_OCTETS) {
+    return { error: "L'image dépasse 8 Mo." };
+  }
+
+  const [{ n: nombreActuel }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(annonceImages)
+    .where(eq(annonceImages.annonceId, annonceId));
+  if (nombreActuel >= MAX_PHOTOS) {
+    return { error: `Vous ne pouvez pas ajouter plus de ${MAX_PHOTOS} photos.` };
+  }
+
+  const extension = fichier.type.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
+  const cle = `annonces/${annonceId}/${randomUUID()}.${extension}`;
+  const buffer = Buffer.from(await fichier.arrayBuffer());
+  await uploadToR2(cle, buffer, fichier.type);
+
+  const [image] = await db
+    .insert(annonceImages)
+    .values({ annonceId, storageKeyOriginal: cle, position: nombreActuel, status: "ready" })
+    .returning({ id: annonceImages.id });
+
+  const url = `/api/uploads/annonces/${image.id}`;
+  // `urlThumb/Medium/Large` pointent toutes vers la même image d'origine pour
+  // l'instant — pas de pipeline de redimensionnement (pas de worker `travaux`
+  // pour ça à ce stade) ; on garde les 3 colonnes pour rester compatible avec
+  // la lecture déjà faite dans app/compte/annonces/page.tsx.
+  await db
+    .update(annonceImages)
+    .set({ urlThumb: url, urlMedium: url, urlLarge: url })
+    .where(eq(annonceImages.id, image.id));
+
+  return { success: true, id: image.id, url };
+}
+
+export async function supprimerPhoto(imageId: string): Promise<{ error: string } | { success: true }> {
+  const session = await auth();
+  if (!session) return { error: "Vous devez être connecté." };
+
+  const [image] = await db.select().from(annonceImages).where(eq(annonceImages.id, imageId)).limit(1);
+  if (!image) return { error: "Photo introuvable." };
+
+  const possession = await chargerAnnoncePossedee(image.annonceId);
+  if (!possession.ok) return { error: possession.error };
+
+  await deleteFromR2(image.storageKeyOriginal).catch(() => {});
+  await db.delete(annonceImages).where(eq(annonceImages.id, imageId));
+
+  const restantes = await db
+    .select({ id: annonceImages.id })
+    .from(annonceImages)
+    .where(eq(annonceImages.annonceId, image.annonceId))
+    .orderBy(annonceImages.position);
+  for (let i = 0; i < restantes.length; i++) {
+    await db.update(annonceImages).set({ position: i }).where(eq(annonceImages.id, restantes[i].id));
+  }
+
+  return { success: true };
+}
+
+export async function reordonnerPhotos(
+  annonceId: string,
+  ordreIds: string[]
+): Promise<{ error: string } | { success: true }> {
+  const possession = await chargerAnnoncePossedee(annonceId);
+  if (!possession.ok) return { error: possession.error };
+
+  for (let i = 0; i < ordreIds.length; i++) {
+    await db
+      .update(annonceImages)
+      .set({ position: i })
+      .where(and(eq(annonceImages.id, ordreIds[i]), eq(annonceImages.annonceId, annonceId)));
+  }
+  return { success: true };
 }
 
 // Retournent `void` (et non un objet de résultat) car ces actions sont
@@ -92,13 +234,12 @@ function optionalInt(formData: FormData, key: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
-export async function creerAnnonce(formData: FormData): Promise<CreerAnnonceResult> {
-  // Le proxy protège /compte/annonces/nouvelle, mais une Server Function
-  // doit toujours revérifier la session elle-même (règle Next.js 16).
-  const session = await auth();
-  if (!session) {
-    return { error: "Vous devez être connecté pour déposer une annonce." };
-  }
+export async function publierAnnonce(id: string, formData: FormData): Promise<CreerAnnonceResult> {
+  // Le brouillon (titre/catégorie/type/photos) existe déjà en base à ce
+  // stade — cette fonction complète les champs restants et fait passer
+  // l'annonce de "brouillon" à "en_ligne" (cf. enregistrerBrouillon).
+  const result = await chargerAnnoncePossedee(id);
+  if (!result.ok) return { error: result.error };
 
   const categorie = formData.get("categorie");
   if (!isCategorie(categorie)) {
@@ -126,6 +267,14 @@ export async function creerAnnonce(formData: FormData): Promise<CreerAnnonceResu
   }
   if (!codePostal || !/^\d{5}$/.test(codePostal)) {
     return { error: "Le code postal doit contenir 5 chiffres." };
+  }
+
+  const [{ n: nombrePhotos }] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(annonceImages)
+    .where(eq(annonceImages.annonceId, id));
+  if (nombrePhotos < 1) {
+    return { error: "Ajoutez au moins une photo avant de publier." };
   }
 
   const prixRaw = optionalString(formData, "prix");
@@ -163,10 +312,9 @@ export async function creerAnnonce(formData: FormData): Promise<CreerAnnonceResu
     typeAnimal = optionalString(formData, "typeAnimal");
   }
 
-  const [inserted] = await db
-    .insert(annonces)
-    .values({
-      userId: session.user.id,
+  await db
+    .update(annonces)
+    .set({
       categorie,
       typeAnnonce,
       titre,
@@ -185,10 +333,11 @@ export async function creerAnnonce(formData: FormData): Promise<CreerAnnonceResu
       typeAnimal,
       attributs,
       publishedAt: new Date(),
+      updatedAt: new Date(),
     })
-    .returning({ id: annonces.id });
+    .where(eq(annonces.id, id));
 
-  redirect(`/annonces/${inserted.id}?nouveau=1`);
+  redirect(`/annonces/${id}?nouveau=1`);
 }
 
 export async function modifierAnnonce(id: string, formData: FormData): Promise<CreerAnnonceResult> {
