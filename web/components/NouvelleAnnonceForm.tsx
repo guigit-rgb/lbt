@@ -20,6 +20,16 @@ interface Photo {
 
 const MAX_PHOTOS = 12;
 
+// Emplacements suggérés pour les 3 premières photos d'un véhicule (repris de
+// l'ordre habituel d'une annonce auto) — reprend les mêmes icônes emoji que le
+// reste du site (cf. lib/categories.ts) plutôt que des pictos dessinés
+// spécifiquement, pour rester cohérent avec l'iconographie déjà en place.
+const VEHICULE_PHOTO_SLOTS = [
+  { label: "3/4 avant gauche", icon: "🚙" },
+  { label: "3/4 arrière droit", icon: "🚙" },
+  { label: "Intérieur conducteur", icon: "💺" },
+];
+
 interface Suggestion {
   categorie: Categorie;
   sousCategorie?: string;
@@ -101,6 +111,51 @@ const TIPS: Record<number, { title: string; text: string }> = {
     text: "Vous pourrez modifier ou retirer votre annonce à tout moment depuis « Mes annonces ».",
   },
 };
+
+function PhotoTile({
+  photo,
+  index,
+  onDragStart,
+  onDrop,
+  onRemove,
+}: {
+  photo: Photo;
+  index: number;
+  onDragStart: () => void;
+  onDrop: () => void;
+  onRemove: () => void;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div
+      className="depot-photo-tile"
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+    >
+      {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
+      {!loaded && !failed && <span className="depot-photo-loading" aria-hidden="true" />}
+      {failed ? (
+        <span className="depot-photo-failed">Échec du chargement</span>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={photo.url}
+          alt=""
+          style={{ opacity: loaded ? 1 : 0 }}
+          onLoad={() => setLoaded(true)}
+          onError={() => setFailed(true)}
+        />
+      )}
+      <button type="button" className="depot-photo-remove" onClick={onRemove} aria-label="Supprimer cette photo">
+        ×
+      </button>
+    </div>
+  );
+}
 
 export default function NouvelleAnnonceForm() {
   const [step, setStep] = useState(1);
@@ -458,30 +513,6 @@ export default function NouvelleAnnonceForm() {
                   Vos photos<span className="req">*</span>
                 </span>
                 <div className="depot-photo-grid">
-                  {photos.map((photo, index) => (
-                    <div
-                      key={photo.id}
-                      className="depot-photo-tile"
-                      draggable
-                      onDragStart={() => {
-                        dragIndexRef.current = index;
-                      }}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleDrop(index)}
-                    >
-                      {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.url} alt="" />
-                      <button
-                        type="button"
-                        className="depot-photo-remove"
-                        onClick={() => handleSupprimerPhoto(photo.id)}
-                        aria-label="Supprimer cette photo"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
                   {photos.length < MAX_PHOTOS && (
                     <label className={`depot-photo-add${uploadingCount > 0 ? " disabled" : ""}`}>
                       <input type="file" accept="image/*" multiple onChange={handleFichiers} />
@@ -489,6 +520,51 @@ export default function NouvelleAnnonceForm() {
                       {uploadingCount > 0 ? "Envoi…" : "Ajouter des photos"}
                     </label>
                   )}
+
+                  {/* Pour les véhicules, les 3 premiers emplacements affichent une
+                      suggestion d'angle (icône + libellé) tant qu'aucune photo n'y
+                      a été déposée — reprend les 3 vignettes guidées du modèle
+                      leboncoin. Les autres catégories n'ont pas cette notion
+                      d'angle et affichent simplement les photos au fur et à mesure. */}
+                  {categorie === "vehicules"
+                    ? VEHICULE_PHOTO_SLOTS.map((slot, index) =>
+                        photos[index] ? (
+                          <PhotoTile
+                            key={photos[index].id}
+                            photo={photos[index]}
+                            index={index}
+                            onDragStart={() => {
+                              dragIndexRef.current = index;
+                            }}
+                            onDrop={() => handleDrop(index)}
+                            onRemove={() => handleSupprimerPhoto(photos[index].id)}
+                          />
+                        ) : (
+                          <label key={slot.label} className={`depot-photo-add${uploadingCount > 0 ? " disabled" : ""}`}>
+                            <input type="file" accept="image/*" onChange={handleFichiers} />
+                            {index === 0 && <span className="depot-photo-cover">Photo de couverture</span>}
+                            <span className="add-icon">{slot.icon}</span>
+                            {slot.label}
+                          </label>
+                        )
+                      )
+                    : null}
+
+                  {photos.map((photo, index) => {
+                    if (categorie === "vehicules" && index < VEHICULE_PHOTO_SLOTS.length) return null;
+                    return (
+                      <PhotoTile
+                        key={photo.id}
+                        photo={photo}
+                        index={index}
+                        onDragStart={() => {
+                          dragIndexRef.current = index;
+                        }}
+                        onDrop={() => handleDrop(index)}
+                        onRemove={() => handleSupprimerPhoto(photo.id)}
+                      />
+                    );
+                  })}
                 </div>
                 {photoError && <p style={{ color: "var(--brand-red)" }}>{photoError}</p>}
 
