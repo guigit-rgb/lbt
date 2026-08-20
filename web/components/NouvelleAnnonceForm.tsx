@@ -49,7 +49,7 @@ function renderSuggestionLabel(label: string) {
 }
 
 const CARD_TITLES: Record<number, string> = {
-  1: "Commençons par l'essentiel !",
+  1: "Démarrons cette annonce",
   3: "Décrivez votre annonce",
   4: "Fixons un prix",
   5: "Où se trouve votre annonce ?",
@@ -246,10 +246,9 @@ export default function NouvelleAnnonceForm() {
 
                 {titre.trim().length >= 3 && (
                   <>
-                    <hr className="depot-divider" />
-
                     {categorie === "" ? (
                       <>
+                        <hr className="depot-divider" />
                         {loadingSuggestions && <p style={{ color: "var(--muted)" }}>Recherche de catégories…</p>}
                         {suggestions.length > 0 && (
                           <>

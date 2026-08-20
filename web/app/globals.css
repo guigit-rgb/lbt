@@ -890,11 +890,11 @@
 }
 .depot-step-label { font-size: 0.78rem; color: var(--muted); margin-bottom: 0.6rem; }
 .depot-card {
-  flex: 1; min-width: 0; background: var(--surface); border-radius: 16px;
-  padding: 2.25rem 2.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  flex: 1; min-width: 0; max-width: 640px; background: var(--surface); border-radius: 16px;
+  padding: 2rem 2.25rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
-.depot-card h1 { font-size: 1.4rem; margin-bottom: 0.9rem; }
-.depot-required-note { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.4rem; }
+.depot-card h1 { font-size: 1.3rem; margin-bottom: 0.75rem; }
+.depot-required-note { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
 .depot-question { font-size: 1.02rem; font-weight: 600; display: block; margin-bottom: 0.7rem; }
 .depot-question .req { color: var(--brand-red); margin-left: 0.15rem; }
 .depot-input, .depot-select, .depot-textarea {
@@ -904,7 +904,7 @@
 .depot-input:focus, .depot-select:focus, .depot-textarea:focus { outline: none; border-color: var(--brand-red); }
 .depot-textarea { resize: vertical; }
 .depot-counter { text-align: right; font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem; }
-.depot-divider { border: none; border-top: 1px solid var(--line); margin: 1.75rem 0; }
+.depot-divider { border: none; border-top: 1px solid var(--line); margin: 1.25rem 0; }
 .depot-suggestions-heading { font-weight: 700; margin-bottom: 0.9rem; }
 .depot-suggestion-list { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.75rem; }
 .depot-suggestion-item {
@@ -913,10 +913,10 @@
 .depot-suggestion-item input[type="radio"] { width: 18px; height: 18px; accent-color: var(--brand-red); }
 .depot-suggestion-icon { font-size: 1.1rem; }
 .depot-suggestion-item .path-sep { color: var(--muted); margin: 0 0.15rem; }
-.depot-fallback-label { display: block; margin-bottom: 1.5rem; }
+.depot-fallback-label { display: block; margin-bottom: 1.1rem; }
 .depot-legal { font-size: 0.85rem; color: var(--muted); }
 .depot-legal a { text-decoration: underline; color: var(--muted); }
-.depot-actions { display: flex; gap: 0.75rem; margin-top: 2rem; }
+.depot-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
 .depot-chip-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.4rem; }
 .depot-chip {
   padding: 0.5rem 1.1rem; border: 1px solid var(--line); border-radius: 999px;
