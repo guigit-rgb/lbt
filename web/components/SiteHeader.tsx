@@ -65,7 +65,11 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
             )}
             {column.map((group, groupIndex) => (
               <div className="mega-group" key={groupIndex}>
-                {group.heading && <h4>{group.heading}</h4>}
+                {group.heading && (
+                  <Link href={`/${entry.categorie}`}>
+                    <h4>{group.heading}</h4>
+                  </Link>
+                )}
                 {group.links.length === 1 && !group.heading ? (
                   <Link className="mega-head" href={`/${entry.categorie}`}>
                     {group.links[0].label}
