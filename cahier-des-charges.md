@@ -7214,3 +7214,14 @@ Nicolas a fourni une capture leboncoin du bloc "Vendu par" (avatar, nom, "Suivre
 - **Volontairement exclu, même liste que les sessions n°45/n°46** : "Suivre" (pas de système d'abonnement), "Très réactif"/"Numéro vérifié" (aucune donnée réelle derrière), "Dernière activité" (aucun horodatage de dernière connexion suivi).
 
 **How to apply :** avatar et ancienneté sont maintenant affichés à trois endroits (`/compte/profil`, `/vendeurs/[id]`, page de détail d'une annonce) avec le même helper `couleurAvatar()` — si un futur endroit a besoin d'afficher un vendeur, réutiliser ce même helper plutôt que d'inventer une nouvelle palette.
+
+## Session n°50 (2026-08-22, suite) — Grille "Informations clés" véhicules étendue (capture leboncoin fournie)
+
+Nicolas a fourni une capture d'une annonce auto leboncoin bien plus détaillée que la nôtre (portes, places, contrôle technique, mise en circulation, état du véhicule, type, sellerie, équipements, couleur, puissances fiscale/DIN, permis) et demandé de reprendre ce niveau de détail.
+
+- Douze nouveaux champs facultatifs ajoutés dans `attributs` (jsonb, même mécanisme que carburant/boite) plutôt qu'une migration de schéma — `VEHICULE_ATTRIBUTS_TEXTE` dans `lib/actions/annonces.ts` liste ces clés en un seul endroit, lu par `publierAnnonce()` et `modifierAnnonce()`.
+- `components/NouvelleAnnonceForm.tsx` (étape 3 véhicule) et `components/ModifierAnnonceForm.tsx` : mêmes 12 champs dans les deux formulaires (dépôt et modification), en `<select>` pour les valeurs fermées (portes, places, type, état, couleur, sellerie, permis) et en texte libre pour puissances/dates/équipements — un champ "Équipements" texte plutôt qu'une liste à cocher, pour ne pas alourdir un formulaire déjà dense.
+- `lib/annonce-display.ts` : `detailInformationsCles()` affiche désormais jusqu'à 16 lignes pour un véhicule (contre 6 avant), chacune avec une icône dédiée.
+- `scripts/backfill-vehicule-attributs.mjs` (nouveau, rejouable — ne touche que les annonces sans `portes`) : les 14 annonces véhicules du catalogue de démo, créées avant l'existence de ces champs, ont été enrichies de valeurs plausibles pour que la nouvelle grille soit visible immédiatement plutôt que vide sur tout le catalogue existant.
+
+**How to apply :** pour ajouter un treizième champ véhicule, l'ajouter à `VEHICULE_ATTRIBUTS_TEXTE` (`lib/actions/annonces.ts`) puis au rendu dans les trois endroits qui en dépendent (les deux formulaires, `detailInformationsCles()`) — aucune migration de schéma n'est nécessaire, `attributs` est déjà extensible.

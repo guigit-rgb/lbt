@@ -18,6 +18,24 @@ import { estFinDeVie } from "@/lib/annonce-display";
 
 const DUREE_PUBLICATION_JOURS = 60;
 
+// Caractéristiques véhicule facultatives, toutes de simples chaînes stockées
+// dans `attributs` (au même titre que carburant/boite) — un seul endroit à
+// étendre si un futur champ vient s'y ajouter.
+const VEHICULE_ATTRIBUTS_TEXTE = [
+  "portes",
+  "places",
+  "etatVehicule",
+  "typeVehicule",
+  "couleur",
+  "sellerie",
+  "equipements",
+  "puissanceFiscale",
+  "puissanceDin",
+  "permis",
+  "controleTechnique",
+  "miseEnCirculation",
+] as const;
+
 function dansNJours(n: number): Date {
   const date = new Date();
   date.setDate(date.getDate() + n);
@@ -323,6 +341,10 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
     const boite = optionalString(formData, "boite");
     if (carburant) attributs.carburant = carburant;
     if (boite) attributs.boite = boite;
+    for (const champ of VEHICULE_ATTRIBUTS_TEXTE) {
+      const valeur = optionalString(formData, champ);
+      if (valeur) attributs[champ] = valeur;
+    }
   } else if (categorie === "loisirs") {
     sousCategorie = optionalString(formData, "sousCategorie");
     etatProduit = optionalString(formData, "etatProduit");
@@ -415,6 +437,10 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     const boite = optionalString(formData, "boite");
     if (carburant) attributs.carburant = carburant;
     if (boite) attributs.boite = boite;
+    for (const champ of VEHICULE_ATTRIBUTS_TEXTE) {
+      const valeur = optionalString(formData, champ);
+      if (valeur) attributs[champ] = valeur;
+    }
   }
 
   await db

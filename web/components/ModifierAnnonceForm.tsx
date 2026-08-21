@@ -12,6 +12,13 @@ import { modifierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces
 type Annonce = typeof annonces.$inferSelect;
 
 const CARBURANTS = ["Essence", "Diesel", "Hybride", "Électrique", "Autre"];
+const PORTES = ["2", "3", "4", "5"];
+const PLACES = ["2", "4", "5", "7", "9"];
+const ETATS_VEHICULE = ["Neuf", "Comme neuf", "Bon état", "Réparations mineures à prévoir", "Pour pièces"];
+const TYPES_VEHICULE = ["Berline", "Citadine", "SUV / 4x4", "Break", "Coupé", "Cabriolet", "Monospace", "Utilitaire"];
+const COULEURS = ["Noir", "Blanc", "Gris", "Bleu", "Rouge", "Vert", "Marron", "Beige", "Jaune", "Orange"];
+const SELLERIES = ["Tissu", "Cuir", "Simili-cuir"];
+const PERMIS_OPTIONS = ["Permis B", "Sans permis (voiturette)"];
 
 const initialState: CreerAnnonceResult = { success: true, id: "" };
 
@@ -221,6 +228,133 @@ export default function ModifierAnnonceForm({
                   </label>
                 </div>
                 <input type="hidden" name="boite" value={boite} />
+
+                <div className="depot-field-row">
+                  <label>
+                    <span className="depot-question">Nombre de portes</span>
+                    <select name="portes" className="depot-select" defaultValue={attributs.portes ?? ""}>
+                      <option value="">Choisissez</option>
+                      {PORTES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Nombre de places</span>
+                    <select name="places" className="depot-select" defaultValue={attributs.places ?? ""}>
+                      <option value="">Choisissez</option>
+                      {PLACES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Type de véhicule</span>
+                    <select name="typeVehicule" className="depot-select" defaultValue={attributs.typeVehicule ?? ""}>
+                      <option value="">Choisissez</option>
+                      {TYPES_VEHICULE.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">État du véhicule</span>
+                    <select name="etatVehicule" className="depot-select" defaultValue={attributs.etatVehicule ?? ""}>
+                      <option value="">Choisissez</option>
+                      {ETATS_VEHICULE.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Couleur</span>
+                    <select name="couleur" className="depot-select" defaultValue={attributs.couleur ?? ""}>
+                      <option value="">Choisissez</option>
+                      {COULEURS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Sellerie</span>
+                    <select name="sellerie" className="depot-select" defaultValue={attributs.sellerie ?? ""}>
+                      <option value="">Choisissez</option>
+                      {SELLERIES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Permis</span>
+                    <select name="permis" className="depot-select" defaultValue={attributs.permis ?? ""}>
+                      <option value="">Choisissez</option>
+                      {PERMIS_OPTIONS.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Puissance fiscale (CV)</span>
+                    <input
+                      name="puissanceFiscale"
+                      type="number"
+                      className="depot-input"
+                      defaultValue={attributs.puissanceFiscale ?? ""}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Puissance DIN (ch)</span>
+                    <input
+                      name="puissanceDin"
+                      type="number"
+                      className="depot-input"
+                      defaultValue={attributs.puissanceDin ?? ""}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Mise en circulation (MM/AAAA)</span>
+                    <input
+                      name="miseEnCirculation"
+                      className="depot-input"
+                      placeholder="03/2018"
+                      defaultValue={attributs.miseEnCirculation ?? ""}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Contrôle technique valide jusqu&apos;à</span>
+                    <input
+                      name="controleTechnique"
+                      type="number"
+                      className="depot-input"
+                      placeholder="2026"
+                      defaultValue={attributs.controleTechnique ?? ""}
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  <span className="depot-question">Équipements (séparés par des virgules)</span>
+                  <input
+                    name="equipements"
+                    className="depot-input"
+                    placeholder="Climatisation, GPS, Toit ouvrant…"
+                    defaultValue={attributs.equipements ?? ""}
+                  />
+                </label>
               </fieldset>
             )}
 

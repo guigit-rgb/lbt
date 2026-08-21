@@ -188,6 +188,26 @@ export function detailInformationsCles(row: AnnonceRow): AdDetailSpec[] {
     const attributs = row.attributs as Record<string, string>;
     if (attributs.carburant) specs.push({ icon: "⛽", label: "Énergie", value: attributs.carburant });
     if (attributs.boite) specs.push({ icon: "⚙️", label: "Boîte de vitesse", value: attributs.boite });
+    if (attributs.typeVehicule) specs.push({ icon: "🚙", label: "Type de véhicule", value: attributs.typeVehicule });
+    if (attributs.etatVehicule) specs.push({ icon: "🔧", label: "État du véhicule", value: attributs.etatVehicule });
+    if (attributs.portes) specs.push({ icon: "🚪", label: "Nombre de portes", value: attributs.portes });
+    if (attributs.places) specs.push({ icon: "💺", label: "Nombre de places", value: attributs.places });
+    if (attributs.miseEnCirculation) {
+      specs.push({ icon: "📆", label: "Mise en circulation", value: attributs.miseEnCirculation });
+    }
+    if (attributs.controleTechnique) {
+      specs.push({ icon: "🛠️", label: "Contrôle technique valide jusqu'à", value: attributs.controleTechnique });
+    }
+    if (attributs.couleur) specs.push({ icon: "🎨", label: "Couleur", value: attributs.couleur });
+    if (attributs.sellerie) specs.push({ icon: "🪑", label: "Sellerie", value: attributs.sellerie });
+    if (attributs.puissanceFiscale) {
+      specs.push({ icon: "🐎", label: "Puissance fiscale", value: `${attributs.puissanceFiscale} CV` });
+    }
+    if (attributs.puissanceDin) {
+      specs.push({ icon: "🏎️", label: "Puissance DIN", value: `${attributs.puissanceDin} ch` });
+    }
+    if (attributs.permis) specs.push({ icon: "🪪", label: "Permis", value: attributs.permis });
+    if (attributs.equipements) specs.push({ icon: "🧩", label: "Équipements", value: attributs.equipements });
     return specs;
   }
   if (row.categorie === "loisirs") {

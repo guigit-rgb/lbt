@@ -33,6 +33,14 @@ const CARBURANTS = ["Essence", "Diesel", "Hybride", "Électrique", "Autre"];
 const ETATS_PRODUIT = ["Neuf", "Très bon état", "Bon état", "Satisfaisant"];
 const TYPES_ANIMAUX = ["Chien", "Chat", "Oiseau", "Rongeur", "Autre"];
 
+const PORTES = ["2", "3", "4", "5"];
+const PLACES = ["2", "4", "5", "7", "9"];
+const ETATS_VEHICULE = ["Neuf", "Comme neuf", "Bon état", "Réparations mineures à prévoir", "Pour pièces"];
+const TYPES_VEHICULE = ["Berline", "Citadine", "SUV / 4x4", "Break", "Coupé", "Cabriolet", "Monospace", "Utilitaire"];
+const COULEURS = ["Noir", "Blanc", "Gris", "Bleu", "Rouge", "Vert", "Marron", "Beige", "Jaune", "Orange"];
+const SELLERIES = ["Tissu", "Cuir", "Simili-cuir"];
+const PERMIS_OPTIONS = ["Permis B", "Sans permis (voiturette)"];
+
 const initialState: CreerAnnonceResult = { success: true, id: "" };
 
 function renderSuggestionLabel(label: string) {
@@ -110,6 +118,18 @@ export default function NouvelleAnnonceForm() {
   const [kilometrage, setKilometrage] = useState("");
   const [carburant, setCarburant] = useState("");
   const [boite, setBoite] = useState("");
+  const [portes, setPortes] = useState("");
+  const [places, setPlaces] = useState("");
+  const [etatVehicule, setEtatVehicule] = useState("");
+  const [typeVehicule, setTypeVehicule] = useState("");
+  const [couleur, setCouleur] = useState("");
+  const [sellerie, setSellerie] = useState("");
+  const [equipements, setEquipements] = useState("");
+  const [puissanceFiscale, setPuissanceFiscale] = useState("");
+  const [puissanceDin, setPuissanceDin] = useState("");
+  const [permis, setPermis] = useState("");
+  const [controleTechnique, setControleTechnique] = useState("");
+  const [miseEnCirculation, setMiseEnCirculation] = useState("");
 
   const [sousCategorie, setSousCategorie] = useState("");
   const [etatProduit, setEtatProduit] = useState("");
@@ -486,6 +506,133 @@ export default function NouvelleAnnonceForm() {
                   </label>
                 </div>
 
+                <div className="depot-field-row">
+                  <label>
+                    <span className="depot-question">Nombre de portes</span>
+                    <select className="depot-select" value={portes} onChange={(e) => setPortes(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {PORTES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Nombre de places</span>
+                    <select className="depot-select" value={places} onChange={(e) => setPlaces(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {PLACES.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Type de véhicule</span>
+                    <select className="depot-select" value={typeVehicule} onChange={(e) => setTypeVehicule(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {TYPES_VEHICULE.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">État du véhicule</span>
+                    <select className="depot-select" value={etatVehicule} onChange={(e) => setEtatVehicule(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {ETATS_VEHICULE.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Couleur</span>
+                    <select className="depot-select" value={couleur} onChange={(e) => setCouleur(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {COULEURS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Sellerie</span>
+                    <select className="depot-select" value={sellerie} onChange={(e) => setSellerie(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {SELLERIES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Permis</span>
+                    <select className="depot-select" value={permis} onChange={(e) => setPermis(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {PERMIS_OPTIONS.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Puissance fiscale (CV)</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={puissanceFiscale}
+                      onChange={(e) => setPuissanceFiscale(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Puissance DIN (ch)</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={puissanceDin}
+                      onChange={(e) => setPuissanceDin(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Mise en circulation (MM/AAAA)</span>
+                    <input
+                      className="depot-input"
+                      placeholder="03/2018"
+                      value={miseEnCirculation}
+                      onChange={(e) => setMiseEnCirculation(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Contrôle technique valide jusqu&apos;à</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      placeholder="2026"
+                      value={controleTechnique}
+                      onChange={(e) => setControleTechnique(e.target.value)}
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  <span className="depot-question">Équipements (séparés par des virgules)</span>
+                  <input
+                    className="depot-input"
+                    placeholder="Climatisation, GPS, Toit ouvrant…"
+                    value={equipements}
+                    onChange={(e) => setEquipements(e.target.value)}
+                  />
+                </label>
+
                 <div className="depot-actions">
                   <button type="button" className="btn btn-outline" onClick={back}>
                     Retour
@@ -702,6 +849,18 @@ export default function NouvelleAnnonceForm() {
                       <input type="hidden" name="kilometrage" value={kilometrage} />
                       <input type="hidden" name="carburant" value={carburant} />
                       <input type="hidden" name="boite" value={boite} />
+                      <input type="hidden" name="portes" value={portes} />
+                      <input type="hidden" name="places" value={places} />
+                      <input type="hidden" name="etatVehicule" value={etatVehicule} />
+                      <input type="hidden" name="typeVehicule" value={typeVehicule} />
+                      <input type="hidden" name="couleur" value={couleur} />
+                      <input type="hidden" name="sellerie" value={sellerie} />
+                      <input type="hidden" name="equipements" value={equipements} />
+                      <input type="hidden" name="puissanceFiscale" value={puissanceFiscale} />
+                      <input type="hidden" name="puissanceDin" value={puissanceDin} />
+                      <input type="hidden" name="permis" value={permis} />
+                      <input type="hidden" name="controleTechnique" value={controleTechnique} />
+                      <input type="hidden" name="miseEnCirculation" value={miseEnCirculation} />
                     </>
                   )}
                   {categorie === "loisirs" && (
