@@ -1,14 +1,32 @@
-import Link from "next/link";
+import AuthCard from "@/components/AuthCard";
+import { destinationInterne } from "@/lib/auth-redirect";
 import { LoginForm } from "./LoginForm";
 
-export default function ConnexionPage() {
+// Titre contextuel, sur le modèle de la référence lacentrale.fr : quand le
+// visiteur a été intercepté par `proxy.ts` en cliquant « Déposer une annonce »,
+// l'écran le dit et le ramène ensuite là où il allait. Le libellé n'est donc
+// pas décoratif — il décrit la destination réellement mémorisée.
+export default async function ConnexionPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
+  const next = destinationInterne(sp.next);
+  const versDepot = next?.startsWith("/compte/annonces/nouvelle") ?? false;
+
   return (
-    <main style={{ maxWidth: 480, margin: "4rem auto", padding: "0 1rem" }}>
-      <h1>Se connecter</h1>
-      <LoginForm />
-      <p style={{ marginTop: "1.5rem" }}>
-        Pas encore de compte ? <Link href="/compte/inscription">Inscrivez-vous</Link>
-      </p>
-    </main>
+    <AuthCard
+      onglet="connexion"
+      titre={versDepot ? "Dépôt d'annonce" : "Mon compte"}
+      lede={
+        versDepot
+          ? "Identifiez-vous pour publier une annonce."
+          : "Identifiez-vous pour retrouver vos annonces et vos messages."
+      }
+      next={next}
+    >
+      <LoginForm next={next} />
+    </AuthCard>
   );
 }

@@ -6,6 +6,7 @@ import { CredentialsSignin } from "next-auth";
 import { db } from "@/lib/db/client";
 import { users, invites } from "@/lib/db/schema";
 import { signIn } from "@/lib/auth";
+import { DESTINATION_PAR_DEFAUT, destinationInterne } from "@/lib/auth-redirect";
 
 export type AuthActionResult = { error: string } | { success: true };
 
@@ -14,6 +15,7 @@ export async function signup(formData: FormData): Promise<AuthActionResult> {
   const password = formData.get("password");
   const displayName = formData.get("displayName");
   const inviteCode = formData.get("inviteCode");
+  const redirectTo = destinationInterne(formData.get("next")) ?? DESTINATION_PAR_DEFAUT;
 
   if (
     typeof email !== "string" ||
@@ -61,7 +63,7 @@ export async function signup(formData: FormData): Promise<AuthActionResult> {
     await signIn("credentials", {
       email: email.trim(),
       password,
-      redirectTo: "/compte/annonces",
+      redirectTo,
     });
     return { success: true };
   } catch (err) {
@@ -75,6 +77,7 @@ export async function signup(formData: FormData): Promise<AuthActionResult> {
 export async function login(formData: FormData): Promise<AuthActionResult> {
   const email = formData.get("email");
   const password = formData.get("password");
+  const redirectTo = destinationInterne(formData.get("next")) ?? DESTINATION_PAR_DEFAUT;
 
   if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
     return { error: "Merci de renseigner votre email et votre mot de passe." };
@@ -84,7 +87,7 @@ export async function login(formData: FormData): Promise<AuthActionResult> {
     await signIn("credentials", {
       email: email.trim(),
       password,
-      redirectTo: "/compte/annonces",
+      redirectTo,
     });
     return { success: true };
   } catch (err) {

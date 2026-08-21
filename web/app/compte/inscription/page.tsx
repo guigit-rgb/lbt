@@ -1,14 +1,28 @@
-import Link from "next/link";
+import AuthCard from "@/components/AuthCard";
+import { destinationInterne } from "@/lib/auth-redirect";
 import { SignupForm } from "./SignupForm";
 
-export default function InscriptionPage() {
+export default async function InscriptionPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | undefined>>;
+}) {
+  const sp = await searchParams;
+  const next = destinationInterne(sp.next);
+  const versDepot = next?.startsWith("/compte/annonces/nouvelle") ?? false;
+
   return (
-    <main style={{ maxWidth: 480, margin: "4rem auto", padding: "0 1rem" }}>
-      <h1>Créer un compte</h1>
-      <SignupForm />
-      <p style={{ marginTop: "1.5rem" }}>
-        Déjà un compte ? <Link href="/compte/connexion">Connectez-vous</Link>
-      </p>
-    </main>
+    <AuthCard
+      onglet="inscription"
+      titre={versDepot ? "Dépôt d'annonce" : "Créer un compte"}
+      lede={
+        versDepot
+          ? "Créez votre compte pour publier une annonce."
+          : "Quelques secondes, et vos annonces vous suivent."
+      }
+      next={next}
+    >
+      <SignupForm next={next} />
+    </AuthCard>
   );
 }

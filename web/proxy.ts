@@ -8,6 +8,10 @@ import { auth } from "@/lib/auth";
 export const proxy = auth((req) => {
   if (!req.auth) {
     const loginUrl = new URL("/compte/connexion", req.url);
+    // Conserve la page demandée pour y revenir après connexion : sans ça, un
+    // visiteur qui clique « Déposer une annonce » se retrouvait sur « Mes
+    // annonces » une fois identifié, et devait recommencer.
+    loginUrl.searchParams.set("next", req.nextUrl.pathname + req.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 });

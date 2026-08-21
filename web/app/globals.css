@@ -1004,11 +1004,11 @@
 .depot-required-note { font-size: 0.85rem; color: var(--muted); margin-bottom: 1rem; }
 .depot-question { font-size: 1.02rem; font-weight: 600; display: block; margin-bottom: 0.7rem; }
 .depot-question .req { color: var(--brand-red); margin-left: 0.15rem; }
-.depot-input, .depot-select, .depot-textarea {
+.depot-input, .depot-select, .depot-textarea, .auth-input {
   width: 100%; border: 1px solid var(--line); border-radius: 12px;
   padding: 0.85rem 1.1rem; font-size: 0.95rem; font-family: inherit; color: var(--ink); background: var(--surface);
 }
-.depot-input:focus, .depot-select:focus, .depot-textarea:focus { outline: none; border-color: var(--brand-red); }
+.depot-input:focus, .depot-select:focus, .depot-textarea:focus, .auth-input:focus { outline: none; border-color: var(--brand-red); }
 .depot-textarea { resize: vertical; }
 .depot-counter { text-align: right; font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem; }
 .depot-divider { border: none; border-top: 1px solid var(--line); margin: 1.25rem 0; }
@@ -1100,4 +1100,70 @@
   .depot-body { flex-direction: column; }
   .depot-sidebar { display: none; }
   .depot-card { padding: 1.5rem; width: 100%; }
+}
+
+/* ---- Connexion / inscription (compte/connexion, compte/inscription) ----
+   Même principe que les écrans d'identification des sites d'annonces
+   (référence fournie par Nicolas : lacentrale.fr) : bandeau minimal plutôt que
+   l'en-tête complet, carte centrée, bascule Connexion/Inscription, champs
+   pleine largeur, un seul bouton primaire. Les champs réutilisent la règle
+   .depot-input du parcours de dépôt — même vocabulaire visuel, pas de second
+   style de formulaire à maintenir. */
+.auth-page { min-height: 100vh; background: #f4f5f7; }
+.auth-top { background: var(--surface); border-bottom: 1px solid var(--line); }
+.auth-top-inner {
+  max-width: 1072px; margin: 0 auto; padding: 0.9rem 1.5rem;
+  display: flex; align-items: center; gap: 0.9rem;
+}
+.auth-back { color: var(--muted); font-size: 1.3rem; line-height: 1; }
+.auth-back:hover { color: var(--ink); }
+.auth-top .wordmark { font-size: 1.5rem; }
+.auth-body { max-width: 520px; margin: 0 auto; padding: 3rem 1.25rem 4rem; }
+.auth-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 2.25rem 2rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.auth-card h1 { font-size: 1.45rem; text-align: center; }
+.auth-lede { text-align: center; color: var(--muted); font-size: 0.95rem; margin: 0.6rem 0 0; }
+/* Piste grise explicite : --surface-2 vaut #ffffff en thème clair, l'onglet
+   actif (blanc) n'y serait pas distinguable du fond. */
+.auth-tabs {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem;
+  background: #f1f2f4; border: 1px solid var(--line); border-radius: 12px;
+  padding: 0.25rem; margin: 1.6rem 0 1.5rem;
+}
+.auth-tab {
+  text-align: center; padding: 0.7rem 0.5rem; border-radius: 9px;
+  font-size: 0.95rem; font-weight: 600; color: var(--muted);
+}
+.auth-tab:hover { color: var(--ink); }
+.auth-tab.active {
+  background: var(--surface); color: var(--brand-red);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.auth-form { display: grid; gap: 1.1rem; }
+.auth-label { display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 0.4rem; }
+.auth-hint { display: block; font-weight: 400; color: var(--muted); font-size: 0.82rem; margin-top: 0.35rem; }
+.auth-password { position: relative; }
+.auth-password .auth-input { padding-right: 3.25rem; }
+.auth-reveal {
+  position: absolute; top: 50%; right: 0.55rem; transform: translateY(-50%);
+  background: none; border: none; padding: 0.35rem 0.5rem; font-size: 1rem;
+  color: var(--muted); border-radius: 8px; line-height: 1;
+}
+.auth-reveal:hover { color: var(--ink); background: #f1f2f4; }
+.auth-error {
+  margin: 0; padding: 0.75rem 0.9rem; border-radius: 10px;
+  background: var(--warm-ink); color: var(--warm); font-size: 0.9rem;
+}
+.auth-submit {
+  width: 100%; justify-content: center; border-radius: 10px;
+  padding: 0.95rem 1rem; font-size: 1rem; margin-top: 0.2rem;
+}
+.auth-switch { text-align: center; color: var(--muted); font-size: 0.9rem; margin: 1.4rem 0 0; }
+.auth-switch a { color: var(--ink); text-decoration: underline; }
+
+@media (max-width: 520px) {
+  .auth-body { padding: 1.75rem 1rem 3rem; }
+  .auth-card { padding: 1.5rem 1.25rem; }
 }
