@@ -148,17 +148,20 @@ export default async function AnnonceDetailPage({
 
             <div className="ad-detail-seller-card">
               <h2>Vendeur</h2>
-              <p className="ad-detail-seller-name">
+              <Link href={`/vendeurs/${row.annonce.userId}`} className="ad-detail-seller-name">
                 {row.vendeurNom}
                 {row.vendeurEstPro && <span className="ad-detail-pro-badge">Pro</span>}
-              </p>
+              </Link>
               {row.vendeurEstPro && row.vendeurSiret && (
                 <p className="ad-detail-siret">N° SIRET : {row.vendeurSiret}</p>
               )}
 
               {autresAnnonces.length > 0 && (
                 <div className="ad-detail-seller-ads">
-                  <h3>Autres annonces de {row.vendeurNom}</h3>
+                  <div className="ad-detail-seller-ads-head">
+                    <h3>Autres annonces de {row.vendeurNom}</h3>
+                    <Link href={`/vendeurs/${row.annonce.userId}`}>Tout voir</Link>
+                  </div>
                   <div className="ad-detail-seller-ads-list">
                     {autresAnnonces.map((ad) => (
                       <AdCard key={ad.id} ad={ad} href={`/annonces/${ad.id}`} />

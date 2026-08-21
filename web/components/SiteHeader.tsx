@@ -116,7 +116,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <Link className="icon-link" href="#">
               <span className="glyph">♡</span>Favoris
             </Link>
-            <Link className="icon-link" href="#">
+            <Link className="icon-link" href="/compte/recherches">
               <span className="glyph">☆</span>Mes recherches
             </Link>
             {session ? (
@@ -189,7 +189,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <Link className="icon-link" href="#" onClick={() => setMobileMenuOpen(false)}>
               <span className="glyph">♡</span>Favoris
             </Link>
-            <Link className="icon-link" href="#" onClick={() => setMobileMenuOpen(false)}>
+            <Link className="icon-link" href="/compte/recherches" onClick={() => setMobileMenuOpen(false)}>
               <span className="glyph">☆</span>Mes recherches
             </Link>
           </nav>

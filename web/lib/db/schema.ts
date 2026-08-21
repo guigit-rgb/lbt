@@ -255,3 +255,21 @@ export const messages = pgTable(
   },
   (table) => [index("messages_conversation_idx").on(table.conversationId)]
 );
+
+export const recherchesSauvegardees = pgTable(
+  "recherches_sauvegardees",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    categorie: text("categorie", { enum: CATEGORIES }).notNull(),
+    // Valeurs de filtre telles que saisies dans l'URL (mêmes clés que
+    // `getFiltersForCategory()`), pas de schéma dédié par catégorie — la
+    // page catégorie sait déjà les réinterpréter.
+    filtres: jsonb("filtres").notNull().default({}),
+    tri: text("tri").notNull().default("pertinence"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("recherches_sauvegardees_user_idx").on(table.userId)]
+);

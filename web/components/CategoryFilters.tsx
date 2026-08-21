@@ -2,10 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { Categorie } from "@/lib/db/schema";
 import type { FilterField } from "@/lib/listing-config";
+import { sauvegarderRecherche } from "@/lib/actions/recherches";
 
 export default function CategoryFilters({
   basePath,
+  categorie,
   filters,
   currentValues,
   options,
@@ -13,6 +16,7 @@ export default function CategoryFilters({
   resultCount,
 }: {
   basePath: string;
+  categorie: Categorie;
   filters: FilterField[];
   currentValues: Record<string, string>;
   options: Record<string, string[]>;
@@ -21,6 +25,18 @@ export default function CategoryFilters({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [etatSauvegarde, setEtatSauvegarde] = useState<"idle" | "enregistrement" | "ok" | "erreur">("idle");
+
+  async function handleSauvegarder() {
+    setEtatSauvegarde("enregistrement");
+    const res = await sauvegarderRecherche(categorie, currentValues, currentTri);
+    if ("error" in res) {
+      setEtatSauvegarde("erreur");
+      if (res.error.includes("connecté")) router.push("/compte/connexion");
+    } else {
+      setEtatSauvegarde("ok");
+    }
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -169,6 +185,15 @@ export default function CategoryFilters({
                   </section>
                 );
               })}
+            </div>
+
+            <div className="filter-drawer-save">
+              <button type="button" className="filter-drawer-save-btn" onClick={handleSauvegarder} disabled={etatSauvegarde === "enregistrement"}>
+                {etatSauvegarde === "ok" ? "✓ Recherche sauvegardée" : "☆ Sauvegarder cette recherche"}
+              </button>
+              {etatSauvegarde === "erreur" && (
+                <p className="filter-drawer-save-error">Une erreur est survenue, réessayez.</p>
+              )}
             </div>
 
             <div className="filter-drawer-footer">

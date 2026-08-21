@@ -813,9 +813,37 @@
 }
 .filter-drawer-footer .btn { flex: 1; justify-content: center; }
 
+.filter-drawer-save { padding: 0.9rem 1.4rem 0; flex-shrink: 0; }
+.filter-drawer-save-btn {
+  background: none; border: 1px solid var(--line); border-radius: 999px; padding: 0.6rem 1.1rem;
+  font: inherit; cursor: pointer; width: 100%; color: var(--ink);
+}
+.filter-drawer-save-btn:hover { background: var(--surface-2); }
+.filter-drawer-save-error { color: var(--brand-red, #e2231a); font-size: 0.82rem; margin: 0.4rem 0 0; }
+
 @media (max-width: 480px) {
   .filter-drawer { width: 100%; }
 }
+
+/* ---- page "Mes recherches" (/compte/recherches) ---- */
+.recherches-page { max-width: 720px; margin: 2.5rem auto; padding: 0 1rem; }
+.recherches-page h1 { margin-bottom: 1.5rem; }
+.recherches-list { display: flex; flex-direction: column; gap: 1rem; }
+.recherche-card {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  border: 1px solid var(--line); border-radius: 10px; padding: 1.1rem 1.4rem;
+}
+.recherche-categorie { font-weight: 700; margin: 0; }
+.recherche-filtres { color: var(--muted); font-size: 0.88rem; margin: 0.25rem 0; }
+.recherche-count { font-size: 0.85rem; margin: 0; }
+.recherche-actions { display: flex; gap: 0.6rem; flex-shrink: 0; }
+
+@media (max-width: 560px) {
+  .recherche-card { flex-direction: column; align-items: stretch; }
+  .recherche-actions { flex-direction: column; }
+}
+
+.profil-deconnexion { margin-top: 1.5rem; text-align: center; }
 .breadcrumb-row { margin-top: 0.6rem; }
 .filter-chip {
   display: inline-flex; align-items: center; gap: 0.4rem;
@@ -936,7 +964,11 @@
 .ad-detail-side-loc { color: var(--muted); font-size: 0.9rem; margin: 0; }
 
 .ad-detail-seller-card h2 { font-size: 0.95rem; margin: 0 0 0.5rem; }
-.ad-detail-seller-name { font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.ad-detail-seller-name {
+  font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem;
+  color: var(--ink); text-decoration: none; width: fit-content;
+}
+.ad-detail-seller-name:hover { text-decoration: underline; }
 .ad-detail-pro-badge {
   font-size: 0.7rem; font-weight: 700; color: var(--accent); border: 1px solid var(--accent);
   border-radius: 4px; padding: 0.1rem 0.4rem; line-height: 1.4;
@@ -945,6 +977,8 @@
 
 /* ---- page profil (/compte/profil) ---- */
 .profil-page { max-width: 640px; margin: 2.5rem auto; padding: 0 1rem; }
+.vendeur-page { padding-top: 2rem; padding-bottom: 3rem; }
+.vendeur-page .profil-header { margin-bottom: 0; }
 .profil-header {
   display: flex; align-items: center; gap: 1.25rem; padding: 1.5rem;
   border: 1px solid var(--line); border-radius: 12px; margin-bottom: 1.5rem;
@@ -980,6 +1014,8 @@
   .profil-header { flex-direction: column; text-align: center; }
 }
 .ad-detail-seller-ads { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--line); }
+.ad-detail-seller-ads-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.ad-detail-seller-ads-head a { font-size: 0.82rem; flex-shrink: 0; }
 .ad-detail-seller-ads h3 { font-size: 0.85rem; color: var(--muted); font-weight: 500; margin: 0 0 0.7rem; }
 .ad-detail-seller-ads-list { display: flex; flex-direction: column; gap: 0.7rem; }
 .ad-detail-seller-ads-list .card { width: auto; }
@@ -1112,6 +1148,7 @@
   border-bottom: 2px solid transparent; margin-bottom: -1px;
 }
 .ma-tab.active { color: var(--ink); border-bottom-color: var(--brand-red); }
+.empty-state { color: var(--muted); padding: 1.5rem 0; }
 .ma-toolbar { display: flex; gap: 0.75rem; padding: 1.2rem 0; }
 .ma-search {
   flex: 1; max-width: 420px; display: flex; align-items: center; gap: 0.5rem;

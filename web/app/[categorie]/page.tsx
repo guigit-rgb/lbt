@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { desc, asc, eq, and, ilike, gte, lte, isNotNull } from "drizzle-orm";
+import { desc, asc, eq, and } from "drizzle-orm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AdRow from "@/components/AdRow";
@@ -8,7 +8,8 @@ import CategoryFilters from "@/components/CategoryFilters";
 import { db } from "@/lib/db/client";
 import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { annonceToRowData, getCoverUrls, annonceVisiblePublic } from "@/lib/annonce-display";
+import { annonceToRowData, getCoverUrls } from "@/lib/annonce-display";
+import { SELECT_COLUMNS, buildAnnonceConditions, distinctOptions } from "@/lib/annonce-filters";
 
 // Les annonces changent à chaque dépôt (Server Function, pas de revalidation
 // ciblée en V0) : la page doit se recalculer à chaque requête, pas être
@@ -17,28 +18,6 @@ export const dynamic = "force-dynamic";
 
 function isCategorie(value: string): value is Categorie {
   return (CATEGORIES as readonly string[]).includes(value);
-}
-
-// Colonne réelle derrière chaque filtre "select" — tenue à part de
-// lib/listing-config.ts pour ne pas faire dépendre ce fichier partagé
-// (utilisé aussi côté dépôt d'annonce) du schéma Drizzle complet.
-const SELECT_COLUMNS = {
-  marque: annonces.marque,
-  modele: annonces.modele,
-  annee: annonces.annee,
-  sous_categorie: annonces.sousCategorie,
-  etat_produit: annonces.etatProduit,
-  type_animal: annonces.typeAnimal,
-} as const;
-
-async function distinctOptions(categorie: Categorie, key: keyof typeof SELECT_COLUMNS): Promise<string[]> {
-  const column = SELECT_COLUMNS[key];
-  const rows = await db
-    .selectDistinct({ value: column })
-    .from(annonces)
-    .where(and(eq(annonces.categorie, categorie), annonceVisiblePublic(), isNotNull(column)))
-    .orderBy(key === "annee" ? desc(column) : asc(column));
-  return rows.map((r) => String(r.value)).filter(Boolean);
 }
 
 export default async function CategorieListingPage({
@@ -56,20 +35,7 @@ export default async function CategorieListingPage({
   }
 
   const config = getFiltersForCategory(categorie);
-
-  const conditions = [eq(annonces.categorie, categorie), annonceVisiblePublic()];
-  if (sp.localisation) conditions.push(ilike(annonces.ville, `%${sp.localisation}%`));
-  if (sp.prix_min) conditions.push(gte(annonces.prixCents, Number(sp.prix_min) * 100));
-  if (sp.prix_max) conditions.push(lte(annonces.prixCents, Number(sp.prix_max) * 100));
-  if (sp.kilometrage_min) conditions.push(gte(annonces.kilometrage, Number(sp.kilometrage_min)));
-  if (sp.kilometrage_max) conditions.push(lte(annonces.kilometrage, Number(sp.kilometrage_max)));
-  for (const key of Object.keys(SELECT_COLUMNS) as (keyof typeof SELECT_COLUMNS)[]) {
-    const value = sp[key];
-    if (value) {
-      const column = SELECT_COLUMNS[key];
-      conditions.push(key === "annee" ? eq(column, Number(value)) : eq(column, value));
-    }
-  }
+  const conditions = buildAnnonceConditions(categorie, sp);
 
   const tri = sp.tri === "prix_asc" || sp.tri === "prix_desc" ? sp.tri : "pertinence";
   const orderBy =
@@ -105,6 +71,7 @@ export default async function CategorieListingPage({
       <section className="filter-bar">
         <CategoryFilters
           basePath={`/${categorie}`}
+          categorie={categorie}
           filters={config.filters}
           currentValues={currentValues}
           options={options}
