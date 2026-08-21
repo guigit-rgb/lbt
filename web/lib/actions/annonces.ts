@@ -6,8 +6,15 @@ import { and, eq, sql } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
-import { annonces, annonceImages, CATEGORIES, type Categorie } from "@/lib/db/schema";
+import {
+  annonces,
+  annonceImages,
+  annoncePrixHistorique,
+  CATEGORIES,
+  type Categorie,
+} from "@/lib/db/schema";
 import { deleteFromR2 } from "@/lib/storage/r2";
+import { estFinDeVie } from "@/lib/annonce-display";
 
 const DUREE_PUBLICATION_JOURS = 60;
 
@@ -18,6 +25,28 @@ function dansNJours(n: number): Date {
 }
 
 type Annonce = typeof annonces.$inferSelect;
+
+type SourcePrix = (typeof annoncePrixHistorique.$inferInsert)["source"];
+
+// Enregistre un prix *observé* dans la trajectoire de l'annonce (§6.6 R3).
+// Deux règles, et elles ont chacune une raison :
+//  - on n'écrit que si le prix a réellement changé, sinon toute modification
+//    de texte gonflerait la table de doublons et fausserait le comptage des
+//    baisses (« trois baisses en quarante jours » doit rester lisible) ;
+//  - on n'écrit jamais d'`update` : une trajectoire ne se corrige pas, elle
+//    s'allonge. Une correction de modération est une observation `back_office`.
+async function enregistrerPrixObserve(
+  annonceId: string,
+  prixCents: number | null | undefined,
+  source: SourcePrix,
+  prixPrecedent?: number | null
+): Promise<void> {
+  const valeur = prixCents ?? null;
+  if (prixPrecedent !== undefined && (prixPrecedent ?? null) === valeur) {
+    return;
+  }
+  await db.insert(annoncePrixHistorique).values({ annonceId, prixCents: valeur, source });
+}
 
 type Possession =
   | { ok: false; error: string }
@@ -160,14 +189,43 @@ export async function reactiverAnnonce(id: string): Promise<void> {
   revalidatePath("/compte/annonces");
 }
 
+// Retrait volontaire par l'auteur. Écrit `retiree_par_auteur` et **jamais**
+// `retiree`, qui est réservé à la décision restrictive de LBT : sans cette
+// distinction, une requête sur `etat` compterait chaque retrait volontaire
+// comme une décision de modération et gonflerait le rapport de transparence
+// public du DSA (cahier des charges §6.6 Résultat n°0, §8.2).
 export async function supprimerAnnonce(id: string): Promise<void> {
   const result = await chargerAnnoncePossedee(id);
   if (!result.ok) throw new Error(result.error);
-  if (result.annonce.etat === "retiree") {
-    throw new Error("Cette annonce est déjà retirée.");
+  if (estFinDeVie(result.annonce.etat)) {
+    throw new Error("Cette annonce n'est plus en ligne.");
   }
 
-  await db.update(annonces).set({ etat: "retiree", updatedAt: new Date() }).where(eq(annonces.id, id));
+  await db
+    .update(annonces)
+    .set({ etat: "retiree_par_auteur", finVieAt: new Date(), updatedAt: new Date() })
+    .where(eq(annonces.id, id));
+  revalidatePath("/compte/annonces");
+}
+
+// Déclaration de vente par l'auteur. La transition d'état ne doit **jamais**
+// être conditionnée à une réponse du vendeur (§6.6 Résultat n°2, règle 1) :
+// l'écran de clôture — statut, prix final pré-rempli, canal — est une couche
+// facultative par-dessus cette transition (action n°189), pas un préalable.
+export async function marquerVendueAnnonce(id: string): Promise<void> {
+  const result = await chargerAnnoncePossedee(id);
+  if (!result.ok) throw new Error(result.error);
+  if (estFinDeVie(result.annonce.etat)) {
+    throw new Error("Cette annonce n'est plus en ligne.");
+  }
+  if (result.annonce.etat === "brouillon") {
+    throw new Error("Une annonce non publiée ne peut pas être marquée vendue.");
+  }
+
+  await db
+    .update(annonces)
+    .set({ etat: "vendue", finVieAt: new Date(), updatedAt: new Date() })
+    .where(eq(annonces.id, id));
   revalidatePath("/compte/annonces");
 }
 
@@ -232,8 +290,13 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
     return { error: "Ajoutez au moins une photo avant de publier." };
   }
 
+  // `null` et non `undefined` : Drizzle **omet** de l'`update` un champ à
+  // `undefined`, si bien qu'un vendeur qui vide le champ Prix pour passer en
+  // « prix sur demande » voyait son ancien prix silencieusement conservé.
+  // Le bug était invisible avant la trajectoire de prix, qui aurait enregistré
+  // une observation « sans prix » sur une annonce toujours affichée à son prix.
   const prixRaw = optionalString(formData, "prix");
-  let prixCents: number | undefined;
+  let prixCents: number | null = null;
   if (prixRaw) {
     const prix = Number.parseFloat(prixRaw.replace(",", "."));
     if (!Number.isFinite(prix) || prix < 0) {
@@ -292,6 +355,10 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
     })
     .where(eq(annonces.id, id));
 
+  // Premier point de la trajectoire de prix (§6.6 R3). Le brouillon n'a pas de
+  // prix observable : l'annonce n'était pas offerte au marché.
+  await enregistrerPrixObserve(id, prixCents, "depot");
+
   redirect(`/annonces/${id}?nouveau=1`);
 }
 
@@ -318,8 +385,13 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     return { error: "Le code postal doit contenir 5 chiffres." };
   }
 
+  // `null` et non `undefined` : Drizzle **omet** de l'`update` un champ à
+  // `undefined`, si bien qu'un vendeur qui vide le champ Prix pour passer en
+  // « prix sur demande » voyait son ancien prix silencieusement conservé.
+  // Le bug était invisible avant la trajectoire de prix, qui aurait enregistré
+  // une observation « sans prix » sur une annonce toujours affichée à son prix.
   const prixRaw = optionalString(formData, "prix");
-  let prixCents: number | undefined;
+  let prixCents: number | null = null;
   if (prixRaw) {
     const prix = Number.parseFloat(prixRaw.replace(",", "."));
     if (!Number.isFinite(prix) || prix < 0) {
@@ -361,6 +433,10 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
       updatedAt: new Date(),
     })
     .where(and(eq(annonces.id, id), eq(annonces.userId, result.session.user.id)));
+
+  // Cet `update` écrasait la valeur précédente sans trace : c'est la baisse de
+  // prix, donc le signal de surévaluation, qui était détruite (§6.6 R3).
+  await enregistrerPrixObserve(id, prixCents, "modification_auteur", annonce.prixCents);
 
   redirect(`/annonces/${id}`);
 }

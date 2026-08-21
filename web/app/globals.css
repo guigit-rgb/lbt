@@ -857,6 +857,9 @@
 .ma-badge.en_ligne { background: var(--accent-ink); color: var(--accent); }
 .ma-badge.en_pause { background: var(--warm-ink); color: var(--warm); }
 .ma-badge.expiree { background: var(--surface-2); color: var(--muted); }
+.ma-badge.vendue { background: var(--accent); color: #fff; }
+.ma-badge.retiree_par_auteur { background: var(--surface-2); color: var(--muted); }
+.ma-badge.retiree { background: var(--warm-ink); color: var(--warm); }
 .ma-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
 .ma-stats {
   display: flex; flex-direction: column; gap: 0.5rem; padding-left: 1rem;

@@ -6,7 +6,7 @@ import SeoLinks from "@/components/SeoLinks";
 import AdCard from "@/components/AdCard";
 import { db } from "@/lib/db/client";
 import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
-import { annonceToCardData, getCoverUrls } from "@/lib/annonce-display";
+import { annonceToCardData, annonceVisiblePublic, getCoverUrls } from "@/lib/annonce-display";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,7 @@ async function latestAds(categorie: Categorie, limit: number) {
   const rows = await db
     .select()
     .from(annonces)
-    .where(and(eq(annonces.categorie, categorie), eq(annonces.etat, "en_ligne")))
+    .where(and(eq(annonces.categorie, categorie), annonceVisiblePublic()))
     .orderBy(desc(annonces.createdAt))
     .limit(limit);
   const covers = await getCoverUrls(rows.map((r) => r.id));
@@ -25,7 +25,7 @@ async function countsByCategorie(): Promise<Record<Categorie, number>> {
   const rows = await db
     .select({ categorie: annonces.categorie, total: count() })
     .from(annonces)
-    .where(eq(annonces.etat, "en_ligne"))
+    .where(annonceVisiblePublic())
     .groupBy(annonces.categorie);
 
   const counts = Object.fromEntries(CATEGORIES.map((categorie) => [categorie, 0])) as Record<Categorie, number>;

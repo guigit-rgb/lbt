@@ -1,9 +1,53 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, gt, inArray, isNull, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { annonceImages, type annonces } from "@/lib/db/schema";
+import { annonceImages, annonces } from "@/lib/db/schema";
 import type { FakeAd } from "@/lib/fake-data";
 
 export type AnnonceRow = typeof annonces.$inferSelect;
+export type EtatAnnonce = AnnonceRow["etat"];
+
+// Libellés des sept états, en un seul endroit. Les trois fins de vie de
+// l'auteur/de l'horloge ne doivent surtout pas emprunter le vocabulaire de la
+// décision de modération (§6.6 Résultat n°0) : un vendeur qui retire son
+// annonce ne lit pas « retirée » comme le lecteur d'une sanction.
+const LIBELLES_ETAT: Record<EtatAnnonce, string> = {
+  brouillon: "brouillon",
+  en_ligne: "en ligne",
+  en_pause: "en pause",
+  vendue: "vendue",
+  retiree_par_auteur: "retirée par son auteur",
+  expiree: "expirée",
+  retiree: "retirée par LBT",
+};
+
+export function libelleEtat(etat: EtatAnnonce): string {
+  return LIBELLES_ETAT[etat];
+}
+
+// Une annonce en fin de vie ne revient pas en ligne.
+export const ETATS_FIN_DE_VIE: readonly EtatAnnonce[] = [
+  "vendue",
+  "retiree_par_auteur",
+  "expiree",
+  "retiree",
+];
+
+export function estFinDeVie(etat: EtatAnnonce): boolean {
+  return ETATS_FIN_DE_VIE.includes(etat);
+}
+
+// Condition unique de visibilité publique d'une annonce, à utiliser dans
+// TOUTES les requêtes de catalogue. `etat = 'en_ligne'` ne suffit pas : aucune
+// horloge n'écrit encore `expiree` (l'échéance n'était vérifiée qu'à
+// l'affichage de « Mes annonces »), si bien qu'une annonce dépassée restait
+// listée et indexable. Le jour où le travail d'expiration existera, cette
+// condition restera juste — elle sera seulement redondante.
+export function annonceVisiblePublic(): SQL | undefined {
+  return and(
+    eq(annonces.etat, "en_ligne"),
+    or(isNull(annonces.expiresAt), gt(annonces.expiresAt, new Date()))
+  );
+}
 
 function formatPrix(prixCents: number | null): string {
   if (prixCents == null) return "Prix sur demande";

@@ -65,11 +65,36 @@ export const annonces = pgTable(
     prixCents: integer("prix_cents"),
     ville: text("ville"),
     codePostal: text("code_postal"),
-    etat: text("etat", { enum: ["brouillon", "en_ligne", "en_pause", "retiree"] })
+    // Quatre fins de vie distinctes, et une seule est une décision de LBT
+    // (cf. cahier des charges §6.6 Résultat n°0, §6.7) :
+    //   - `vendue`             : l'auteur déclare la vente
+    //   - `retiree_par_auteur` : l'auteur retire son annonce (ex-`retiree`)
+    //   - `expiree`            : l'horloge
+    //   - `retiree`            : RÉSERVÉ à la décision restrictive de LBT
+    //                            (exposé des motifs art. 17 du DSA + file R).
+    // Ne jamais écrire `retiree` depuis une action de l'utilisateur : le
+    // registre de décision et le rapport de transparence public se lisent sur
+    // cette valeur, et la distinction ne se rétro-ajoute pas.
+    etat: text("etat", {
+      enum: [
+        "brouillon",
+        "en_ligne",
+        "en_pause",
+        "vendue",
+        "retiree_par_auteur",
+        "expiree",
+        "retiree",
+      ],
+    })
       .notNull()
       .default("brouillon"),
     vues: integer("vues").notNull().default(0),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
+    // Date d'entrée dans une fin de vie, quelle qu'elle soit. `updatedAt` ne
+    // peut pas en tenir lieu : toute écriture ultérieure l'écrase, alors que
+    // l'analyse de durée de vie (§6.6 Résultat n°5) a besoin de la date de
+    // l'événement *ou* de la censure. Nul tant que l'annonce est vivante.
+    finVieAt: timestamp("fin_vie_at", { withTimezone: true }),
     // Véhicules
     marque: text("marque"),
     modele: text("modele"),
@@ -91,6 +116,32 @@ export const annonces = pgTable(
     index("annonces_categorie_etat_idx").on(table.categorie, table.etat),
     index("annonces_user_idx").on(table.userId),
   ]
+);
+
+// Trajectoire de prix d'une annonce (couche « P0 » du cahier des charges,
+// §6.6 Résultat n°3). Une ligne par prix *observé*, jamais d'`update` : le
+// dernier prix affiché est le `prix_cents` le plus récent, et les baisses
+// successives sont le signal de surévaluation le plus exhaustif que le site
+// puisse produire — il ne dépend d'aucune réponse du vendeur. Avant cette
+// table, `modifierAnnonce` écrasait `annonces.prix_cents` et la trajectoire
+// était perdue définitivement.
+export const annoncePrixHistorique = pgTable(
+  "annonce_prix_historique",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    annonceId: uuid("annonce_id")
+      .notNull()
+      .references(() => annonces.id, { onDelete: "cascade" }),
+    prixCents: integer("prix_cents"),
+    // `depot` : première publication ; `modification_auteur` : écran Modifier ;
+    // `flux_pro` : réconciliation des flux de stock VO (§7.3, toutes les 4 h) ;
+    // `back_office` : correction par la modération (§7.5).
+    source: text("source", {
+      enum: ["depot", "modification_auteur", "flux_pro", "back_office"],
+    }).notNull(),
+    observeA: timestamp("observe_a", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("annonce_prix_historique_annonce_idx").on(table.annonceId, table.observeA)]
 );
 
 export const annonceImages = pgTable(

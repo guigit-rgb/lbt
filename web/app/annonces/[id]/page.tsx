@@ -6,6 +6,7 @@ import { db } from "@/lib/db/client";
 import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { getFiltersForCategory } from "@/lib/listing-config";
+import { libelleEtat } from "@/lib/annonce-display";
 import { AnnonceFeedbackGate } from "./AnnonceFeedbackGate";
 
 export const dynamic = "force-dynamic";
@@ -85,13 +86,7 @@ export default async function AnnonceDetailPage({
           {config.label}
           {row.annonce.etat !== "en_ligne" && (
             <strong style={{ marginLeft: "0.5rem" }}>
-              (annonce{" "}
-              {row.annonce.etat === "retiree"
-                ? "retirée"
-                : row.annonce.etat === "en_pause"
-                  ? "en pause"
-                  : row.annonce.etat}{" "}
-              — visible uniquement par vous)
+              (annonce {libelleEtat(row.annonce.etat)} — visible uniquement par vous)
             </strong>
           )}
         </p>

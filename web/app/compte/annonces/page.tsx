@@ -7,7 +7,13 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, conversations, favoris, messages } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { mettreEnPauseAnnonce, reactiverAnnonce, supprimerAnnonce } from "@/lib/actions/annonces";
+import { estFinDeVie, libelleEtat } from "@/lib/annonce-display";
+import {
+  marquerVendueAnnonce,
+  mettreEnPauseAnnonce,
+  reactiverAnnonce,
+  supprimerAnnonce,
+} from "@/lib/actions/annonces";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +53,8 @@ export default async function MesAnnoncesPage({
   }
 
   const { onglet: ongletBrut, q } = await searchParams;
-  const onglet = ongletBrut === "expirees" ? "expirees" : "en_ligne";
+  const onglet =
+    ongletBrut === "expirees" ? "expirees" : ongletBrut === "cloturees" ? "cloturees" : "en_ligne";
   const recherche = q?.trim().toLowerCase() ?? "";
 
   const toutes = await db
@@ -59,8 +66,13 @@ export default async function MesAnnoncesPage({
   const actives = toutes.filter((a) => a.etat === "en_ligne" || a.etat === "en_pause");
   const enLigne = actives.filter((a) => !estExpiree(a));
   const expirees = actives.filter((a) => estExpiree(a));
+  // Troisième onglet : sans lui, une annonce marquée vendue ou retirée
+  // disparaîtrait des deux listes sans aucune confirmation pour son auteur.
+  const cloturees = toutes.filter((a) => estFinDeVie(a.etat));
 
-  const annoncesOnglet = (onglet === "expirees" ? expirees : enLigne).filter(
+  const listeOnglet =
+    onglet === "expirees" ? expirees : onglet === "cloturees" ? cloturees : enLigne;
+  const annoncesOnglet = listeOnglet.filter(
     (a) => !recherche || a.titre.toLowerCase().includes(recherche)
   );
 
@@ -109,6 +121,9 @@ export default async function MesAnnoncesPage({
           <Link href="/compte/annonces?onglet=expirees" className={`ma-tab${onglet === "expirees" ? " active" : ""}`}>
             Expirées ({expirees.length})
           </Link>
+          <Link href="/compte/annonces?onglet=cloturees" className={`ma-tab${onglet === "cloturees" ? " active" : ""}`}>
+            Clôturées ({cloturees.length})
+          </Link>
         </nav>
 
         <form className="ma-toolbar" action="/compte/annonces">
@@ -125,7 +140,9 @@ export default async function MesAnnoncesPage({
               ? "Aucune annonce ne correspond à votre recherche."
               : onglet === "expirees"
                 ? "Vous n'avez aucune annonce expirée."
-                : "Vous n'avez pas encore d'annonce en ligne."}
+                : onglet === "cloturees"
+                  ? "Vous n'avez aucune annonce clôturée."
+                  : "Vous n'avez pas encore d'annonce en ligne."}
           </p>
         ) : (
           <ul className="ma-list">
@@ -133,7 +150,7 @@ export default async function MesAnnoncesPage({
               const vignette = vignetteParAnnonce.get(annonce.id);
               const expiree = onglet === "expirees";
               const badgeClass = expiree ? "expiree" : annonce.etat;
-              const badgeLabel = expiree ? "Expirée" : annonce.etat === "en_pause" ? "En pause" : "En ligne";
+              const badgeLabel = expiree ? "Expirée" : libelleEtat(annonce.etat);
               const config = getFiltersForCategory(annonce.categorie);
 
               return (
@@ -159,9 +176,28 @@ export default async function MesAnnoncesPage({
                     </div>
 
                     <div className="ma-actions">
-                      <Link href={`/compte/annonces/${annonce.id}/modifier`} className="btn btn-outline">
-                        Modifier
-                      </Link>
+                      {!estFinDeVie(annonce.etat) && (
+                        <Link href={`/compte/annonces/${annonce.id}/modifier`} className="btn btn-outline">
+                          Modifier
+                        </Link>
+                      )}
+                      {/* « C'est vendu » est l'action PRIMAIRE, « Retirer »
+                          l'action secondaire : c'est la forme retenue chez
+                          FINN.no (même groupe d'origine que leboncoin) et la
+                          décision du §6.6, Résultat n°1. Marquer vendu sert
+                          d'abord le vendeur — cela arrête les appels — et c'est
+                          ce qui rend la donnée de clôture exploitable, là où un
+                          questionnaire greffé sur « Supprimer » ne récolte
+                          rien. */}
+                      {/* Volontairement proposé aussi sur l'onglet « Expirées » :
+                          une annonce arrivée à échéance est justement celle dont
+                          la §6.6 (R5) ne saura rien si le vendeur n'a aucun
+                          moyen de déclarer la vente. */}
+                      {(annonce.etat === "en_ligne" || annonce.etat === "en_pause") && (
+                        <form action={marquerVendueAnnonce.bind(null, annonce.id)}>
+                          <button type="submit" className="btn btn-accent">C&rsquo;est vendu</button>
+                        </form>
+                      )}
                       {!expiree && annonce.etat === "en_ligne" && (
                         <form action={mettreEnPauseAnnonce.bind(null, annonce.id)}>
                           <button type="submit" className="btn btn-ghost">Mettre en pause</button>
@@ -172,9 +208,11 @@ export default async function MesAnnoncesPage({
                           <button type="submit" className="btn btn-ghost">Réactiver</button>
                         </form>
                       )}
-                      <form action={supprimerAnnonce.bind(null, annonce.id)}>
-                        <button type="submit" className="btn btn-danger">Supprimer</button>
-                      </form>
+                      {!estFinDeVie(annonce.etat) && (
+                        <form action={supprimerAnnonce.bind(null, annonce.id)}>
+                          <button type="submit" className="btn btn-ghost">Retirer l&rsquo;annonce</button>
+                        </form>
+                      )}
                     </div>
                   </div>
 
