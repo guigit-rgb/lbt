@@ -5,7 +5,15 @@ import { mettreAJourProfilPro, type ProfilActionResult } from "@/lib/actions/pro
 
 const initialState: ProfilActionResult = { success: true };
 
-export function ProfilProForm({ estPro, siret }: { estPro: boolean; siret: string }) {
+export function ProfilProForm({
+  estPro,
+  siret,
+  telephone,
+}: {
+  estPro: boolean;
+  siret: string;
+  telephone: string;
+}) {
   const [checked, setChecked] = useState(estPro);
   const [state, formAction, pending] = useActionState(
     async (_prev: ProfilActionResult, formData: FormData) => mettreAJourProfilPro(formData),
@@ -14,6 +22,11 @@ export function ProfilProForm({ estPro, siret }: { estPro: boolean; siret: strin
 
   return (
     <form action={formAction} style={{ display: "grid", gap: "0.9rem" }}>
+      <label>
+        Téléphone (facultatif)
+        <input type="tel" name="telephone" defaultValue={telephone} placeholder="06 12 34 56 78" />
+      </label>
+
       <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
         <input
           type="checkbox"

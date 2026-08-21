@@ -7150,3 +7150,11 @@ En testant la messagerie (session n°41), Nicolas a demandé si le navigateur re
 - Non traité ici, à noter pour une prochaine session si besoin : aucun menu déroulant sur le nom du compte (juste un lien direct vers "Mes annonces" + un bouton déconnexion séparé) — suffisant pour l'usage actuel, mais pas la richesse du menu compte de leboncoin.
 
 **How to apply :** toute nouvelle info liée à la session à afficher côté client passe par `useSession()` maintenant que le `SessionProvider` existe — ne pas recréer un fetch manuel de `/api/auth/session`.
+
+## Session n°44 (2026-08-21, suite) — Corrige "Se déconnecter" et ajoute "Voir le numéro"
+
+**Bug signalé par Nicolas avec capture** : le texte "Se déconnecter" ajouté en session n°43 s'affichait en trop grand et chevauchait les autres liens de la barre de navigation. Cause : `.nav-logout { font: inherit }` réinitialise aussi `font-size`, qui écrasait le `0.68rem` de `.icon-link` défini juste au-dessus (même spécificité, la règle la plus tardive dans la feuille de style gagne). Corrigé en `font-family: inherit` seulement — `font-size` retombe sur celui de `.icon-link`.
+
+**"Voir le numéro"**, sur le modèle du bloc vendeur de leboncoin (capture fournie) : `users.telephone` (nouveau, facultatif, migré en base) réglable sur `/compte/profil`, validé en forme (10 chiffres, numéro français) mais jamais vérifié par SMS/appel. Sur la page de détail, `components/RevealPhoneButton.tsx` (client, affiché seulement si le vendeur a renseigné un numéro et que le visiteur est connecté et n'est pas le propriétaire) affiche d'abord un bouton "Voir le numéro", qui révèle au clic un lien `tel:` formaté en paires de chiffres — pas de numéro masqué/relais anonymisé comme le fait leboncoin (ça demanderait un service de renvoi d'appel tiers, hors périmètre).
+
+**How to apply :** le téléphone est facultatif partout — ne jamais afficher un numéro vide ou un bouton qui ne mène à rien ; `RevealPhoneButton` n'est monté que si `vendeurTelephone` existe.

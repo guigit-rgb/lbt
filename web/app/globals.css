@@ -151,7 +151,7 @@
     line-height: 1;
   }
   .icon-link:hover { color: var(--ink); }
-  .nav-logout { background: none; border: none; font: inherit; cursor: pointer; padding: 0; }
+  .nav-logout { background: none; border: none; font-family: inherit; cursor: pointer; padding: 0; }
   .icon-link .dot {
     position: absolute; top: -2px; right: -6px;
     width: 8px; height: 8px; border-radius: 50%;
@@ -959,6 +959,9 @@
 }
 .ad-detail-contact-error { color: var(--brand-red, #e2231a); font-size: 0.85rem; margin: 0; }
 .ad-detail-contact-login { margin-top: 1rem; width: 100%; justify-content: center; }
+.ad-detail-phone { margin-top: 1rem; }
+.ad-detail-phone .btn { width: 100%; justify-content: center; }
+.ad-detail-phone-revealed { font-weight: 700; text-decoration: none; }
 
 /* ---- messagerie (/compte/messages) ---- */
 .msg-shell { display: flex; gap: 1.5rem; padding: 1.75rem 0 3rem; align-items: flex-start; }

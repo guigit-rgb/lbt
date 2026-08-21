@@ -6,6 +6,7 @@ import SiteFooter from "@/components/SiteFooter";
 import AdCard from "@/components/AdCard";
 import AdGallery from "@/components/AdGallery";
 import { ContactVendeurForm } from "@/components/ContactVendeurForm";
+import { RevealPhoneButton } from "@/components/RevealPhoneButton";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -32,6 +33,7 @@ export default async function AnnonceDetailPage({
       vendeurNom: users.displayName,
       vendeurEstPro: users.estPro,
       vendeurSiret: users.siret,
+      vendeurTelephone: users.telephone,
     })
     .from(annonces)
     .innerJoin(users, eq(annonces.userId, users.id))
@@ -129,7 +131,14 @@ export default async function AnnonceDetailPage({
 
               {!isOwner &&
                 (session ? (
-                  <ContactVendeurForm annonceId={row.annonce.id} />
+                  <>
+                    {row.vendeurTelephone && (
+                      <div className="ad-detail-phone">
+                        <RevealPhoneButton telephone={row.vendeurTelephone} />
+                      </div>
+                    )}
+                    <ContactVendeurForm annonceId={row.annonce.id} />
+                  </>
                 ) : (
                   <Link href="/compte/connexion" className="btn btn-accent ad-detail-contact-login">
                     Se connecter pour contacter le vendeur

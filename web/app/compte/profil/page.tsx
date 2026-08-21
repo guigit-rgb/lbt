@@ -16,7 +16,7 @@ export default async function ProfilPage() {
   }
 
   const [user] = await db
-    .select({ estPro: users.estPro, siret: users.siret })
+    .select({ estPro: users.estPro, siret: users.siret, telephone: users.telephone })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1);
@@ -29,9 +29,10 @@ export default async function ProfilPage() {
         <h1 style={{ marginBottom: "0.5rem" }}>Mon profil</h1>
         <p style={{ color: "var(--muted)", marginBottom: "1.5rem" }}>
           Le statut professionnel est auto-déclaré : LBT ne vérifie pas le SIRET auprès d&apos;un
-          registre officiel.
+          registre officiel. Le téléphone est facultatif ; sans lui, vos annonces n&apos;affichent
+          pas le bouton « Voir le numéro ».
         </p>
-        <ProfilProForm estPro={user?.estPro ?? false} siret={user?.siret ?? ""} />
+        <ProfilProForm estPro={user?.estPro ?? false} siret={user?.siret ?? ""} telephone={user?.telephone ?? ""} />
       </main>
 
       <SiteFooter />

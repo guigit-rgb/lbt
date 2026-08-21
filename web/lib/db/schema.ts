@@ -45,6 +45,9 @@ export const users = pgTable("users", {
   // seulement ce que le vendeur a coché dans son profil.
   estPro: boolean("est_pro").notNull().default(false),
   siret: text("siret"),
+  // Facultatif — un vendeur sans numéro renseigné n'affiche simplement pas
+  // le bouton "Voir le numéro" sur ses annonces (pas de valeur bidon).
+  telephone: text("telephone"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
