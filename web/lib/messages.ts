@@ -80,7 +80,10 @@ export interface ConversationDetail {
   annonceTitre: string;
   annoncePrixCents: number | null;
   annoncePhotoUrl?: string;
+  autreParticipantId: string;
   autreParticipantNom: string;
+  autreParticipantMembreDepuis: Date;
+  autreParticipantEstPro: boolean;
   messages: MessageItem[];
 }
 
@@ -101,6 +104,10 @@ export async function chargerConversation(conversationId: string, userId: string
       vendeurId: conversations.vendeurId,
       acheteurNom: acheteur.displayName,
       vendeurNom: vendeur.displayName,
+      acheteurCreatedAt: acheteur.createdAt,
+      vendeurCreatedAt: vendeur.createdAt,
+      acheteurEstPro: acheteur.estPro,
+      vendeurEstPro: vendeur.estPro,
     })
     .from(conversations)
     .innerJoin(annonces, eq(conversations.annonceId, annonces.id))
@@ -118,13 +125,18 @@ export async function chargerConversation(conversationId: string, userId: string
     getCoverUrls([conv.annonceId]),
   ]);
 
+  const estAcheteur = conv.acheteurId === userId;
+
   return {
     id: conv.id,
     annonceId: conv.annonceId,
     annonceTitre: conv.annonceTitre,
     annoncePrixCents: conv.annoncePrixCents,
     annoncePhotoUrl: covers.get(conv.annonceId),
-    autreParticipantNom: conv.acheteurId === userId ? conv.vendeurNom : conv.acheteurNom,
+    autreParticipantId: estAcheteur ? conv.vendeurId : conv.acheteurId,
+    autreParticipantNom: estAcheteur ? conv.vendeurNom : conv.acheteurNom,
+    autreParticipantMembreDepuis: estAcheteur ? conv.vendeurCreatedAt : conv.acheteurCreatedAt,
+    autreParticipantEstPro: estAcheteur ? conv.vendeurEstPro : conv.acheteurEstPro,
     messages: msgs.map((m) => ({ id: m.id, body: m.body, createdAt: m.createdAt, estMoi: m.senderId === userId })),
   };
 }

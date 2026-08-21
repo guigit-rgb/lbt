@@ -79,7 +79,7 @@ function sousLigne(row: AnnonceRow): string {
 // `coverUrl` (photo de couverture réelle, position 0 dans annonce_images) est
 // facultatif : quand l'annonce n'a pas encore de photo, on retombe sur
 // l'icône générique `ic-teapot` plutôt que de casser l'affichage.
-export function annonceToCardData(row: AnnonceRow, coverUrl?: string | null): FakeAd {
+export function annonceToCardData(row: AnnonceRow, coverUrl?: string | null, estFavori = false): FakeAd {
   const titre =
     row.categorie === "vehicules" && row.marque
       ? `${row.marque} ${row.modele ?? ""}`.trim() + (row.annee ? ` — ${row.annee}` : "")
@@ -92,6 +92,7 @@ export function annonceToCardData(row: AnnonceRow, coverUrl?: string | null): Fa
     sousLigne: sousLigne(row),
     prixLabel: formatPrix(row.prixCents),
     fraicheur: formatFraicheur(row.createdAt),
+    favori: estFavori,
     thumbClass: "ic-teapot",
     photoUrl: coverUrl ?? undefined,
     badges: row.categorie === "loisirs" && row.avisExpert ? [{ label: "Avis d'expert", variant: "expert" }] : undefined,
@@ -113,6 +114,7 @@ export interface AdRowData {
   ville: string | null;
   vendeurNom: string;
   specs: AdRowSpec[];
+  estFavori: boolean;
 }
 
 // Caractéristiques affichées en grille sous le prix, sur le modèle de la page
@@ -146,7 +148,12 @@ function specsListe(row: AnnonceRow): AdRowSpec[] {
 // Convertit une ligne réelle vers la forme attendue par <AdRow> — la vue en
 // liste détaillée d'une page de résultats par catégorie (par opposition à
 // <AdCard>, la vignette compacte utilisée sur l'accueil).
-export function annonceToRowData(row: AnnonceRow, coverUrl: string | undefined, vendeurNom: string): AdRowData {
+export function annonceToRowData(
+  row: AnnonceRow,
+  coverUrl: string | undefined,
+  vendeurNom: string,
+  estFavori = false
+): AdRowData {
   const titre =
     row.categorie === "vehicules" && row.marque
       ? `${row.marque} ${row.modele ?? ""}`.trim() + (row.annee ? ` — ${row.annee}` : "")
@@ -162,6 +169,7 @@ export function annonceToRowData(row: AnnonceRow, coverUrl: string | undefined, 
     ville: row.ville,
     vendeurNom,
     specs: specsListe(row),
+    estFavori,
   };
 }
 

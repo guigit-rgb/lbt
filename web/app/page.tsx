@@ -7,10 +7,12 @@ import AdCard from "@/components/AdCard";
 import { db } from "@/lib/db/client";
 import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { annonceToCardData, annonceVisiblePublic, getCoverUrls } from "@/lib/annonce-display";
+import { auth } from "@/lib/auth";
+import { listerFavorisIds } from "@/lib/favoris";
 
 export const dynamic = "force-dynamic";
 
-async function latestAds(categorie: Categorie, limit: number) {
+async function latestAds(categorie: Categorie, limit: number, favorisIds: Set<string>) {
   const rows = await db
     .select()
     .from(annonces)
@@ -18,7 +20,7 @@ async function latestAds(categorie: Categorie, limit: number) {
     .orderBy(desc(annonces.createdAt))
     .limit(limit);
   const covers = await getCoverUrls(rows.map((r) => r.id));
-  return rows.map((row) => annonceToCardData(row, covers.get(row.id)));
+  return rows.map((row) => annonceToCardData(row, covers.get(row.id), favorisIds.has(row.id)));
 }
 
 async function countsByCategorie(): Promise<Record<Categorie, number>> {
@@ -50,9 +52,12 @@ const CATALOG_TILES: { categorie: Categorie; label: string }[] = [
 ];
 
 export default async function HomePage() {
+  const session = await auth();
+  const favorisIds = session ? await listerFavorisIds(session.user.id) : new Set<string>();
+
   const [vehicules, loisirs, counts] = await Promise.all([
-    latestAds("vehicules", 6),
-    latestAds("loisirs", 5),
+    latestAds("vehicules", 6, favorisIds),
+    latestAds("loisirs", 5, favorisIds),
     countsByCategorie(),
   ]);
 

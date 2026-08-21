@@ -7,6 +7,8 @@ import { db } from "@/lib/db/client";
 import { annonces, users } from "@/lib/db/schema";
 import { annonceToCardData, annonceVisiblePublic, getCoverUrls } from "@/lib/annonce-display";
 import { couleurAvatar } from "@/lib/avatar";
+import { auth } from "@/lib/auth";
+import { listerFavorisIds } from "@/lib/favoris";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +42,12 @@ export default async function VendeurPage({
     .where(and(...conditions))
     .orderBy(desc(annonces.createdAt));
 
-  const covers = await getCoverUrls(rows.map((r) => r.id));
-  const ads = rows.map((r) => annonceToCardData(r, covers.get(r.id)));
+  const session = await auth();
+  const [covers, favorisIds] = await Promise.all([
+    getCoverUrls(rows.map((r) => r.id)),
+    session ? listerFavorisIds(session.user.id) : Promise.resolve(new Set<string>()),
+  ]);
+  const ads = rows.map((r) => annonceToCardData(r, covers.get(r.id), favorisIds.has(r.id)));
 
   const membreDepuis = vendeur.createdAt.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 

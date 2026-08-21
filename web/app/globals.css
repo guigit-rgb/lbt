@@ -542,6 +542,7 @@
     background: color-mix(in srgb, var(--surface) 85%, transparent);
     display: flex; align-items: center; justify-content: center;
     font-size: 0.85rem;
+    border: none; cursor: pointer; color: var(--ink); padding: 0;
   }
   .card .fav.on { color: var(--warm); }
   .card .body { padding: 0.65rem 0.7rem 0.75rem; }
@@ -874,7 +875,22 @@
   position: absolute; top: 0.6rem; right: 0.6rem; width: 28px; height: 28px; border-radius: 50%;
   background: color-mix(in srgb, var(--surface) 85%, transparent);
   display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+  border: none; cursor: pointer; color: var(--ink); padding: 0;
 }
+.ad-row-fav.on { color: var(--warm); }
+
+.favori-popup {
+  position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 100;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); padding: 1.2rem 1.4rem; max-width: 320px; width: 90vw;
+}
+.favori-popup-close {
+  position: absolute; top: 0.6rem; right: 0.7rem; background: none; border: none; cursor: pointer;
+  font-size: 0.9rem; color: var(--muted); padding: 0.2rem;
+}
+.favori-popup-title { font-weight: 700; margin: 0 0 0.4rem; padding-right: 1rem; }
+.favori-popup-text { color: var(--muted); font-size: 0.88rem; margin: 0 0 0.9rem; }
+.favori-popup-btn { width: 100%; justify-content: center; }
 .ad-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ad-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 .ad-row-title { font-size: 1.08rem; font-weight: 700; margin: 0; }
@@ -1074,8 +1090,22 @@
   flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; display: flex;
   flex-direction: column; height: 560px;
 }
-.msg-thread-header { padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); }
+.msg-thread-header {
+  padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--line); display: flex; align-items: center;
+  gap: 0.6rem; color: var(--ink); text-decoration: none;
+}
+.msg-thread-header:hover strong { text-decoration: underline; }
+.msg-thread-avatar {
+  width: 34px; height: 34px; border-radius: 50%; color: #fff; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700;
+}
 .msg-thread-body { flex: 1; overflow-y: auto; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.msg-about-seller {
+  border: 1px solid var(--line); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 0.5rem;
+  align-self: stretch;
+}
+.msg-about-seller-title { font-weight: 700; margin: 0 0 0.4rem; }
+.msg-about-seller-meta { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.5rem; }
 .msg-bubble {
   max-width: 70%; padding: 0.6rem 0.9rem; border-radius: 12px; background: var(--surface-2); margin: 0;
   white-space: pre-wrap; align-self: flex-start;

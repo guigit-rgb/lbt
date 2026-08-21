@@ -18,5 +18,6 @@ export const config = {
     "/compte/messages/:path*",
     "/compte/profil/:path*",
     "/compte/recherches/:path*",
+    "/compte/favoris/:path*",
   ],
 };

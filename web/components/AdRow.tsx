@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { AdRowData } from "@/lib/annonce-display";
+import { FavoriButton } from "@/components/FavoriButton";
 
 export default function AdRow({ ad, href }: { ad: AdRowData; href: string }) {
   return (
@@ -9,7 +10,7 @@ export default function AdRow({ ad, href }: { ad: AdRowData; href: string }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={ad.photoUrl} alt="" />
         )}
-        <span className="ad-row-fav">♡</span>
+        <FavoriButton annonceId={ad.id} initialFavori={ad.estFavori} className="ad-row-fav" />
       </div>
 
       <div className="ad-row-body">

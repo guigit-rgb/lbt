@@ -7225,3 +7225,19 @@ Nicolas a fourni une capture d'une annonce auto leboncoin bien plus détaillée 
 - `scripts/backfill-vehicule-attributs.mjs` (nouveau, rejouable — ne touche que les annonces sans `portes`) : les 14 annonces véhicules du catalogue de démo, créées avant l'existence de ces champs, ont été enrichies de valeurs plausibles pour que la nouvelle grille soit visible immédiatement plutôt que vide sur tout le catalogue existant.
 
 **How to apply :** pour ajouter un treizième champ véhicule, l'ajouter à `VEHICULE_ATTRIBUTS_TEXTE` (`lib/actions/annonces.ts`) puis au rendu dans les trois endroits qui en dépendent (les deux formulaires, `detailInformationsCles()`) — aucune migration de schéma n'est nécessaire, `attributs` est déjà extensible.
+
+## Session n°51 (2026-08-22, suite) — Favoris (avec notification d'intérêt) + détail du vendeur sur la messagerie
+
+Deux demandes distinctes de Nicolas, capture leboncoin à l'appui pour chacune.
+
+**Favoris.** La table `favoris` (userId, annonceId) existait en base depuis plusieurs sessions sans jamais avoir été alimentée — les cœurs affichés sur `AdRow`/`AdCard` étaient purement décoratifs. Après clarification (in-app seulement, pas d'e-mail — même logique que les recherches sauvegardées) :
+
+- `lib/actions/favoris.ts` : `basculerFavori()` bascule l'état en base ; `lib/favoris.ts` lit les favoris d'un compte (`listerFavorisIds()` pour savoir quel cœur remplir sur une grille, `listerAnnoncesFavorites()` pour la page dédiée — une annonce retirée disparaît de la liste sans que le favori soit supprimé en base).
+- `components/FavoriButton.tsx` (client) remplace le `<span>` décoratif dans `AdRow`/`AdCard`. Au premier clic qui ajoute un favori (pas au retrait), un popup de confirmation apparaît avec un bouton "Envoyer une notification" — **un geste volontaire, jamais automatique**, exactement comme le montre la capture leboncoin. Rendu via `createPortal` dans `document.body` plutôt qu'ancré à la carte cliquée : les cartes ont un `overflow: hidden` qui l'aurait découpé, et un popup par carte n'a pas de sens sur une grille de plusieurs dizaines d'annonces.
+- La notification réutilise l'infrastructure de messagerie existante (`lib/actions/messages.ts`, refactorisé pour extraire `trouverOuCreerConversation()` et `poserMessage()`, partagés maintenant entre l'envoi d'un vrai message et cette notification automatique) : elle crée/réutilise une conversation et y dépose "{nom} a manifesté un intérêt pour votre annonce." — un message normal, visible et modifiable comme un autre dans la boîte du vendeur, pas un système de notification séparé.
+- Nouvelle page `/compte/favoris` (même famille que `/compte/recherches`) ; lien "Favoris" du header enfin branché (pointait vers `#`).
+- L'état initial du cœur (rempli ou non à l'affichage) est câblé avec de vraies données sur la page catégorie, l'accueil et la page vendeur ; resté à `false` par défaut sur les aperçus secondaires ("Autres annonces de ce vendeur") — le bouton fonctionne quand même, il part juste toujours vide visuellement là où ce n'était pas déjà câblé.
+
+**Détail du vendeur sur la messagerie.** `lib/messages.ts` (`chargerConversation()`) renvoie maintenant l'identifiant, l'ancienneté et le statut pro de l'autre participant. La page `/compte/messages/[id]` affiche un avatar (`couleurAvatar()`, partagé) dans l'en-tête du fil et un encart "À propos de ce vendeur" (membre depuis, badge Pro, lien vers son profil public) — sur le modèle de la capture fournie, sans la note/avis ni "Dernière activité", toujours pour la même raison (aucune donnée réelle derrière).
+
+**How to apply :** toute action qui pose un message automatique (notification d'intérêt, et toute future notification du même genre) doit passer par `trouverOuCreerConversation()`/`poserMessage()` (`lib/actions/messages.ts`) plutôt que réinventer la logique d'upsert de conversation.

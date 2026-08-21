@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { FakeAd } from "@/lib/fake-data";
+import { FavoriButton } from "@/components/FavoriButton";
 
 interface AdCardProps {
   ad: FakeAd;
@@ -28,7 +29,7 @@ export default function AdCard({ ad, showSeller = false, href }: AdCardProps) {
             {badge.label}
           </span>
         ))}
-        <span className={`fav${ad.favori ? " on" : ""}`}>{ad.favori ? "♥" : "♡"}</span>
+        <FavoriButton annonceId={ad.id} initialFavori={!!ad.favori} className="fav" />
       </div>
       <div className="body">
         <div className="price-row">

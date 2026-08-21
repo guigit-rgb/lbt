@@ -113,7 +113,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <Link className="icon-link" href="/compte/messages">
               <span className="glyph">✉️</span>Messages<span className="dot" />
             </Link>
-            <Link className="icon-link" href="#">
+            <Link className="icon-link" href="/compte/favoris">
               <span className="glyph">♡</span>Favoris
             </Link>
             <Link className="icon-link" href="/compte/recherches">
@@ -186,7 +186,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <Link className="icon-link" href="/compte/messages" onClick={() => setMobileMenuOpen(false)}>
               <span className="glyph">✉️</span>Messages
             </Link>
-            <Link className="icon-link" href="#" onClick={() => setMobileMenuOpen(false)}>
+            <Link className="icon-link" href="/compte/favoris" onClick={() => setMobileMenuOpen(false)}>
               <span className="glyph">♡</span>Favoris
             </Link>
             <Link className="icon-link" href="/compte/recherches" onClick={() => setMobileMenuOpen(false)}>

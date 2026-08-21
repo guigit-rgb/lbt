@@ -10,6 +10,8 @@ import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { annonceToRowData, getCoverUrls } from "@/lib/annonce-display";
 import { SELECT_COLUMNS, buildAnnonceConditions, distinctOptions } from "@/lib/annonce-filters";
+import { auth } from "@/lib/auth";
+import { listerFavorisIds } from "@/lib/favoris";
 
 // Les annonces changent à chaque dépôt (Server Function, pas de revalidation
 // ciblée en V0) : la page doit se recalculer à chaque requête, pas être
@@ -41,7 +43,9 @@ export default async function CategorieListingPage({
   const orderBy =
     tri === "prix_asc" ? asc(annonces.prixCents) : tri === "prix_desc" ? desc(annonces.prixCents) : desc(annonces.createdAt);
 
-  const [rowsWithVendeur, optionEntries] = await Promise.all([
+  const session = await auth();
+
+  const [rowsWithVendeur, optionEntries, favorisIds] = await Promise.all([
     db
       .select({ annonce: annonces, vendeurNom: users.displayName })
       .from(annonces)
@@ -53,11 +57,14 @@ export default async function CategorieListingPage({
         .filter((f) => f.widget === "select")
         .map(async (f) => [f.key, await distinctOptions(categorie, f.key as keyof typeof SELECT_COLUMNS)] as const)
     ),
+    session ? listerFavorisIds(session.user.id) : Promise.resolve(new Set<string>()),
   ]);
   const options = Object.fromEntries(optionEntries);
 
   const covers = await getCoverUrls(rowsWithVendeur.map((r) => r.annonce.id));
-  const ads = rowsWithVendeur.map((r) => annonceToRowData(r.annonce, covers.get(r.annonce.id), r.vendeurNom));
+  const ads = rowsWithVendeur.map((r) =>
+    annonceToRowData(r.annonce, covers.get(r.annonce.id), r.vendeurNom, favorisIds.has(r.annonce.id))
+  );
   const count = ads.length;
 
   const currentValues = Object.fromEntries(
