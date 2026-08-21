@@ -115,10 +115,7 @@ export default async function HomePage() {
 
       <section>
         <div className="wrap">
-          <span className="label eyebrow-flagship">
-            Spécialité collection — le reste des loisirs suit le catalogue standard
-          </span>
-          <div className="section-head" style={{ marginTop: "0.3rem" }}>
+          <div className="section-head">
             <h2>Loisirs</h2>
             <Link className="see-all" href="/loisirs">
               Voir les {counts.loisirs.toLocaleString("fr-FR")} annonces →
