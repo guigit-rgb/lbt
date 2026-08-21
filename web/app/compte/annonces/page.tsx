@@ -109,9 +109,14 @@ export default async function MesAnnoncesPage({
       <main className="wrap">
         <div className="ma-header">
           <h1>Mes annonces</h1>
-          <Link href="/compte/annonces/nouvelle" className="btn btn-accent">
-            <span className="btn-plus"><span>+</span></span> Déposer une annonce
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+            <Link href="/compte/profil" style={{ color: "var(--muted)" }}>
+              Mon profil
+            </Link>
+            <Link href="/compte/annonces/nouvelle" className="btn btn-accent">
+              <span className="btn-plus"><span>+</span></span> Déposer une annonce
+            </Link>
+          </div>
         </div>
 
         <nav className="ma-tabs">

@@ -7098,3 +7098,18 @@ Après la vue en liste (session 38), Nicolas a fourni une capture complète (hau
 - Anomalie de données repérée en vérifiant visuellement (pas liée à ce changement, à signaler à Nicolas) : au moins une annonce du catalogue démo affiche un titre/photo de caravane mais des caractéristiques "Dacia Sandero" — incohérence de génération du catalogue de démonstration (session 36), pas corrigée ici.
 
 **How to apply :** pour ajouter des caractéristiques détail pour une autre catégorie, étendre `detailInformationsCles()` (et non `specsListe()`, qui sert la vue en liste) dans `lib/annonce-display.ts`.
+
+## Session n°40 (2026-08-21, suite) — Galerie en mosaïque + statut "compte professionnel" auto-déclaré
+
+Deux ajouts à la page de détail, chacun sur une capture de référence leboncoin fournie par Nicolas.
+
+**Galerie en mosaïque.** Quand une annonce a plusieurs photos, l'ancienne présentation (grande photo + bandeau de vignettes en dessous) est remplacée par la mosaïque leboncoin : une grande photo à gauche, deux empilées à droite, avec une pastille "Voir les X photos" sur la troisième s'il y en a davantage. Nouveau composant client `components/AdGallery.tsx` : le bouton déplie une rangée de vignettes cliquables sous la mosaïque (chaque vignette remplace la grande photo) plutôt que d'ouvrir une visionneuse plein écran — pas de lightbox dans ce projet pour l'instant, et ça reste honnête (le bouton fait réellement quelque chose). Une seule photo → pas de mosaïque, juste la photo pleine largeur (comportement inchangé).
+
+**Statut "compte professionnel" auto-déclaré.** Nicolas a fourni une capture du bloc "Vendu par" d'une annonce pro leboncoin (logo, badge "Pro", n° SIRET, "Dernière activité", "Les annonces de ce pro"). LBT n'avait aucune notion de compte pro (juste `role: user|admin`) — décision explicite de Nicolas : ajouter un statut auto-déclaré plutôt qu'une vérification SIRET réelle (aurait demandé un appel à une API externe type recherche-entreprises/INSEE) ou ne rien faire.
+
+- Migration (`db:push`, déjà appliquée à la base partagée) : `users.est_pro` (boolean, défaut false) + `users.siret` (text, nullable).
+- Nouvelle page `/compte/profil` (+ `ProfilProForm.tsx`, `lib/actions/profil.ts`) : case à cocher "Je vends en tant que professionnel" + champ SIRET, validé en forme (14 chiffres) mais jamais vérifié auprès d'un registre officiel — message d'avertissement affiché sur la page. Lien ajouté depuis "Mes annonces". Route protégée ajoutée au matcher de `proxy.ts`.
+- Page de détail : badge "Pro" + ligne SIRET affichés dans le bloc "Vendeur" seulement si `estPro` est vrai.
+- Volontairement omis (pas de donnée réelle derrière) : logo de l'entreprise, note/étoiles, "Dernière activité" (aucun horodatage de dernière connexion n'est suivi), nombre total d'annonces du pro affiché dans son propre encart d'en-tête.
+
+**How to apply :** si une vérification SIRET réelle devient nécessaire plus tard, c'est `mettreAJourProfilPro()` dans `lib/actions/profil.ts` qui doit appeler l'API externe — ne pas juste resserrer la regex de validation en forme, qui ne prouve rien sur l'identité du vendeur.

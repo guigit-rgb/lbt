@@ -13,5 +13,5 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  matcher: ["/compte/annonces/:path*", "/compte/messages/:path*"],
+  matcher: ["/compte/annonces/:path*", "/compte/messages/:path*", "/compte/profil/:path*"],
 };

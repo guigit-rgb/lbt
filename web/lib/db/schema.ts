@@ -40,6 +40,11 @@ export const users = pgTable("users", {
   role: text("role", { enum: ["user", "admin"] })
     .notNull()
     .default("user"),
+  // Statut professionnel auto-déclaré (pas de vérification SIRET auprès d'un
+  // registre officiel) : le badge "Pro" affiché sur les annonces reflète
+  // seulement ce que le vendeur a coché dans son profil.
+  estPro: boolean("est_pro").notNull().default(false),
+  siret: text("siret"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

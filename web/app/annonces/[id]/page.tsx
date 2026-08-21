@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AdCard from "@/components/AdCard";
+import AdGallery from "@/components/AdGallery";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -25,7 +26,12 @@ export default async function AnnonceDetailPage({
   const session = await auth();
 
   const [row] = await db
-    .select({ annonce: annonces, vendeurNom: users.displayName })
+    .select({
+      annonce: annonces,
+      vendeurNom: users.displayName,
+      vendeurEstPro: users.estPro,
+      vendeurSiret: users.siret,
+    })
     .from(annonces)
     .innerJoin(users, eq(annonces.userId, users.id))
     .where(eq(annonces.id, id))
@@ -78,24 +84,7 @@ export default async function AnnonceDetailPage({
 
         <div className="ad-detail-grid">
           <div className="ad-detail-main">
-            {photos.length > 0 && (
-              <div className="ad-detail-gallery">
-                <div className="ad-detail-gallery-main">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photos[0].url ?? undefined} alt={row.annonce.titre} />
-                </div>
-                {photos.length > 1 && (
-                  <div className="ad-detail-thumbs">
-                    {photos.slice(1).map((p) => (
-                      <div key={p.id} className="ad-detail-thumb">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.url ?? undefined} alt="" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            <AdGallery photos={photos} alt={row.annonce.titre} />
 
             {specs.length > 0 && (
               <section className="ad-detail-block">
@@ -140,7 +129,13 @@ export default async function AnnonceDetailPage({
 
             <div className="ad-detail-seller-card">
               <h2>Vendeur</h2>
-              <p className="ad-detail-seller-name">{row.vendeurNom}</p>
+              <p className="ad-detail-seller-name">
+                {row.vendeurNom}
+                {row.vendeurEstPro && <span className="ad-detail-pro-badge">Pro</span>}
+              </p>
+              {row.vendeurEstPro && row.vendeurSiret && (
+                <p className="ad-detail-siret">N° SIRET : {row.vendeurSiret}</p>
+              )}
 
               {autresAnnonces.length > 0 && (
                 <div className="ad-detail-seller-ads">
