@@ -1,4 +1,4 @@
-import { and, eq, gt, inArray, isNull, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, ne, or, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { annonceImages, annonces } from "@/lib/db/schema";
 import type { FakeAd } from "@/lib/fake-data";
@@ -163,6 +163,57 @@ export function annonceToRowData(row: AnnonceRow, coverUrl: string | undefined, 
     vendeurNom,
     specs: specsListe(row),
   };
+}
+
+export interface AdDetailSpec {
+  icon: string;
+  label: string;
+  value: string;
+}
+
+// Grille « Les informations clés » de la page de détail — sur le modèle de
+// leboncoin (icône + libellé + valeur). Volontairement distinct de
+// `specsListe` : la page de détail affiche marque/modèle (déjà repris dans le
+// titre de la vignette compacte, donc redondant là-bas) en plus des
+// caractéristiques déjà listées pour la vue en liste.
+export function detailInformationsCles(row: AnnonceRow): AdDetailSpec[] {
+  if (row.categorie === "vehicules") {
+    const specs: AdDetailSpec[] = [];
+    if (row.marque) specs.push({ icon: "🚗", label: "Marque", value: row.marque });
+    if (row.modele) specs.push({ icon: "🏷️", label: "Modèle", value: row.modele });
+    if (row.annee) specs.push({ icon: "📅", label: "Année", value: String(row.annee) });
+    if (row.kilometrage != null) {
+      specs.push({ icon: "🛣️", label: "Kilométrage", value: `${row.kilometrage.toLocaleString("fr-FR")} km` });
+    }
+    const attributs = row.attributs as Record<string, string>;
+    if (attributs.carburant) specs.push({ icon: "⛽", label: "Énergie", value: attributs.carburant });
+    if (attributs.boite) specs.push({ icon: "⚙️", label: "Boîte de vitesse", value: attributs.boite });
+    return specs;
+  }
+  if (row.categorie === "loisirs") {
+    const specs: AdDetailSpec[] = [];
+    if (row.sousCategorie) specs.push({ icon: "🏷️", label: "Catégorie", value: row.sousCategorie });
+    if (row.etatProduit) specs.push({ icon: "✅", label: "État", value: row.etatProduit });
+    return specs;
+  }
+  if (row.categorie === "animaux" && row.typeAnimal) {
+    return [{ icon: "🐾", label: "Type", value: row.typeAnimal }];
+  }
+  return [];
+}
+
+// Autres annonces en ligne du même vendeur (hors annonce courante) — pour la
+// section « Vendu par » de la page de détail, sur le modèle du bloc
+// « Les annonces de ce pro » de leboncoin.
+export async function getAutresAnnoncesVendeur(userId: string, excludeId: string, limite = 4): Promise<FakeAd[]> {
+  const rows = await db
+    .select()
+    .from(annonces)
+    .where(and(eq(annonces.userId, userId), annonceVisiblePublic(), ne(annonces.id, excludeId)))
+    .orderBy(desc(annonces.createdAt))
+    .limit(limite);
+  const covers = await getCoverUrls(rows.map((r) => r.id));
+  return rows.map((r) => annonceToCardData(r, covers.get(r.id)));
 }
 
 // Photo de couverture (position 0) de chaque annonce, en une seule requête
