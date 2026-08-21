@@ -7197,3 +7197,11 @@ Nicolas a trouvé `/compte/profil` "brute de décoffrage" en y ajoutant son num�
 **Déconnexion depuis la page profil** : Nicolas a montré l'espace personnel leboncoin (portefeuille, mes activités, mes projets, mon compte) comme référence de densité d'information, avec un bouton "Me déconnecter" en bas de page — absent de `/compte/profil` (seul le lien du header permettait de se déconnecter). Ajouté un bouton dédié (`components/DeconnexionButton.tsx`, réutilisable) en bas de la page profil. Le reste de la capture (portefeuille, espace locataire/bailleur, candidatures emploi, etc.) ne correspond à aucune fonctionnalité de LBT — non repris.
 
 **How to apply :** toute nouvelle page qui filtre des annonces par catégorie doit passer par `buildAnnonceConditions()` (`lib/annonce-filters.ts`), jamais reconstruire ses propres conditions de filtre — c'est désormais le seul endroit qui sait lire les clés de filtre de l'URL.
+
+## Session n°48 (2026-08-22) — Corrige le couplage "Voir le numéro" / connexion
+
+Nicolas a signalé, à raison, un vrai défaut : sur la page de détail d'une annonce, déconnecté, ni le numéro ni le formulaire de message ne s'affichaient — un seul bouton "Se connecter pour contacter le vendeur" couvrait les deux. Ce n'était pas le comportement voulu par leboncoin, où voir le numéro ne demande pas de compte, seul l'envoi d'un message en demande un.
+
+- `app/annonces/[id]/page.tsx` : le bouton `RevealPhoneButton` est maintenant affiché indépendamment de la session (dès que le vendeur a renseigné un numéro et que le visiteur n'est pas le propriétaire) ; seul `ContactVendeurForm`/le lien de connexion restent conditionnés à la session, avec un libellé resserré ("Se connecter pour envoyer un message" plutôt que "...pour contacter le vendeur", qui ne décrivait plus que ça couvre encore).
+
+**How to apply :** ne jamais coupler deux fonctionnalités sous une même condition d'accès sans se demander si chacune a réellement besoin du même niveau d'authentification — ici, "voir" et "écrire" n'ont pas la même exigence.

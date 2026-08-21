@@ -129,19 +129,18 @@ export default async function AnnonceDetailPage({
               <h1 className="ad-detail-title">{row.annonce.titre}</h1>
               {row.annonce.ville && <p className="ad-detail-side-loc">{row.annonce.ville}</p>}
 
+              {!isOwner && row.vendeurTelephone && (
+                <div className="ad-detail-phone">
+                  <RevealPhoneButton telephone={row.vendeurTelephone} />
+                </div>
+              )}
+
               {!isOwner &&
                 (session ? (
-                  <>
-                    {row.vendeurTelephone && (
-                      <div className="ad-detail-phone">
-                        <RevealPhoneButton telephone={row.vendeurTelephone} />
-                      </div>
-                    )}
-                    <ContactVendeurForm annonceId={row.annonce.id} />
-                  </>
+                  <ContactVendeurForm annonceId={row.annonce.id} />
                 ) : (
                   <Link href="/compte/connexion" className="btn btn-accent ad-detail-contact-login">
-                    Se connecter pour contacter le vendeur
+                    Se connecter pour envoyer un message
                   </Link>
                 ))}
             </div>
