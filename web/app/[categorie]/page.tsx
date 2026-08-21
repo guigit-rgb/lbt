@@ -109,6 +109,7 @@ export default async function CategorieListingPage({
           currentValues={currentValues}
           options={options}
           currentTri={tri}
+          resultCount={count}
         />
       </section>
 

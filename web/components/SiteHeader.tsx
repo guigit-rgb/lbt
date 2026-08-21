@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY, type MegaMenuEntry } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
 
@@ -92,6 +93,7 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
 
 export default function SiteHeader({ activeCategorie }: { activeCategorie?: Categorie }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <div className="site-top">
@@ -117,9 +119,21 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <Link className="icon-link" href="#">
               <span className="glyph">☆</span>Mes recherches
             </Link>
-            <Link className="icon-link" href="/compte/connexion">
-              <span className="glyph">👤</span>Se connecter
-            </Link>
+            {session ? (
+              <>
+                <Link className="icon-link" href="/compte/annonces">
+                  <span className="glyph">👤</span>
+                  {session.user.name}
+                </Link>
+                <button type="button" className="icon-link nav-logout" onClick={() => signOut({ callbackUrl: "/" })}>
+                  Se déconnecter
+                </button>
+              </>
+            ) : (
+              <Link className="icon-link" href="/compte/connexion">
+                <span className="glyph">👤</span>Se connecter
+              </Link>
+            )}
             <Link className="btn btn-accent" href="/compte/annonces/nouvelle">
               <span className="btn-plus">
                 <span>+</span>
@@ -147,9 +161,28 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
               </span>
               Déposer une annonce
             </Link>
-            <Link className="icon-link" href="/compte/connexion" onClick={() => setMobileMenuOpen(false)}>
-              <span className="glyph">👤</span>Se connecter
-            </Link>
+            {session ? (
+              <>
+                <Link className="icon-link" href="/compte/annonces" onClick={() => setMobileMenuOpen(false)}>
+                  <span className="glyph">👤</span>
+                  {session.user.name}
+                </Link>
+                <button
+                  type="button"
+                  className="icon-link nav-logout"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    signOut({ callbackUrl: "/" });
+                  }}
+                >
+                  Se déconnecter
+                </button>
+              </>
+            ) : (
+              <Link className="icon-link" href="/compte/connexion" onClick={() => setMobileMenuOpen(false)}>
+                <span className="glyph">👤</span>Se connecter
+              </Link>
+            )}
             <Link className="icon-link" href="/compte/messages" onClick={() => setMobileMenuOpen(false)}>
               <span className="glyph">✉️</span>Messages
             </Link>

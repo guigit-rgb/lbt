@@ -7128,3 +7128,25 @@ Nicolas a explicitement priorisé cette fonctionnalité sur toute autre tâche d
 - Volontairement omis (MVP) : badge de non-lus en temps réel dans l'en-tête du site (le `<span className="dot">` statique sur "Messages" dans `SiteHeader.tsx` n'est pas encore branché sur un vrai compteur — `SiteHeader` est un composant client sans accès à la session serveur, le brancher demande soit une route API interrogée en `useEffect`, soit une refonte plus large de l'en-tête, hors périmètre ici), pièces jointes/photos dans un message, indicateur de frappe, notifications e-mail, blocage d'un interlocuteur, suppression d'un message.
 
 **How to apply :** pour un badge de messages non lus dans l'en-tête, ajouter une route API légère (ex. `/api/messages/unread-count`) et l'appeler depuis `SiteHeader.tsx` en `useEffect` plutôt que de rendre tout le composant serveur — ne pas dupliquer la logique de comptage, elle existe déjà dans `listerConversations()` (`lib/messages.ts`).
+
+## Session n°42 (2026-08-21, suite) — Filtres de la page catégorie en panneau latéral (principe leboncoin)
+
+Nicolas a fourni une capture du panneau "Tous les filtres" de leboncoin (glissant depuis la droite, sections par filtre, pied de page "Tout effacer" / "Rechercher (N)") et demandé si la même présentation était réalisable pour LBT, à la place de la rangée de pastilles horizontale actuelle.
+
+- `components/CategoryFilters.tsx` réécrit : la logique de navigation (`navigateWith`, `navigateTri`, lecture/écriture de l'URL) est inchangée, seule la présentation change. Une barre compacte (bouton "Filtres" avec badge du nombre de filtres actifs + sélecteur de tri) ouvre un panneau plein écran glissant depuis la droite (overlay + `Escape` pour fermer), qui reprend chaque champ de `getFiltersForCategory()` sous forme de sections verticales : tri en radios, localisation en texte libre, prix/kilométrage en min-max, et chaque `select` (marque, modèle...) en liste de radios avec un lien "Effacer" par section dès qu'une valeur est choisie.
+- Chaque changement s'applique toujours immédiatement (même comportement qu'avant, pas de mode "brouillon" avant validation) — le bouton "Voir les résultats (N)" du pied de page ferme simplement le panneau, `resultCount` étant un nouveau prop transmis par `app/[categorie]/page.tsx` depuis le `count` déjà calculé.
+- Piège évité : synchroniser le champ localisation avec `currentValues` via `useState` + `useEffect` déclenche l'erreur ESLint `react-hooks/set-state-in-effect` (cascade de rendus). Corrigé en repassant ce champ en non contrôlé (`defaultValue` + `key={valeur actuelle}`), même pattern déjà utilisé pour les champs min/max.
+- Testé en local (Playwright) : ouverture du panneau, sélection d'un filtre (marque), fermeture — le compteur de résultats, le badge sur "Filtres" et le lien "Effacer" se mettent à jour correctement.
+
+**How to apply :** pour ajouter un type de widget de filtre (ex. case à cocher multiple), l'ajouter dans le `switch` de rendu de `CategoryFilters.tsx` — `getFiltersForCategory()` (`lib/listing-config.ts`) reste la seule source de vérité sur quels champs existent par catégorie, ce composant ne fait que les afficher.
+
+## Session n°43 (2026-08-21, suite) — L'en-tête ne reflétait jamais la connexion (la messagerie a révélé le vrai bug)
+
+En testant la messagerie (session n°41), Nicolas a demandé si le navigateur retient la connexion précédente pour éviter de se reconnecter à chaque fois, comme sur leboncoin. **Vérifié : c'était déjà le cas côté cookie** — NextAuth v5 pose par défaut un cookie de session JWT valide 30 jours, non limité à la durée de l'onglet (confirmé en lisant l'expiration réelle du cookie après connexion). **Le vrai bug était ailleurs : `SiteHeader.tsx` affichait "Se connecter" en dur, sans jamais lire l'état de connexion**, qu'on soit connecté ou non — d'où l'impression de devoir toujours se reconnecter alors que la session, elle, survivait bien.
+
+- `app/layout.tsx` enveloppe désormais tout le site dans `<SessionProvider>` (`next-auth/react`), pour que `SiteHeader` (composant client, sans accès direct à `auth()` côté serveur) puisse lire la session avec `useSession()`.
+- `SiteHeader.tsx` (desktop + panneau mobile) : affiche le nom du compte + un bouton "Se déconnecter" (`signOut()`) quand une session existe, "Se connecter" sinon — au lieu du lien statique précédent.
+- Testé en local (Playwright, compte jetable nettoyé après coup) : connecté → nom affiché ; nouveau contexte de navigateur avec les mêmes cookies (persistance) → toujours connecté sans ressaisir le mot de passe ; clic "Se déconnecter" → retour à "Se connecter".
+- Non traité ici, à noter pour une prochaine session si besoin : aucun menu déroulant sur le nom du compte (juste un lien direct vers "Mes annonces" + un bouton déconnexion séparé) — suffisant pour l'usage actuel, mais pas la richesse du menu compte de leboncoin.
+
+**How to apply :** toute nouvelle info liée à la session à afficher côté client passe par `useSession()` maintenant que le `SessionProvider` existe — ne pas recréer un fetch manuel de `/api/auth/session`.
