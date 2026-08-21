@@ -8,6 +8,15 @@ export interface FilterField {
   widget: FilterWidget;
 }
 
+// Une option de filtre `select`. La valeur et le libellé sont distincts parce
+// que la facette de catégorie de la recherche affiche « Maison & jardin » pour
+// la valeur `maison-jardin` ; pour les facettes tirées de la base (marque,
+// modèle…) les deux sont égaux.
+export interface FilterOption {
+  value: string;
+  label: string;
+}
+
 export interface ListingConfig {
   categorie: Categorie;
   label: string;
@@ -118,3 +127,18 @@ const FILTERS_BY_CATEGORY: Record<Categorie, ListingConfig> = Object.fromEntries
 export function getFiltersForCategory(categorie: Categorie): ListingConfig {
   return FILTERS_BY_CATEGORY[categorie];
 }
+
+export function categorieLabel(categorie: Categorie): string {
+  return FILTERS_BY_CATEGORY[categorie].label;
+}
+
+// Filtres de la page de recherche texte. Volontairement plus pauvres que ceux
+// d'une page catégorie : une requête texte peut ramener plusieurs catégories à
+// la fois, donc aucun filtre spécifique à l'une d'elles (marque, kilométrage,
+// type d'animal…) n'a de sens ici. La facette de catégorie remplace ces
+// filtres : on choisit d'abord une catégorie, et sa page porte les siens.
+export const SEARCH_FILTERS: FilterField[] = [
+  LOCATION_FILTER,
+  { key: "categorie", label: "Toutes les catégories", widget: "select" },
+  PRIX_FILTER,
+];

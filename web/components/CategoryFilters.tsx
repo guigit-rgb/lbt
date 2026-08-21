@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import type { FilterField } from "@/lib/listing-config";
+import type { FilterField, FilterOption } from "@/lib/listing-config";
 
 export default function CategoryFilters({
   basePath,
@@ -14,7 +14,7 @@ export default function CategoryFilters({
   basePath: string;
   filters: FilterField[];
   currentValues: Record<string, string>;
-  options: Record<string, string[]>;
+  options: Record<string, FilterOption[]>;
   currentTri: string;
 }) {
   const router = useRouter();
@@ -80,8 +80,8 @@ export default function CategoryFilters({
             >
               <option value="">{filter.label}</option>
               {opts.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>

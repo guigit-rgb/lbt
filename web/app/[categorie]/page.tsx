@@ -7,7 +7,7 @@ import AdRow from "@/components/AdRow";
 import CategoryFilters from "@/components/CategoryFilters";
 import { db } from "@/lib/db/client";
 import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
-import { getFiltersForCategory } from "@/lib/listing-config";
+import { getFiltersForCategory, type FilterOption } from "@/lib/listing-config";
 import { annonceToRowData, getCoverUrls, annonceVisiblePublic } from "@/lib/annonce-display";
 
 // Les annonces changent à chaque dépôt (Server Function, pas de revalidation
@@ -31,14 +31,17 @@ const SELECT_COLUMNS = {
   type_animal: annonces.typeAnimal,
 } as const;
 
-async function distinctOptions(categorie: Categorie, key: keyof typeof SELECT_COLUMNS): Promise<string[]> {
+async function distinctOptions(categorie: Categorie, key: keyof typeof SELECT_COLUMNS): Promise<FilterOption[]> {
   const column = SELECT_COLUMNS[key];
   const rows = await db
     .selectDistinct({ value: column })
     .from(annonces)
     .where(and(eq(annonces.categorie, categorie), annonceVisiblePublic(), isNotNull(column)))
     .orderBy(key === "annee" ? desc(column) : asc(column));
-  return rows.map((r) => String(r.value)).filter(Boolean);
+  return rows
+    .map((r) => String(r.value))
+    .filter(Boolean)
+    .map((value) => ({ value, label: value }));
 }
 
 export default async function CategorieListingPage({

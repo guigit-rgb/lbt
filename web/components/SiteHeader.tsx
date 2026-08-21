@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY, type MegaMenuEntry } from "@/lib/categories";
+import { MAX_LONGUEUR_REQUETE } from "@/lib/search-constants";
 import type { Categorie } from "@/lib/db/schema";
 
 function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; activeCategorie?: Categorie }) {
@@ -90,7 +91,16 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
   );
 }
 
-export default function SiteHeader({ activeCategorie }: { activeCategorie?: Categorie }) {
+export default function SiteHeader({
+  activeCategorie,
+  searchQuery,
+}: {
+  activeCategorie?: Categorie;
+  // Rempli par la page de résultats seule : la requête reste visible dans la
+  // barre après un envoi, et un filtre appliqué depuis les résultats ne repart
+  // pas d'un champ vide.
+  searchQuery?: string;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -101,8 +111,20 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <span>lebon</span>
             <span className="truc">truc</span>
           </Link>
-          <form className="nav-search" role="search" action="#">
-            <input type="search" placeholder="Une Clio, un vinyle, un utilitaire…" aria-label="Rechercher une annonce" />
+          {/* Formulaire GET, sans JavaScript : la barre de recherche doit
+              fonctionner même si l'hydratation échoue. `key` force React à
+              réafficher la valeur par défaut quand on passe d'une requête à
+              une autre — sans elle, l'input conserve la précédente. */}
+          <form className="nav-search" role="search" action="/recherche">
+            <input
+              key={searchQuery}
+              type="search"
+              name="q"
+              defaultValue={searchQuery}
+              maxLength={MAX_LONGUEUR_REQUETE}
+              placeholder="Une Clio, un vinyle, un utilitaire…"
+              aria-label="Rechercher une annonce"
+            />
             <button type="submit" className="nav-search-btn" aria-label="Rechercher">
               ⌕
             </button>

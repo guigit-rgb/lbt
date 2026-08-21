@@ -776,6 +776,14 @@
 .results-head h1 { font-size: 1.3rem; }
 .results-count { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
 .results-grid-section { padding-bottom: 2.5rem; }
+/* Message tenant la place de la liste quand elle est vide (aucun résultat,
+   aucun mot-clé saisi) : la classe était posée par la page catégorie mais
+   n'avait aucun style, donc le message tombait en corps de texte brut. */
+.empty-state { padding: 2.5rem 0; color: var(--muted); font-size: 0.95rem; text-align: center; }
+.empty-state a { color: var(--ink); text-decoration: underline; }
+/* Note sous la liste (résultats plafonnés) : à distinguer de .empty-state,
+   qui remplace la liste au lieu de la compléter. */
+.results-note { padding: 1.25rem 0 0; color: var(--muted); font-size: 0.85rem; }
 
 /* ---- liste détaillée d'une page de résultats par catégorie (vs. la vignette
    compacte .card de l'accueil) — une ligne par annonce, sur le principe des
