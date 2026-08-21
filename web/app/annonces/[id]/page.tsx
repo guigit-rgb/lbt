@@ -5,6 +5,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AdCard from "@/components/AdCard";
 import AdGallery from "@/components/AdGallery";
+import { ContactVendeurForm } from "@/components/ContactVendeurForm";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -125,6 +126,15 @@ export default async function AnnonceDetailPage({
               <p className="ad-detail-price">{formatPrix(row.annonce.prixCents)}</p>
               <h1 className="ad-detail-title">{row.annonce.titre}</h1>
               {row.annonce.ville && <p className="ad-detail-side-loc">{row.annonce.ville}</p>}
+
+              {!isOwner &&
+                (session ? (
+                  <ContactVendeurForm annonceId={row.annonce.id} />
+                ) : (
+                  <Link href="/compte/connexion" className="btn btn-accent ad-detail-contact-login">
+                    Se connecter pour contacter le vendeur
+                  </Link>
+                ))}
             </div>
 
             <div className="ad-detail-seller-card">

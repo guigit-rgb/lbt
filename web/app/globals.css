@@ -901,6 +901,75 @@
   .ad-detail-side { position: static; }
 }
 
+.ad-detail-contact { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+.ad-detail-contact textarea {
+  width: 100%; resize: vertical; border: 1px solid var(--line); border-radius: 8px; padding: 0.6rem;
+  font: inherit;
+}
+.ad-detail-contact-error { color: var(--brand-red, #e2231a); font-size: 0.85rem; margin: 0; }
+.ad-detail-contact-login { margin-top: 1rem; width: 100%; justify-content: center; }
+
+/* ---- messagerie (/compte/messages) ---- */
+.msg-shell { display: flex; gap: 1.5rem; padding: 1.75rem 0 3rem; align-items: flex-start; }
+.msg-list { width: 320px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.msg-list-title { font-size: 1.05rem; margin: 0; padding: 1rem 1.1rem; border-bottom: 1px solid var(--line); }
+.msg-empty { color: var(--muted); font-size: 0.88rem; padding: 1rem 1.1rem; }
+.msg-list-item {
+  display: flex; gap: 0.7rem; padding: 0.8rem 1.1rem; border-bottom: 1px solid var(--line); position: relative;
+}
+.msg-list-item:hover { background: var(--surface-2); }
+.msg-list-thumb {
+  width: 52px; height: 52px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: var(--surface-2);
+}
+.msg-list-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.msg-list-body { min-width: 0; flex: 1; }
+.msg-list-top { display: flex; justify-content: space-between; gap: 0.5rem; }
+.msg-list-titre { font-weight: 600; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-list-time { color: var(--muted); font-size: 0.75rem; flex-shrink: 0; }
+.msg-list-snippet {
+  margin: 0.15rem 0 0; font-size: 0.83rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.msg-list-snippet strong { color: var(--ink); }
+.msg-list-badge {
+  position: absolute; top: 0.8rem; right: 1.1rem; background: var(--accent); color: var(--accent-ink);
+  border-radius: 999px; font-size: 0.72rem; font-weight: 700; padding: 0.1rem 0.45rem;
+}
+
+.msg-panel { flex: 1; display: flex; gap: 1.5rem; align-items: flex-start; min-width: 0; }
+.msg-panel-empty { border: 1px solid var(--line); border-radius: 10px; padding: 2rem; color: var(--muted); }
+.msg-thread {
+  flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 10px; display: flex;
+  flex-direction: column; height: 560px;
+}
+.msg-thread-header { padding: 1rem 1.2rem; border-bottom: 1px solid var(--line); }
+.msg-thread-body { flex: 1; overflow-y: auto; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.msg-bubble {
+  max-width: 70%; padding: 0.6rem 0.9rem; border-radius: 12px; background: var(--surface-2); margin: 0;
+  white-space: pre-wrap; align-self: flex-start;
+}
+.msg-bubble.mine { background: var(--accent); color: var(--accent-ink); align-self: flex-end; }
+.msg-reply { display: flex; gap: 0.6rem; padding: 1rem; border-top: 1px solid var(--line); align-items: flex-start; }
+.msg-reply textarea {
+  flex: 1; resize: none; border: 1px solid var(--line); border-radius: 8px; padding: 0.5rem 0.7rem; font: inherit;
+}
+.msg-reply-error { color: var(--brand-red, #e2231a); font-size: 0.85rem; margin: 0; }
+
+.msg-ad-card { width: 240px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 10px; padding: 1rem; }
+.msg-ad-thumb {
+  aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: var(--surface-2); margin-bottom: 0.7rem;
+}
+.msg-ad-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.msg-ad-titre { font-weight: 600; margin: 0 0 0.2rem; font-size: 0.9rem; }
+.msg-ad-prix { font-weight: 700; margin: 0 0 0.5rem; }
+
+@media (max-width: 860px) {
+  .msg-shell { flex-direction: column; }
+  .msg-list { width: 100%; }
+  .msg-panel { flex-direction: column; width: 100%; }
+  .msg-ad-card { width: 100%; }
+}
+
 /* ---- pagination + filtres populaires + fil d'ariane, en bas des pages de résultats ---- */
 .pagination {
   display: flex; align-items: center; justify-content: center; gap: 0.4rem;
