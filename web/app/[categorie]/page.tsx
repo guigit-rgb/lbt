@@ -3,12 +3,12 @@ import { notFound } from "next/navigation";
 import { desc, asc, eq, and, ilike, gte, lte, isNotNull } from "drizzle-orm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import AdCard from "@/components/AdCard";
+import AdRow from "@/components/AdRow";
 import CategoryFilters from "@/components/CategoryFilters";
 import { db } from "@/lib/db/client";
-import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
+import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { annonceToCardData, getCoverUrls, annonceVisiblePublic } from "@/lib/annonce-display";
+import { annonceToRowData, getCoverUrls, annonceVisiblePublic } from "@/lib/annonce-display";
 
 // Les annonces changent à chaque dépôt (Server Function, pas de revalidation
 // ciblée en V0) : la page doit se recalculer à chaque requête, pas être
@@ -75,10 +75,11 @@ export default async function CategorieListingPage({
   const orderBy =
     tri === "prix_asc" ? asc(annonces.prixCents) : tri === "prix_desc" ? desc(annonces.prixCents) : desc(annonces.createdAt);
 
-  const [rows, optionEntries] = await Promise.all([
+  const [rowsWithVendeur, optionEntries] = await Promise.all([
     db
-      .select()
+      .select({ annonce: annonces, vendeurNom: users.displayName })
       .from(annonces)
+      .innerJoin(users, eq(annonces.userId, users.id))
       .where(and(...conditions))
       .orderBy(orderBy),
     Promise.all(
@@ -89,8 +90,8 @@ export default async function CategorieListingPage({
   ]);
   const options = Object.fromEntries(optionEntries);
 
-  const covers = await getCoverUrls(rows.map((r) => r.id));
-  const ads = rows.map((row) => annonceToCardData(row, covers.get(row.id)));
+  const covers = await getCoverUrls(rowsWithVendeur.map((r) => r.annonce.id));
+  const ads = rowsWithVendeur.map((r) => annonceToRowData(r.annonce, covers.get(r.annonce.id), r.vendeurNom));
   const count = ads.length;
 
   const currentValues = Object.fromEntries(
@@ -123,9 +124,9 @@ export default async function CategorieListingPage({
           {ads.length === 0 && (
             <p className="empty-state">Aucune annonce ne correspond à ces filtres pour le moment.</p>
           )}
-          <div className="card-strip">
+          <div className="ad-row-list">
             {ads.map((ad) => (
-              <AdCard key={ad.id} ad={ad} href={`/annonces/${ad.id}`} showSeller />
+              <AdRow key={ad.id} ad={ad} href={`/annonces/${ad.id}`} />
             ))}
           </div>
         </div>

@@ -7071,3 +7071,18 @@ Nicolas a repéré (capture annotée d'un cercle violet) que le bandeau de filtr
 **Validation** : testé directement en base (comptage 12→2 annonces après filtre marque, tri prix croissant vérifié sur les valeurs réelles) puis en navigateur — le premier essai semblait montrer un select qui ne déclenchait aucune navigation, mais un délai plus long a confirmé que ça fonctionnait (le round-trip serveur prend ~1,5 s, pas immédiat) : encore un faux négatif de timing de test, pas un bug, comme plusieurs fois dans les sessions précédentes sur ce projet.
 
 **How to apply :** aucune vraie pagination n'existe encore — `/vehicules?marque=X` retourne TOUTES les annonces correspondantes en une seule fois, sans limite. Pas un problème au volume actuel (catalogue démo + tests), à surveiller si le nombre d'annonces par catégorie grossit significativement.
+
+## Session n°38 (2026-08-21, suite) — Vue en liste détaillée sur les pages catégorie (principe leboncoin)
+
+Deux corrections rapides puis un changement de mise en page plus net, tous les trois sur la navigation/l'affichage des annonces :
+
+**Mega-menu — titres de groupe cliquables.** Dans le menu déroulant d'une catégorie (ex. survol "Véhicules"), les titres de groupe ("Voitures", "Motos"...) n'étaient que du texte (`&lt;h4&gt;`), alors que les liens en dessous l'étaient déjà. Corrigé dans `MegaMenuItem` (`SiteHeader.tsx`) — s'applique à toutes les catégories via le composant partagé.
+
+**Vue en liste détaillée.** Nicolas a fourni une vraie capture d'une page de résultats leboncoin (`/c/voitures`) : chaque annonce y est une ligne horizontale (photo à gauche, titre, prix, une grille de 4 caractéristiques — Année/Kilométrage/Énergie/Boîte de vitesse — puis le vendeur et la localisation), pas une carte en grille. Demande de reprendre ce principe pour LBT.
+
+- Nouveau composant `components/AdRow.tsx` + `annonceToRowData()`/`AdRowData` dans `lib/annonce-display.ts` (distinct de `annonceToCardData`/`AdCard`, qui reste utilisé pour les vignettes compactes de l'accueil — LBC lui-même distingue les deux : grille compacte en accueil, liste détaillée sur la page de résultats).
+- Caractéristiques affichées par catégorie : véhicules → Année/Kilométrage/Énergie/Boîte ; loisirs → Catégorie/État ; animaux → Type ; les 11 autres catégories n'ont pas de grille de caractéristiques (juste photo/titre/prix/vendeur) — dégradation propre vérifiée visuellement, pas de colonnes vides.
+- `app/[categorie]/page.tsx` fait maintenant une jointure sur `users` pour afficher le vrai nom du vendeur sous chaque annonce — absent jusqu'ici (le `showSeller` de l'ancien `&lt;AdCard&gt;` sur cette page ne faisait déjà rien, `ad.vendeur` n'étant jamais renseigné pour les vraies annonces).
+- Volontairement omis (fonctionnalités payantes ou algorithmes non construits, même logique que les sessions précédentes) : badge "À la une", badge "Pro", financement "ou dès X €/mois", estimateur "Prix équitable", encarts publicitaires, bouton "Sauvegarder la recherche".
+
+**How to apply :** si une future session doit ajouter des caractéristiques pour une autre catégorie (ex. Surface/Pièces pour l'immobilier), étendre `specsListe()` dans `lib/annonce-display.ts` — c'est le seul endroit qui décide quelles colonnes s'affichent par catégorie, ne pas dupliquer cette logique dans `AdRow.tsx` ou la page.

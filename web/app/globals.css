@@ -776,6 +776,48 @@
 .results-head h1 { font-size: 1.3rem; }
 .results-count { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
 .results-grid-section { padding-bottom: 2.5rem; }
+
+/* ---- liste détaillée d'une page de résultats par catégorie (vs. la vignette
+   compacte .card de l'accueil) — une ligne par annonce, sur le principe des
+   pages de résultats leboncoin ---- */
+.ad-row-list { display: flex; flex-direction: column; }
+.ad-row {
+  display: flex; gap: 1.25rem; padding: 1.25rem 0; border-bottom: 1px solid var(--line);
+}
+.ad-row:first-child { padding-top: 0; }
+.ad-row-thumb {
+  position: relative; flex-shrink: 0; overflow: hidden; border-radius: 8px;
+  width: 220px; height: 165px; background: var(--accent-ink); color: var(--accent);
+  display: flex; align-items: center; justify-content: center; font-size: 0.75rem; text-align: center; padding: 0.5rem;
+}
+.ad-row-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ad-row-fav {
+  position: absolute; top: 0.6rem; right: 0.6rem; width: 28px; height: 28px; border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+}
+.ad-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ad-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.ad-row-title { font-size: 1.08rem; font-weight: 700; margin: 0; }
+.ad-row-fresh { color: var(--muted); font-size: 0.85rem; white-space: nowrap; flex-shrink: 0; }
+.ad-row-price { font-size: 1.2rem; font-weight: 700; margin: 0.3rem 0 0; }
+.ad-row-specs {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem 1.5rem;
+  margin: 0.75rem 0; max-width: 640px;
+}
+.ad-row-spec-label { display: block; color: var(--muted); font-size: 0.75rem; }
+.ad-row-spec-value { display: block; font-weight: 600; font-size: 0.92rem; }
+.ad-row-seller {
+  margin-top: auto; padding-top: 0.5rem; color: var(--muted); font-size: 0.85rem;
+  display: flex; gap: 0.6rem; flex-wrap: wrap;
+}
+.ad-row-seller span + span::before { content: "· "; }
+
+@media (max-width: 640px) {
+  .ad-row { flex-direction: column; }
+  .ad-row-thumb { width: 100%; height: 200px; }
+  .ad-row-specs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 /* ---- pagination + filtres populaires + fil d'ariane, en bas des pages de résultats ---- */
 .pagination {
   display: flex; align-items: center; justify-content: center; gap: 0.4rem;

@@ -49,12 +49,12 @@ export function annonceVisiblePublic(): SQL | undefined {
   );
 }
 
-function formatPrix(prixCents: number | null): string {
+export function formatPrix(prixCents: number | null): string {
   if (prixCents == null) return "Prix sur demande";
   return `${(prixCents / 100).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} €`;
 }
 
-function formatFraicheur(createdAt: Date): string {
+export function formatFraicheur(createdAt: Date): string {
   const days = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
   if (days <= 0) return "Auj.";
   if (days === 1) return "1 j.";
@@ -95,6 +95,73 @@ export function annonceToCardData(row: AnnonceRow, coverUrl?: string | null): Fa
     thumbClass: "ic-teapot",
     photoUrl: coverUrl ?? undefined,
     badges: row.categorie === "loisirs" && row.avisExpert ? [{ label: "Avis d'expert", variant: "expert" }] : undefined,
+  };
+}
+
+export interface AdRowSpec {
+  label: string;
+  value: string;
+}
+
+export interface AdRowData {
+  id: string;
+  titre: string;
+  prixLabel: string;
+  fraicheur: string;
+  photoUrl?: string;
+  thumbClass: string;
+  ville: string | null;
+  vendeurNom: string;
+  specs: AdRowSpec[];
+}
+
+// Caractéristiques affichées en grille sous le prix, sur le modèle de la page
+// de résultats leboncoin (Année/Kilométrage/Énergie/Boîte pour un véhicule).
+// Différent de `sousLigne` (une seule ligne condensée, utilisée par la carte
+// compacte de l'accueil) : ici chaque caractéristique reste un champ à part.
+function specsListe(row: AnnonceRow): AdRowSpec[] {
+  if (row.categorie === "vehicules") {
+    const specs: AdRowSpec[] = [];
+    if (row.annee) specs.push({ label: "Année", value: String(row.annee) });
+    if (row.kilometrage != null) {
+      specs.push({ label: "Kilométrage", value: `${row.kilometrage.toLocaleString("fr-FR")} km` });
+    }
+    const attributs = row.attributs as Record<string, string>;
+    if (attributs.carburant) specs.push({ label: "Énergie", value: attributs.carburant });
+    if (attributs.boite) specs.push({ label: "Boîte de vitesse", value: attributs.boite });
+    return specs;
+  }
+  if (row.categorie === "loisirs") {
+    const specs: AdRowSpec[] = [];
+    if (row.sousCategorie) specs.push({ label: "Catégorie", value: row.sousCategorie });
+    if (row.etatProduit) specs.push({ label: "État", value: row.etatProduit });
+    return specs;
+  }
+  if (row.categorie === "animaux" && row.typeAnimal) {
+    return [{ label: "Type", value: row.typeAnimal }];
+  }
+  return [];
+}
+
+// Convertit une ligne réelle vers la forme attendue par <AdRow> — la vue en
+// liste détaillée d'une page de résultats par catégorie (par opposition à
+// <AdCard>, la vignette compacte utilisée sur l'accueil).
+export function annonceToRowData(row: AnnonceRow, coverUrl: string | undefined, vendeurNom: string): AdRowData {
+  const titre =
+    row.categorie === "vehicules" && row.marque
+      ? `${row.marque} ${row.modele ?? ""}`.trim() + (row.annee ? ` — ${row.annee}` : "")
+      : row.titre;
+
+  return {
+    id: row.id,
+    titre: titre || row.titre,
+    prixLabel: formatPrix(row.prixCents),
+    fraicheur: formatFraicheur(row.createdAt),
+    photoUrl: coverUrl,
+    thumbClass: "ic-teapot",
+    ville: row.ville,
+    vendeurNom,
+    specs: specsListe(row),
   };
 }
 
