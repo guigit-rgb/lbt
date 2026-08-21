@@ -7,7 +7,7 @@ import AdCard from "@/components/AdCard";
 import { db } from "@/lib/db/client";
 import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { annonceToCardData } from "@/lib/annonce-display";
+import { annonceToCardData, getCoverUrls } from "@/lib/annonce-display";
 
 // Les annonces changent à chaque dépôt (Server Function, pas de revalidation
 // ciblée en V0) : la page doit se recalculer à chaque requête, pas être
@@ -35,7 +35,8 @@ export default async function CategorieListingPage({
     .from(annonces)
     .where(and(eq(annonces.categorie, categorie), eq(annonces.etat, "en_ligne")))
     .orderBy(desc(annonces.createdAt));
-  const ads = rows.map(annonceToCardData);
+  const covers = await getCoverUrls(rows.map((r) => r.id));
+  const ads = rows.map((row) => annonceToCardData(row, covers.get(row.id)));
   const count = ads.length;
 
   return (

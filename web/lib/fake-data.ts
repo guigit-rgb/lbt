@@ -8,6 +8,7 @@ export interface FakeAd {
   prixLabel: string;
   fraicheur: string;
   thumbClass: string;
+  photoUrl?: string;
   badges?: { label: string; variant?: "histovec" | "expert" }[];
   favori?: boolean;
   vendeur?: { initiale: string; couleur: string; nom: string };

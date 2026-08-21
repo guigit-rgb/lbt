@@ -1,9 +1,9 @@
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { db } from "@/lib/db/client";
-import { annonces, users } from "@/lib/db/schema";
+import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { AnnonceFeedbackGate } from "./AnnonceFeedbackGate";
@@ -52,6 +52,12 @@ export default async function AnnonceDetailPage({
       .where(eq(annonces.id, id));
   }
 
+  const photos = await db
+    .select({ id: annonceImages.id, url: annonceImages.urlThumb })
+    .from(annonceImages)
+    .where(eq(annonceImages.annonceId, id))
+    .orderBy(asc(annonceImages.position));
+
   const config = getFiltersForCategory(row.annonce.categorie);
   const details: { label: string; value: string }[] = [];
   if (row.annonce.categorie === "vehicules") {
@@ -89,6 +95,51 @@ export default async function AnnonceDetailPage({
             </strong>
           )}
         </p>
+
+        {photos.length > 0 && (
+          <div style={{ marginBottom: "1.25rem" }}>
+            <div
+              style={{
+                aspectRatio: "4/3",
+                borderRadius: 10,
+                overflow: "hidden",
+                background: "var(--surface-2)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={photos[0].url ?? undefined}
+                alt={row.annonce.titre}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            </div>
+            {photos.length > 1 && (
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
+                {photos.slice(1).map((p) => (
+                  <div
+                    key={p.id}
+                    style={{
+                      width: 90,
+                      height: 68,
+                      borderRadius: 6,
+                      overflow: "hidden",
+                      background: "var(--surface-2)",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={p.url ?? undefined}
+                      alt=""
+                      style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <h1 style={{ marginBottom: "0.25rem" }}>{row.annonce.titre}</h1>
         <p style={{ fontSize: "1.4rem", fontWeight: 700 }}>{formatPrix(row.annonce.prixCents)}</p>
         <p style={{ color: "var(--muted)" }}>

@@ -18,7 +18,11 @@ export default function AdCard({ ad, showSeller = false, href }: AdCardProps) {
           <span className="name">{ad.vendeur.nom}</span>
         </div>
       )}
-      <div className={`thumb ${ad.thumbClass}`}>
+      <div className={`thumb${ad.photoUrl ? "" : ` ${ad.thumbClass}`}`}>
+        {ad.photoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={ad.photoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        )}
         {ad.badges?.map((badge) => (
           <span key={badge.label} className={`badge${badge.variant ? ` ${badge.variant}` : ""}`}>
             {badge.label}

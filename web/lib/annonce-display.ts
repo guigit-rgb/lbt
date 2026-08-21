@@ -1,4 +1,6 @@
-import type { annonces } from "@/lib/db/schema";
+import { and, eq, inArray } from "drizzle-orm";
+import { db } from "@/lib/db/client";
+import { annonceImages, type annonces } from "@/lib/db/schema";
 import type { FakeAd } from "@/lib/fake-data";
 
 export type AnnonceRow = typeof annonces.$inferSelect;
@@ -30,7 +32,10 @@ function sousLigne(row: AnnonceRow): string {
 
 // Convertit une ligne réelle `annonces` vers la même forme que `FakeAd`,
 // pour que <AdCard> reste inchangé quelle que soit la source des données.
-export function annonceToCardData(row: AnnonceRow): FakeAd {
+// `coverUrl` (photo de couverture réelle, position 0 dans annonce_images) est
+// facultatif : quand l'annonce n'a pas encore de photo, on retombe sur
+// l'icône générique `ic-teapot` plutôt que de casser l'affichage.
+export function annonceToCardData(row: AnnonceRow, coverUrl?: string | null): FakeAd {
   const titre =
     row.categorie === "vehicules" && row.marque
       ? `${row.marque} ${row.modele ?? ""}`.trim() + (row.annee ? ` — ${row.annee}` : "")
@@ -44,6 +49,18 @@ export function annonceToCardData(row: AnnonceRow): FakeAd {
     prixLabel: formatPrix(row.prixCents),
     fraicheur: formatFraicheur(row.createdAt),
     thumbClass: "ic-teapot",
+    photoUrl: coverUrl ?? undefined,
     badges: row.categorie === "loisirs" && row.avisExpert ? [{ label: "Avis d'expert", variant: "expert" }] : undefined,
   };
+}
+
+// Photo de couverture (position 0) de chaque annonce, en une seule requête
+// groupée — à utiliser avant `annonceToCardData` pour les listes.
+export async function getCoverUrls(ids: string[]): Promise<Map<string, string>> {
+  if (ids.length === 0) return new Map();
+  const rows = await db
+    .select({ annonceId: annonceImages.annonceId, url: annonceImages.urlThumb })
+    .from(annonceImages)
+    .where(and(inArray(annonceImages.annonceId, ids), eq(annonceImages.position, 0)));
+  return new Map(rows.filter((r): r is { annonceId: string; url: string } => !!r.url).map((r) => [r.annonceId, r.url]));
 }

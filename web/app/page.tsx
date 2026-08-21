@@ -6,7 +6,7 @@ import SeoLinks from "@/components/SeoLinks";
 import AdCard from "@/components/AdCard";
 import { db } from "@/lib/db/client";
 import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
-import { annonceToCardData } from "@/lib/annonce-display";
+import { annonceToCardData, getCoverUrls } from "@/lib/annonce-display";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,8 @@ async function latestAds(categorie: Categorie, limit: number) {
     .where(and(eq(annonces.categorie, categorie), eq(annonces.etat, "en_ligne")))
     .orderBy(desc(annonces.createdAt))
     .limit(limit);
-  return rows.map(annonceToCardData);
+  const covers = await getCoverUrls(rows.map((r) => r.id));
+  return rows.map((row) => annonceToCardData(row, covers.get(row.id)));
 }
 
 async function countsByCategorie(): Promise<Record<Categorie, number>> {
