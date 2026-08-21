@@ -7205,3 +7205,12 @@ Nicolas a signalé, à raison, un vrai défaut : sur la page de détail d'une an
 - `app/annonces/[id]/page.tsx` : le bouton `RevealPhoneButton` est maintenant affiché indépendamment de la session (dès que le vendeur a renseigné un numéro et que le visiteur n'est pas le propriétaire) ; seul `ContactVendeurForm`/le lien de connexion restent conditionnés à la session, avec un libellé resserré ("Se connecter pour envoyer un message" plutôt que "...pour contacter le vendeur", qui ne décrivait plus que ça couvre encore).
 
 **How to apply :** ne jamais coupler deux fonctionnalités sous une même condition d'accès sans se demander si chacune a réellement besoin du même niveau d'authentification — ici, "voir" et "écrire" n'ont pas la même exigence.
+
+## Session n°49 (2026-08-22, suite) — Avatar + ancienneté dans le bloc "Vendeur" de la page de détail
+
+Nicolas a fourni une capture leboncoin du bloc "Vendu par" (avatar, nom, "Suivre", "Membre depuis", "Dernière activité", badges "Très réactif"/"Numéro vérifié") en demandant d'afficher "quelques infos sur le vendeur" sur chaque annonce. Le bloc existait déjà (nom, badge Pro, SIRET, autres annonces) mais sans les deux informations les plus consultées : l'avatar et l'ancienneté — déjà construites ailleurs (`/vendeurs/[id]`, `/compte/profil`) mais jamais reprises ici.
+
+- `app/annonces/[id]/page.tsx` sélectionne maintenant `users.createdAt` du vendeur ; le bloc "Vendeur" affiche l'avatar (`couleurAvatar()`, `lib/avatar.ts`, déjà partagé) et "Membre depuis {mois année}" au-dessus du nom, dans un lien unique vers `/vendeurs/[id]`.
+- **Volontairement exclu, même liste que les sessions n°45/n°46** : "Suivre" (pas de système d'abonnement), "Très réactif"/"Numéro vérifié" (aucune donnée réelle derrière), "Dernière activité" (aucun horodatage de dernière connexion suivi).
+
+**How to apply :** avatar et ancienneté sont maintenant affichés à trois endroits (`/compte/profil`, `/vendeurs/[id]`, page de détail d'une annonce) avec le même helper `couleurAvatar()` — si un futur endroit a besoin d'afficher un vendeur, réutiliser ce même helper plutôt que d'inventer une nouvelle palette.

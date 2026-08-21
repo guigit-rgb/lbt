@@ -12,6 +12,7 @@ import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { libelleEtat, formatPrix, detailInformationsCles, getAutresAnnoncesVendeur } from "@/lib/annonce-display";
+import { couleurAvatar } from "@/lib/avatar";
 import { AnnonceFeedbackGate } from "./AnnonceFeedbackGate";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,7 @@ export default async function AnnonceDetailPage({
       vendeurEstPro: users.estPro,
       vendeurSiret: users.siret,
       vendeurTelephone: users.telephone,
+      vendeurMembreDepuis: users.createdAt,
     })
     .from(annonces)
     .innerJoin(users, eq(annonces.userId, users.id))
@@ -70,6 +72,7 @@ export default async function AnnonceDetailPage({
 
   const config = getFiltersForCategory(row.annonce.categorie);
   const specs = detailInformationsCles(row.annonce);
+  const membreDepuis = row.vendeurMembreDepuis.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
 
   return (
     <>
@@ -147,9 +150,21 @@ export default async function AnnonceDetailPage({
 
             <div className="ad-detail-seller-card">
               <h2>Vendeur</h2>
-              <Link href={`/vendeurs/${row.annonce.userId}`} className="ad-detail-seller-name">
-                {row.vendeurNom}
-                {row.vendeurEstPro && <span className="ad-detail-pro-badge">Pro</span>}
+              <Link href={`/vendeurs/${row.annonce.userId}`} className="ad-detail-seller-head">
+                <span
+                  className="ad-detail-seller-avatar"
+                  style={{ background: couleurAvatar(row.vendeurNom) }}
+                  aria-hidden="true"
+                >
+                  {row.vendeurNom.charAt(0).toUpperCase()}
+                </span>
+                <span>
+                  <span className="ad-detail-seller-name">
+                    {row.vendeurNom}
+                    {row.vendeurEstPro && <span className="ad-detail-pro-badge">Pro</span>}
+                  </span>
+                  <span className="ad-detail-seller-membre">Membre depuis {membreDepuis}</span>
+                </span>
               </Link>
               {row.vendeurEstPro && row.vendeurSiret && (
                 <p className="ad-detail-siret">N° SIRET : {row.vendeurSiret}</p>
