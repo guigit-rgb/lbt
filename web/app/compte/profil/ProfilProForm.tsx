@@ -21,40 +21,40 @@ export function ProfilProForm({
   );
 
   return (
-    <form action={formAction} style={{ display: "grid", gap: "0.9rem" }}>
-      <label>
-        Téléphone (facultatif)
+    <form action={formAction} className="profil-form">
+      <label className="profil-field">
+        <span>Téléphone</span>
         <input type="tel" name="telephone" defaultValue={telephone} placeholder="06 12 34 56 78" />
       </label>
 
-      <label style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <label className="profil-field profil-field-checkbox">
         <input
           type="checkbox"
           name="estPro"
           checked={checked}
           onChange={(e) => setChecked(e.target.checked)}
         />
-        Je vends en tant que professionnel
+        <span>Je vends en tant que professionnel</span>
       </label>
 
       {checked && (
-        <label>
-          N° SIRET (14 chiffres)
+        <label className="profil-field">
+          <span>N° SIRET (14 chiffres)</span>
           <input type="text" name="siret" defaultValue={siret} inputMode="numeric" maxLength={14} />
         </label>
       )}
 
       {"error" in state && state.error ? (
-        <p role="alert" style={{ color: "var(--brand-red, #e2231a)" }}>
+        <p role="alert" className="profil-form-error">
           {state.error}
         </p>
       ) : (
         state !== initialState && "success" in state && state.success && (
-          <p style={{ color: "var(--muted)" }}>Profil mis à jour.</p>
+          <p className="profil-form-success">Profil mis à jour.</p>
         )
       )}
 
-      <button type="submit" disabled={pending} style={{ justifySelf: "start" }}>
+      <button type="submit" className="btn btn-accent profil-form-submit" disabled={pending}>
         {pending ? "Enregistrement…" : "Enregistrer"}
       </button>
     </form>
