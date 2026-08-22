@@ -796,6 +796,10 @@
 .filter-drawer-radio { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.92rem; }
 .filter-drawer-checkbox { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.92rem; }
 .filter-drawer-count { color: var(--muted); font-size: 0.82rem; margin-left: auto; }
+.filter-drawer-subhead {
+  font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--muted); margin: 0.9rem 0 0.3rem;
+}
 .filter-drawer-search {
   width: 100%; padding: 0.6rem 0.7rem; margin-bottom: 0.5rem; border: 1px solid var(--line); border-radius: 999px;
   font: inherit;

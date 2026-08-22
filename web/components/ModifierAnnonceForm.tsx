@@ -8,6 +8,7 @@ import PhotoGrid, { type Photo } from "@/components/PhotoGrid";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import type { annonces } from "@/lib/db/schema";
 import { modifierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
+import { MARQUES_COURANTES, MARQUES_AUTRES } from "@/lib/marques";
 
 type Annonce = typeof annonces.$inferSelect;
 
@@ -171,7 +172,32 @@ export default function ModifierAnnonceForm({
                 <div className="depot-field-row">
                   <label>
                     <span className="depot-question">Marque</span>
-                    <input name="marque" className="depot-input" defaultValue={annonce.marque ?? ""} />
+                    <select name="marque" className="depot-select" defaultValue={annonce.marque ?? ""}>
+                      <option value="">Choisissez</option>
+                      {/* Annonce déposée avant le passage en liste fermée
+                          (marque en texte libre) : préserve la valeur
+                          existante plutôt que de la perdre silencieusement. */}
+                      {annonce.marque &&
+                        !MARQUES_COURANTES.includes(annonce.marque as (typeof MARQUES_COURANTES)[number]) &&
+                        !MARQUES_AUTRES.includes(annonce.marque as (typeof MARQUES_AUTRES)[number]) && (
+                          <option value={annonce.marque}>{annonce.marque}</option>
+                        )}
+                      <optgroup label="Marques courantes">
+                        {MARQUES_COURANTES.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Autres marques">
+                        {MARQUES_AUTRES.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <option value="Autre">Autre</option>
+                    </select>
                   </label>
                   <label>
                     <span className="depot-question">Modèle</span>

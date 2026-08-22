@@ -6,6 +6,7 @@ import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
 import { enregistrerBrouillon, publierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
 import PhotoGrid, { type Photo } from "@/components/PhotoGrid";
+import { MARQUES_COURANTES, MARQUES_AUTRES } from "@/lib/marques";
 
 interface Suggestion {
   categorie: Categorie;
@@ -451,7 +452,24 @@ export default function NouvelleAnnonceForm() {
                 <div className="depot-field-row">
                   <label>
                     <span className="depot-question">Marque</span>
-                    <input className="depot-input" value={marque} onChange={(e) => setMarque(e.target.value)} />
+                    <select className="depot-select" value={marque} onChange={(e) => setMarque(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      <optgroup label="Marques courantes">
+                        {MARQUES_COURANTES.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Autres marques">
+                        {MARQUES_AUTRES.map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <option value="Autre">Autre</option>
+                    </select>
                   </label>
                   <label>
                     <span className="depot-question">Modèle</span>

@@ -6,6 +6,7 @@ import type { Categorie } from "@/lib/db/schema";
 import type { FilterField } from "@/lib/listing-config";
 import { sauvegarderRecherche } from "@/lib/actions/recherches";
 import { LocationFilter } from "@/components/LocationFilter";
+import { MARQUES_COURANTES, MARQUES_AUTRES } from "@/lib/marques";
 
 const TRI_OPTIONS = [
   { value: "pertinence", label: "Pertinence" },
@@ -191,13 +192,32 @@ export default function CategoryFilters({
                   );
                 }
 
-                if (filter.widget === "checkbox") {
-                  const opts = options[filter.key] ?? [];
+                if (filter.widget === "marque") {
+                  const comptesParMarque = new Map((options[filter.key] ?? []).map((o) => [o.value, o.count]));
                   const selected = (currentValues[filter.key] ?? "").split(",").filter(Boolean);
-                  const recherche = (recherchesTexte[filter.key] ?? "").trim().toLowerCase();
-                  const optsFiltres = recherche
-                    ? opts.filter((opt) => labelFor(filter.key, opt.value).toLowerCase().includes(recherche))
-                    : opts;
+                  const recherche = (recherchesTexte[filter.key] ?? "").trim().toUpperCase();
+
+                  // Marques du catalogue absentes de la base : comptées à 0,
+                  // pour qu'un acheteur voie toujours "Toyota" même si aucune
+                  // annonce Toyota n'est en ligne aujourd'hui (retour de
+                  // Nicolas du 2026-08-22).
+                  const courantes = MARQUES_COURANTES.map((m) => ({ value: m, count: comptesParMarque.get(m) ?? 0 }));
+                  const autresCatalogue = new Set(MARQUES_AUTRES as readonly string[]);
+                  const autres = [
+                    ...MARQUES_AUTRES,
+                    // Filet de sécurité : une marque en base absente du
+                    // catalogue (ancienne annonce en texte libre non
+                    // reconnue) reste visible plutôt que de disparaître.
+                    ...[...comptesParMarque.keys()].filter(
+                      (m) => !autresCatalogue.has(m) && !(MARQUES_COURANTES as readonly string[]).includes(m)
+                    ),
+                  ]
+                    .sort()
+                    .map((m) => ({ value: m, count: comptesParMarque.get(m) ?? 0 }));
+
+                  const filtreRecherche = (liste: { value: string; count: number }[]) =>
+                    recherche ? liste.filter((o) => o.value.includes(recherche)) : liste;
+
                   return (
                     <section key={filter.key} className="filter-drawer-section">
                       <h3>{filter.label}</h3>
@@ -208,6 +228,76 @@ export default function CategoryFilters({
                         value={recherchesTexte[filter.key] ?? ""}
                         onChange={(e) => setRecherchesTexte((prev) => ({ ...prev, [filter.key]: e.target.value }))}
                       />
+                      {filtreRecherche(courantes).length > 0 && (
+                        <>
+                          <p className="filter-drawer-subhead">Marques courantes</p>
+                          {filtreRecherche(courantes).map((opt) => (
+                            <label key={opt.value} className="filter-drawer-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={selected.includes(opt.value)}
+                                onChange={() => toggleValue(filter.key, opt.value)}
+                              />
+                              {opt.value}
+                              <span className="filter-drawer-count">{opt.count}</span>
+                            </label>
+                          ))}
+                        </>
+                      )}
+                      {filtreRecherche(autres).length > 0 && (
+                        <>
+                          <p className="filter-drawer-subhead">Autres marques</p>
+                          {filtreRecherche(autres).map((opt) => (
+                            <label key={opt.value} className="filter-drawer-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={selected.includes(opt.value)}
+                                onChange={() => toggleValue(filter.key, opt.value)}
+                              />
+                              {opt.value}
+                              <span className="filter-drawer-count">{opt.count}</span>
+                            </label>
+                          ))}
+                        </>
+                      )}
+                      {selected.length > 0 && (
+                        <button
+                          type="button"
+                          className="filter-drawer-reset"
+                          onClick={() => navigateWith(filter.key, "")}
+                        >
+                          Effacer
+                        </button>
+                      )}
+                    </section>
+                  );
+                }
+
+                if (filter.widget === "checkbox") {
+                  const opts = options[filter.key] ?? [];
+                  const selected = (currentValues[filter.key] ?? "").split(",").filter(Boolean);
+                  // La recherche textuelle n'a de sens que pour une longue
+                  // liste (ex. Marque) — pour un critère à deux ou trois
+                  // valeurs (ex. Permis), elle n'apporte rien et n'est pas
+                  // affichée, cf. retour de Nicolas du 2026-08-22.
+                  const rechercheActivee = opts.length > 8;
+                  const recherche = (recherchesTexte[filter.key] ?? "").trim().toLowerCase();
+                  const optsFiltres =
+                    rechercheActivee && recherche
+                      ? opts.filter((opt) => labelFor(filter.key, opt.value).toLowerCase().includes(recherche))
+                      : opts;
+                  return (
+                    <section key={filter.key} className="filter-drawer-section">
+                      <h3>{filter.label}</h3>
+                      {rechercheActivee && (
+                        <input
+                          type="search"
+                          className="filter-drawer-search"
+                          placeholder="Rechercher une valeur"
+                          value={recherchesTexte[filter.key] ?? ""}
+                          onChange={(e) => setRecherchesTexte((prev) => ({ ...prev, [filter.key]: e.target.value }))}
+                        />
+                      )}
                       {optsFiltres.map((opt) => (
                         <label key={opt.value} className="filter-drawer-checkbox">
                           <input

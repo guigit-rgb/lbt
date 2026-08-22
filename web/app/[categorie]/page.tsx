@@ -61,7 +61,7 @@ export default async function CategorieListingPage({
       .orderBy(orderBy),
     Promise.all(
       config.filters
-        .filter((f) => f.widget === "select" || f.widget === "checkbox")
+        .filter((f) => f.widget === "select" || f.widget === "checkbox" || f.widget === "marque")
         .map(async (f) => [f.key, await optionCounts(categorie, sp, f.key)] as const)
     ),
     typeAnnonceCounts(categorie, sp),

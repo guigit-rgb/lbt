@@ -25,7 +25,7 @@ function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): 
   }
 
   for (const filtre of config.filters) {
-    if ((filtre.widget === "select" || filtre.widget === "checkbox") && filtres[filtre.key]) {
+    if ((filtre.widget === "select" || filtre.widget === "checkbox" || filtre.widget === "marque") && filtres[filtre.key]) {
       morceaux.push(`${filtre.label} : ${filtres[filtre.key].split(",").join(", ")}`);
     }
     if (filtre.widget === "range") {

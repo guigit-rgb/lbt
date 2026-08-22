@@ -1,6 +1,6 @@
 import { CATEGORIES, type Categorie } from "./db/schema";
 
-export type FilterWidget = "location" | "select" | "checkbox" | "range" | "text";
+export type FilterWidget = "location" | "select" | "checkbox" | "marque" | "range" | "text";
 
 export interface FilterField {
   key: string;
@@ -27,7 +27,7 @@ const ENRICHED: Record<string, ListingConfig> = {
     h1: "Annonces Véhicules",
     filters: [
       LOCATION_FILTER,
-      { key: "marque", label: "Marque", widget: "select" },
+      { key: "marque", label: "Marque", widget: "marque" },
       { key: "modele", label: "Modèle", widget: "select" },
       { key: "annee", label: "Année-modèle", widget: "range" },
       { key: "typeVehicule", label: "Type de véhicule", widget: "select" },

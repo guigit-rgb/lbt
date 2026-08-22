@@ -7,7 +7,6 @@ import { annonceVisiblePublic } from "@/lib/annonce-display";
 // lib/listing-config.ts pour ne pas faire dépendre ce fichier partagé
 // (utilisé aussi côté dépôt d'annonce) du schéma Drizzle complet.
 export const SELECT_COLUMNS = {
-  marque: annonces.marque,
   modele: annonces.modele,
   annee: annonces.annee,
   sous_categorie: annonces.sousCategorie,
@@ -68,6 +67,22 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
     if (value) {
       const column = SELECT_COLUMNS[key];
       conditions.push(key === "annee" ? eq(column, Number(value)) : eq(column, value));
+    }
+  }
+  // Marque : cases à cocher multiples (catalogue lib/marques.ts) et
+  // insensible à la casse, pour matcher aussi les annonces déposées avant le
+  // passage du champ de dépôt en liste fermée (texte libre auparavant).
+  if (params.marque) {
+    const valeurs = params.marque.split(",").filter(Boolean).map((v) => v.toUpperCase());
+    if (valeurs.length === 1) {
+      conditions.push(sql`upper(${annonces.marque}) = ${valeurs[0]}`);
+    } else if (valeurs.length > 1) {
+      conditions.push(
+        sql`upper(${annonces.marque}) in (${sql.join(
+          valeurs.map((v) => sql`${v}`),
+          sql`, `
+        )})`
+      );
     }
   }
   for (const key of ATTRIBUT_SELECT_KEYS) {
@@ -142,6 +157,22 @@ export async function optionCounts(
       // paramètre distinct ($1, $6…) aux yeux de Postgres, même identique en
       // valeur — une position numérique évite la divergence de paramètres.
       .where(and(...conditions, sql`${annonces.attributs} ? ${key}`))
+      .groupBy(sql`1`)
+      .orderBy(sql`1`);
+    return rows.map((r) => ({ value: r.valeur, count: r.total })).filter((r) => r.value);
+  }
+
+  if (key === "marque") {
+    // upper() fusionne "Peugeot" et "PEUGEOT" dans un seul compteur — sans
+    // ça, les annonces déposées avant le passage en liste fermée (catalogue
+    // lib/marques.ts) apparaîtraient comme une marque à part.
+    const valeur = sql<string>`upper(${annonces.marque})`;
+    const total = sql<number>`count(*)::int`;
+    const rows = await db
+      .select({ valeur, total })
+      .from(annonces)
+      .innerJoin(users, eq(annonces.userId, users.id))
+      .where(and(...conditions, isNotNull(annonces.marque)))
       .groupBy(sql`1`)
       .orderBy(sql`1`);
     return rows.map((r) => ({ value: r.valeur, count: r.total })).filter((r) => r.value);
