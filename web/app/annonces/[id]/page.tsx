@@ -13,6 +13,7 @@ import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { libelleEtat, formatPrix, detailInformationsCles, getAutresAnnoncesVendeur, estUrgente } from "@/lib/annonce-display";
+import { InformationsCles } from "@/components/InformationsCles";
 import { couleurAvatar } from "@/lib/avatar";
 import { AnnonceFeedbackGate } from "./AnnonceFeedbackGate";
 
@@ -96,19 +97,7 @@ export default async function AnnonceDetailPage({
             {specs.length > 0 && (
               <section className="ad-detail-block">
                 <h2>Les informations clés</h2>
-                <div className="ad-detail-specs">
-                  {specs.map((spec) => (
-                    <div key={spec.label} className="ad-detail-spec">
-                      <span className="ad-detail-spec-icon" aria-hidden="true">
-                        {spec.icon}
-                      </span>
-                      <span>
-                        <span className="ad-detail-spec-label">{spec.label}</span>
-                        <span className="ad-detail-spec-value">{spec.value}</span>
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <InformationsCles specs={specs} />
               </section>
             )}
 
