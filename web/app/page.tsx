@@ -4,6 +4,7 @@ import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import SeoLinks from "@/components/SeoLinks";
 import AdCard from "@/components/AdCard";
+import RechercheVehiculesWidget from "@/components/RechercheVehiculesWidget";
 import { db } from "@/lib/db/client";
 import { annonces, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { annonceToCardData, annonceVisiblePublic, getCoverUrls } from "@/lib/annonce-display";
@@ -98,6 +99,12 @@ export default async function HomePage() {
               des milliards d&apos;€ aux fonds américains)
             </p>
           </div>
+        </div>
+      </section>
+
+      <section className="recherche-widget-section">
+        <div className="wrap">
+          <RechercheVehiculesWidget />
         </div>
       </section>
 

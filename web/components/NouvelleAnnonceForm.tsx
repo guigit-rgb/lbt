@@ -7,6 +7,7 @@ import type { Categorie } from "@/lib/db/schema";
 import { enregistrerBrouillon, publierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
 import PhotoGrid, { type Photo } from "@/components/PhotoGrid";
 import { MARQUES_COURANTES, MARQUES_AUTRES } from "@/lib/marques";
+import { TYPES_VEHICULE } from "@/lib/vehicule-types";
 
 interface Suggestion {
   categorie: Categorie;
@@ -37,7 +38,6 @@ const TYPES_ANIMAUX = ["Chien", "Chat", "Oiseau", "Rongeur", "Autre"];
 const PORTES = ["2", "3", "4", "5"];
 const PLACES = ["2", "4", "5", "7", "9"];
 const ETATS_VEHICULE = ["Neuf", "Comme neuf", "Bon état", "Réparations mineures à prévoir", "Pour pièces"];
-const TYPES_VEHICULE = ["Berline", "Citadine", "SUV / 4x4", "Break", "Coupé", "Cabriolet", "Monospace", "Utilitaire"];
 const COULEURS = ["Noir", "Blanc", "Gris", "Bleu", "Rouge", "Vert", "Marron", "Beige", "Jaune", "Orange"];
 const SELLERIES = ["Tissu", "Cuir", "Simili-cuir"];
 const PERMIS_OPTIONS = ["Permis B", "Sans permis (voiturette)"];

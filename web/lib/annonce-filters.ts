@@ -19,11 +19,16 @@ export const SELECT_COLUMNS = {
 // dédiée) — typeVehicule/carburant/boite/critAir en choix unique, puissanceDin
 // en plage min/max comme kilométrage. Traités à part de SELECT_COLUMNS qui ne
 // connaît que les vraies colonnes Drizzle.
-export const ATTRIBUT_SELECT_KEYS = ["typeVehicule", "carburant", "boite", "critAir"] as const;
+export const ATTRIBUT_SELECT_KEYS = ["carburant", "boite", "critAir"] as const;
 export const ATTRIBUT_RANGE_KEYS = ["puissanceDin"] as const;
-// Permis : seul critère où on autorise de cocher plusieurs valeurs à la fois
+// Permis : cocher plusieurs valeurs à la fois dans le panneau de filtres
 // (ex. "Avec permis" + "Sans permis" cochés ensemble = pas de restriction).
-export const ATTRIBUT_MULTI_KEYS = ["permis"] as const;
+// typeVehicule : le panneau de filtres reste en sélection unique (widget
+// "select"), mais le widget de recherche de l'accueil doit pouvoir passer
+// plusieurs types à la fois pour son bouton "Voiture" (Berline + Citadine +
+// SUV + ... en une seule requête) — d'où le support multi ici, sans rien
+// changer au panneau (lib/vehicule-types.ts, TYPES_VOITURE).
+export const ATTRIBUT_MULTI_KEYS = ["permis", "typeVehicule"] as const;
 
 function isAttributSelectKey(key: string): key is (typeof ATTRIBUT_SELECT_KEYS)[number] {
   return (ATTRIBUT_SELECT_KEYS as readonly string[]).includes(key);
@@ -55,6 +60,12 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
     );
   } else if (params.localisation) {
     conditions.push(ilike(annonces.ville, `%${params.localisation}%`));
+  }
+  // Code postal du widget de recherche accueil (§ "Voiture/Utilitaire/Moto")
+  // — préfixe, pas égalité stricte, pour accepter aussi bien un code postal
+  // complet qu'un simple département (ex. "33").
+  if (params.codePostal) {
+    conditions.push(ilike(annonces.codePostal, `${params.codePostal}%`));
   }
   if (params.prix_min) conditions.push(gte(annonces.prixCents, Number(params.prix_min) * 100));
   if (params.prix_max) conditions.push(lte(annonces.prixCents, Number(params.prix_max) * 100));
