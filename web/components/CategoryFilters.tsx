@@ -31,6 +31,25 @@ function labelFor(key: string, value: string): string {
   return LABEL_OVERRIDES[key]?.[value] ?? value;
 }
 
+// Complète les comptages venus de la base avec les valeurs du catalogue
+// fermé d'un filtre (`FilterField.catalogue`) qui n'ont encore aucune
+// annonce — sur le modèle déjà appliqué au widget "marque" (MARQUES_COURANTES
+// toujours affichées, même à 0). Dans l'ordre du catalogue, valeurs de la
+// base absentes du catalogue ajoutées ensuite (filet de sécurité comme pour
+// les marques en texte libre).
+function withCatalogue(
+  catalogue: readonly string[] | undefined,
+  opts: { value: string; count: number }[]
+): { value: string; count: number }[] {
+  if (!catalogue) return opts;
+  const comptes = new Map(opts.map((o) => [o.value, o.count]));
+  const catalogueSet = new Set(catalogue as readonly string[]);
+  return [
+    ...catalogue.map((value) => ({ value, count: comptes.get(value) ?? 0 })),
+    ...opts.filter((o) => !catalogueSet.has(o.value)),
+  ];
+}
+
 function toggleInList(current: string, value: string): string {
   const values = current ? current.split(",").filter(Boolean) : [];
   const next = values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
@@ -167,7 +186,7 @@ export default function CategoryFilters({
                 }
 
                 if (filter.widget === "select") {
-                  const opts = options[filter.key] ?? [];
+                  const opts = withCatalogue(filter.catalogue, options[filter.key] ?? []);
                   return (
                     <section key={filter.key} className="filter-drawer-section">
                       <h3>{filter.label}</h3>
@@ -278,7 +297,7 @@ export default function CategoryFilters({
                 }
 
                 if (filter.widget === "checkbox") {
-                  const opts = options[filter.key] ?? [];
+                  const opts = withCatalogue(filter.catalogue, options[filter.key] ?? []);
                   const selected = (currentValues[filter.key] ?? "").split(",").filter(Boolean);
                   // La recherche textuelle n'a de sens que pour une longue
                   // liste (ex. Marque) — pour un critère à deux ou trois

@@ -1,4 +1,14 @@
 import { CATEGORIES, type Categorie } from "./db/schema";
+import {
+  TYPES_BIEN,
+  TYPES_VENTE,
+  EXTERIEURS,
+  ETAGES,
+  EXPOSITIONS,
+  CARACTERISTIQUES,
+  ETATS_BIEN,
+  DPE_CLASSES,
+} from "./immobilier-types";
 
 export type FilterWidget = "location" | "select" | "checkbox" | "marque" | "range" | "text";
 
@@ -6,6 +16,14 @@ export interface FilterField {
   key: string;
   label: string;
   widget: FilterWidget;
+  // Liste fermée de valeurs toujours proposées (même à 0 annonce) — sur le
+  // modèle du catalogue Marque (lib/marques.ts) : un acheteur doit voir
+  // "Piscine" comme option de recherche même si aucune annonce n'en a une
+  // aujourd'hui, plutôt qu'une section de filtre vide tant que le catalogue
+  // d'annonces est encore jeune (cf. retour de Nicolas du 2026-08-23, panneau
+  // Immobilier vide à son ouverture). Absent pour les filtres qui restent
+  // purement dérivés des valeurs déjà en base (ex. Modèle, Catégorie loisirs).
+  catalogue?: readonly string[];
 }
 
 export interface ListingConfig {
@@ -102,20 +120,20 @@ const ENRICHED: Record<string, ListingConfig> = {
     // fois), pas "select" : voir lib/annonce-filters.ts ATTRIBUT_MULTI_KEYS.
     filters: [
       LOCATION_FILTER,
-      { key: "typeBien", label: "Type de bien", widget: "checkbox" },
+      { key: "typeBien", label: "Type de bien", widget: "checkbox", catalogue: TYPES_BIEN },
       PRIX_FILTER,
       { key: "surfaceHabitable", label: "Surface habitable", widget: "range" },
-      { key: "typeVente", label: "Type de vente", widget: "checkbox" },
+      { key: "typeVente", label: "Type de vente", widget: "checkbox", catalogue: TYPES_VENTE },
       { key: "surfaceTerrain", label: "Surface du terrain", widget: "range" },
       { key: "pieces", label: "Pièces", widget: "range" },
       { key: "chambres", label: "Chambres", widget: "range" },
-      { key: "exterieur", label: "Extérieur", widget: "checkbox" },
-      { key: "etage", label: "Étage de l'appartement", widget: "checkbox" },
-      { key: "ascenseur", label: "Avec ascenseur", widget: "checkbox" },
-      { key: "exposition", label: "Exposition", widget: "checkbox" },
-      { key: "caracteristiques", label: "Caractéristiques", widget: "checkbox" },
-      { key: "etatBien", label: "État du bien", widget: "checkbox" },
-      { key: "dpe", label: "Classe énergie (DPE)", widget: "checkbox" },
+      { key: "exterieur", label: "Extérieur", widget: "checkbox", catalogue: EXTERIEURS },
+      { key: "etage", label: "Étage de l'appartement", widget: "checkbox", catalogue: ETAGES },
+      { key: "ascenseur", label: "Avec ascenseur", widget: "checkbox", catalogue: ["1"] },
+      { key: "exposition", label: "Exposition", widget: "checkbox", catalogue: EXPOSITIONS },
+      { key: "caracteristiques", label: "Caractéristiques", widget: "checkbox", catalogue: CARACTERISTIQUES },
+      { key: "etatBien", label: "État du bien", widget: "checkbox", catalogue: ETATS_BIEN },
+      { key: "dpe", label: "Classe énergie (DPE)", widget: "checkbox", catalogue: DPE_CLASSES },
     ],
     popularFilters: ["Maison", "Appartement", "Terrain", "Parking", "Balcon", "Jardin", "Piscine", "Avec ascenseur"],
   },
