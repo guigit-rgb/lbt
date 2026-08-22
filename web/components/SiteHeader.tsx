@@ -131,7 +131,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
               <span className="glyph">♡</span>Favoris
             </Link>
             <Link className="icon-link" href="/compte/recherches">
-              <span className="glyph">☆</span>Mes recherches
+              <span className="glyph glyph-recherches">☆</span>Mes recherches
               {recherchesCount > 0 && <span className="badge-count">{recherchesCount}</span>}
             </Link>
             {session ? (
@@ -205,7 +205,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
               <span className="glyph">♡</span>Favoris
             </Link>
             <Link className="icon-link" href="/compte/recherches" onClick={() => setMobileMenuOpen(false)}>
-              <span className="glyph">☆</span>Mes recherches
+              <span className="glyph glyph-recherches">☆</span>Mes recherches
               {recherchesCount > 0 && <span className="badge-count">{recherchesCount}</span>}
             </Link>
           </nav>

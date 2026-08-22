@@ -157,11 +157,12 @@
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--warm);
   }
+  .icon-link .glyph-recherches { font-size: 1.55rem; }
   .icon-link .badge-count {
-    position: absolute; top: -7px; right: -12px;
-    min-width: 18px; height: 18px; padding: 0 4px; border-radius: 999px;
+    position: absolute; top: -5px; left: 3px;
+    min-width: 17px; height: 17px; padding: 0 3px; border-radius: 999px;
     background: var(--warm); color: var(--warm-ink);
-    font-size: 0.62rem; font-weight: 700; line-height: 18px; text-align: center;
+    font-size: 0.6rem; font-weight: 700; line-height: 17px; text-align: center;
   }
 
   /* ---- category band : icon tiles, no flagship emphasis ---- */
