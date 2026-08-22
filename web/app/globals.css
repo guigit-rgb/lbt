@@ -161,7 +161,7 @@
   .icon-link .badge-count {
     position: absolute; top: -5px; left: 3px;
     min-width: 17px; height: 17px; padding: 0 3px; border-radius: 999px;
-    background: var(--warm); color: var(--warm-ink);
+    background: var(--brand-red); color: var(--brand-red-ink);
     font-size: 0.6rem; font-weight: 700; line-height: 17px; text-align: center;
   }
 
