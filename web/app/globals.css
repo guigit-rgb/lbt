@@ -558,6 +558,24 @@
     padding: 0.2rem 0.45rem; border-radius: 3px;
   }
 
+  /* ---- page /admin ---- */
+  .admin-page { padding: 2rem 0 4rem; }
+  .admin-page h1 { margin-bottom: 1.5rem; }
+  .admin-section { margin-bottom: 2.5rem; }
+  .admin-section h2 { font-size: 1.15rem; margin-bottom: 0.9rem; }
+  .admin-section h3 { font-size: 0.95rem; color: var(--muted); margin: 1.5rem 0 0.7rem; }
+  .admin-tiles { display: flex; gap: 1rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+  .admin-tile {
+    background: var(--surface-2); border-radius: 10px; padding: 1rem 1.4rem; min-width: 160px;
+    display: flex; flex-direction: column; gap: 0.2rem;
+  }
+  .admin-tile strong { font-size: 1.6rem; }
+  .admin-tile span { color: var(--muted); font-size: 0.85rem; }
+  .admin-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .admin-table th, .admin-table td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line); }
+  .admin-table th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  .admin-non-disponible { color: var(--muted); font-size: 0.9rem; font-style: italic; }
+
   /* ---- widget de recherche véhicules (accueil) ---- */
   .recherche-widget-section { padding: 2rem 0 0; }
   .recherche-widget {

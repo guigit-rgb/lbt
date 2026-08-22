@@ -215,6 +215,21 @@ export const paiements = pgTable(
   (table) => [index("paiements_user_idx").on(table.userId)]
 );
 
+// Journal de la recherche en langage naturel de l'accueil (§ widget
+// RechercheVehiculesWidget) — jusqu'ici aucune trace de son usage n'existait
+// nulle part (ni compteur, ni log), question posée par Nicolas le 2026-08-22.
+export const recherchesIa = pgTable(
+  "recherches_ia",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    texte: text("texte").notNull(),
+    filtresExtraits: jsonb("filtres_extraits").notNull().default({}),
+    ip: text("ip"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("recherches_ia_created_idx").on(table.createdAt)]
+);
+
 export const travaux = pgTable(
   "travaux",
   {
