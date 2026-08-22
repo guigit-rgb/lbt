@@ -103,8 +103,7 @@ export default async function HomePage() {
 
       <section className="tint">
         <div className="wrap">
-          <span className="label eyebrow-flagship">Cœur du métier — là où on investit dans la confiance</span>
-          <div className="section-head" style={{ marginTop: "0.3rem" }}>
+          <div className="section-head">
             <h2>Véhicules</h2>
             <Link className="see-all" href="/vehicules">
               Voir les {counts.vehicules.toLocaleString("fr-FR")} annonces →
