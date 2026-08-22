@@ -15,7 +15,10 @@ export default function AdRow({ ad, href }: { ad: AdRowData; href: string }) {
 
       <div className="ad-row-body">
         <div className="ad-row-top">
-          <h3 className="ad-row-title">{ad.titre}</h3>
+          <h3 className="ad-row-title">
+            {ad.urgent && <span className="ad-row-urgent">Urgent</span>}
+            {ad.titre}
+          </h3>
           <span className="ad-row-fresh">{ad.fraicheur}</span>
         </div>
 

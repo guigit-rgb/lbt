@@ -7,13 +7,14 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, conversations, favoris, messages } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { estFinDeVie, libelleEtat } from "@/lib/annonce-display";
+import { estFinDeVie, estUrgente, libelleEtat } from "@/lib/annonce-display";
 import {
   marquerVendueAnnonce,
   mettreEnPauseAnnonce,
   reactiverAnnonce,
   supprimerAnnonce,
 } from "@/lib/actions/annonces";
+import { demarrerAnnonceUrgente } from "@/lib/actions/paiements";
 
 export const dynamic = "force-dynamic";
 
@@ -171,6 +172,7 @@ export default async function MesAnnoncesPage({
 
                   <div className="ma-body">
                     <span className={`ma-badge ${badgeClass}`}>{badgeLabel}</span>
+                    {estUrgente(annonce) && <span className="ma-badge urgent">Urgent</span>}
                     <Link href={`/annonces/${annonce.id}`} className="ma-title">
                       {annonce.titre}
                     </Link>
@@ -216,6 +218,14 @@ export default async function MesAnnoncesPage({
                       {!estFinDeVie(annonce.etat) && (
                         <form action={supprimerAnnonce.bind(null, annonce.id)}>
                           <button type="submit" className="btn btn-ghost">Retirer l&rsquo;annonce</button>
+                        </form>
+                      )}
+                      {/* Annonce urgente (§5 Résultat n°6) : réutilise le boost
+                          déjà décidé au §5.2, avec badge + filtre en plus —
+                          pas un second mécanisme de paiement. */}
+                      {!expiree && annonce.etat === "en_ligne" && !estUrgente(annonce) && (
+                        <form action={demarrerAnnonceUrgente.bind(null, annonce.id)}>
+                          <button type="submit" className="btn btn-ghost">Rendre urgente (2,99€)</button>
                         </form>
                       )}
                     </div>

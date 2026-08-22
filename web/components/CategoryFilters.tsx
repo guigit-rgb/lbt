@@ -40,6 +40,7 @@ export default function CategoryFilters({
   options,
   typeAnnonceCounts,
   vendeurCounts,
+  urgentCount,
   currentTri,
   resultCount,
 }: {
@@ -50,6 +51,7 @@ export default function CategoryFilters({
   options: Record<string, { value: string; count: number }[]>;
   typeAnnonceCounts: { value: "offre" | "demande"; count: number }[];
   vendeurCounts: { particulier: number; pro: number };
+  urgentCount: number;
   currentTri: string;
   resultCount: number;
 }) {
@@ -328,6 +330,19 @@ export default function CategoryFilters({
                     Effacer
                   </button>
                 )}
+              </section>
+
+              <section className="filter-drawer-section">
+                <h3>Annonces urgentes</h3>
+                <label className="filter-drawer-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={currentValues.urgent === "1"}
+                    onChange={() => navigateWith("urgent", currentValues.urgent === "1" ? "" : "1")}
+                  />
+                  Annonces urgentes uniquement
+                  <span className="filter-drawer-count">{urgentCount}</span>
+                </label>
               </section>
             </div>
 

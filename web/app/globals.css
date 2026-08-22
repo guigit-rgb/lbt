@@ -925,6 +925,11 @@
 .ad-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .ad-row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
 .ad-row-title { font-size: 1.08rem; font-weight: 700; margin: 0; }
+.ad-row-urgent {
+  display: inline-block; background: var(--brand-red, #e2231a); color: #fff; font-size: 0.68rem;
+  font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.1rem 0.4rem;
+  border-radius: 4px; margin-right: 0.5rem; vertical-align: middle;
+}
 .ad-row-fresh { color: var(--muted); font-size: 0.85rem; white-space: nowrap; flex-shrink: 0; }
 .ad-row-price { font-size: 1.2rem; font-weight: 700; margin: 0.3rem 0 0; }
 .ad-row-specs {
@@ -1195,6 +1200,11 @@
 .card .badge.expert { background: var(--accent); color: var(--accent-ink); }
 .card .badge + .badge.expert { top: 2.15rem; }
 
+/* ---- badge "Urgent" (annonce urgente, §5 Résultat n°6) ---- */
+.card .badge.urgent { background: var(--brand-red, #e2231a); color: #fff; }
+.card .badge + .badge.urgent { top: 2.15rem; }
+.card .badge + .badge + .badge.urgent { top: 3.3rem; }
+
 /* ---- Mes annonces (compte/annonces) ---- */
 .btn-outline { background: transparent; border: 1px solid var(--line); color: var(--ink); }
 .btn-outline:hover { background: var(--surface-2); }
@@ -1248,6 +1258,7 @@
 .ma-badge.vendue { background: var(--accent); color: #fff; }
 .ma-badge.retiree_par_auteur { background: var(--surface-2); color: var(--muted); }
 .ma-badge.retiree { background: var(--warm-ink); color: var(--warm); }
+.ma-badge.urgent { background: var(--brand-red, #e2231a); color: #fff; margin-left: 0.35rem; }
 .ma-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem; }
 .ma-stats {
   display: flex; flex-direction: column; gap: 0.5rem; padding-left: 1rem;

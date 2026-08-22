@@ -61,6 +61,12 @@ export function formatFraicheur(createdAt: Date): string {
   return `${days} j.`;
 }
 
+// Annonce urgente (§5 Résultat n°6) : badge + critère de recherche, jamais un
+// effet sur `_eval()`/`sort_by` (§14.2/§14.4) — voir lib/annonce-filters.ts.
+export function estUrgente(row: Pick<AnnonceRow, "urgentJusqua">): boolean {
+  return row.urgentJusqua != null && row.urgentJusqua.getTime() > Date.now();
+}
+
 function sousLigne(row: AnnonceRow): string {
   const parts: string[] = [];
   if (row.categorie === "vehicules" && row.kilometrage != null) {
@@ -95,7 +101,10 @@ export function annonceToCardData(row: AnnonceRow, coverUrl?: string | null, est
     favori: estFavori,
     thumbClass: "ic-teapot",
     photoUrl: coverUrl ?? undefined,
-    badges: row.categorie === "loisirs" && row.avisExpert ? [{ label: "Avis d'expert", variant: "expert" }] : undefined,
+    badges: [
+      estUrgente(row) ? { label: "Urgent", variant: "urgent" as const } : undefined,
+      row.categorie === "loisirs" && row.avisExpert ? { label: "Avis d'expert", variant: "expert" as const } : undefined,
+    ].filter((b): b is { label: string; variant: "urgent" | "expert" } => b !== undefined),
   };
 }
 
@@ -115,6 +124,7 @@ export interface AdRowData {
   vendeurNom: string;
   specs: AdRowSpec[];
   estFavori: boolean;
+  urgent: boolean;
 }
 
 // Caractéristiques affichées en grille sous le prix, sur le modèle de la page
@@ -170,6 +180,7 @@ export function annonceToRowData(
     vendeurNom,
     specs: specsListe(row),
     estFavori,
+    urgent: estUrgente(row),
   };
 }
 

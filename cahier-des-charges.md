@@ -1,7 +1,7 @@
 # Cahier des charges — LBT (lebontruc.fr / .com)
 ### Devenir le n°2 crédible du segment professionnel de l'automobile et de la collection en France
 
-*Document vivant — dernière mise à jour : 2026-08-17. Porté par Nicolas Therond (PDG RETRO+), en phase de conception avec Claude. Pas encore d'équipe technique affectée.*
+*Document vivant — dernière mise à jour : 2026-08-22. Porté par Nicolas Therond (PDG RETRO+), en phase de conception avec Claude. Pas encore d'équipe technique affectée.*
 
 ---
 
@@ -273,10 +273,21 @@ Nicolas observe que La Centrale propose de bonnes fonctionnalités mais perd du 
 | Levier | Particuliers | Professionnels (auto) |
 |---|---|---|
 | Dépôt d'annonce | Gratuit, illimité en durée | Gratuit jusqu'à 3 véhicules en ligne (palier Découverte), abonnement au-delà — **arbitré le 2026-08-01, §5.2** |
-| Modification | Gratuite (comme LBC aujourd'hui — ne pas réinventer une friction qui n'existe pas chez le concurrent) | Gratuite |
+| Modification | ~~Gratuite (comme LBC aujourd'hui)~~ → **corrigé le 2026-08-22 : payante, 4€, SAUF si l'unique changement est une baisse de prix (reste gratuite)** — voir Résultat n°6 ci-dessous | Gratuite, incluse dans l'abonnement (cohérent avec le principe « tout inclus » du §5.2 Résultat n°4) |
+| Annonce urgente (badge + filtre dédié) | **Nouveau le 2026-08-22** : réutilise le mécanisme de mise en avant/boost ci-dessous (même achat, même durée 48h) en y ajoutant un badge visible « Urgent » et un critère de recherche filtrable — pas un second prix ni un second mécanisme | Consomme le quota mensuel de remontées inclus dans l'abonnement (même logique que le boost) |
 | Mise en avant / boost | Payant, prix d'appel < LBC (ex. 0,99-4,99€ vs 1,99-7,99€ chez LBC) | **Inclus en quota mensuel dans les paliers, jamais vendu à l'unité au MVP (§5.2)** |
 | Anti-fraude auto | **Friction-fee symbolique ciblé uniquement sur l'auto** (montant à tester : 0,50-1€), justifié auprès de l'utilisateur comme mesure anti-arnaque, pas comme frais caché | — |
 | Abonnement vitrine pro | — | **Grille arrêtée le 2026-08-01 (§5.2)** : 5 paliers à l'**emplacement** (véhicules en ligne), 0 / 79 / 149 / 249 / 399 € HT/mois, **sans engagement**, **garantie contacts** (« jamais plus de 30 € le contact, ou le mois est offert »). Repère LBC : 1 780 €/mois pour 20 véhicules = 89 €/véhicule |
+
+#### Résultat n°6 — la modification payante ne doit pas décourager les baisses de prix (établi le 2026-08-22)
+
+**Correction du principe « gratuité réelle » ci-dessus, à l'initiative de Nicolas** : LBC facture aujourd'hui 9,90 € la modification d'une annonce particulier (un des mécanismes qui a fait sa rentabilité aux débuts) — l'hypothèse retenue le 2026-07-27 selon laquelle « LBC ne facture pas la modification » était donc fausse. **LBT retient 4 € (~2,5× moins cher que LBC)**, un prix d'appel cohérent avec le positionnement du reste de la grille (paliers pro à ~12× moins cher, boost à ~2× moins cher).
+
+**Point de vigilance identifié en le décidant, pas après coup** : une mécanique de baisse de prix construite avec soin existe déjà dans ce document — §6.6 trace la trajectoire de prix d'une annonce et valorise explicitement les baisses successives comme signal de confiance et argument anti-surévaluation. Facturer 4 € **toute** modification, y compris une simple baisse de prix, créerait une incitation directe à ne jamais corriger un prix trop haut — et détruirait la qualité du signal que le §6.6 a été conçu pour produire. **Décision : une modification dont l'unique effet est de baisser le prix affiché reste gratuite** ; toute autre modification (texte, photos, caractéristiques, ou toute hausse de prix) déclenche les 4 €. Cette règle doit être écrite dans l'UI du formulaire de modification, pas seulement dans ce document (« Baisser votre prix reste toujours gratuit »).
+
+**Annonce urgente — décision de ne pas créer un second mécanisme.** Le §5.2 avait déjà retenu un boost payant (remontée 48h, 0,99-4,99€ pour un particulier, inclus en quota pour les pros) mais ne l'avait jamais implémenté et ne prévoyait ni badge ni critère de recherche dédié. Plutôt que de facturer une troisième fois une variante du même geste commercial, l'« annonce urgente » demandée par Nicolas **est** ce boost, complété d'un badge « Urgent » affiché sur la vignette et d'un filtre de recherche dédié — le badge et le filtre ne touchent jamais `_eval()`/`sort_by` (§14.2/§14.4), donc aucune des obligations de transparence de classement de l'article 5 du règlement P2B (§8.x) ne s'applique à cet ajout : c'est un signal cosmétique et un critère de filtre, pas un mécanisme de tri.
+
+**Prestataire de paiement (périmètre confirmé le 2026-08-22) : Stripe, et seulement Stripe au lancement**, pour les quatre encaissements où LBT facture directement son propre utilisateur (abonnement pro, friction-fee anti-fraude, modification payante, annonce urgente/boost) — CB + prélèvement SEPA, cohérent avec la décision déjà prise au §5.2 Résultat n°4 (« Prélèvement SEPA par défaut, carte en repli »). **Explicitement écarté à ce stade : multiplier les moyens de paiement (PayPal, virement bancaire par QR code) dès le lancement** — chaque moyen supplémentaire ajoute de l'intégration et du support pour un gain marginal tant qu'aucun client ne le demande explicitement ; à réévaluer si un segment (ex. garages peu à l'aise avec la CB) le réclame. **Ce périmètre reste strictement du cas « LBT encaisse pour son propre compte »** — aucun paiement entre acheteur et vendeur du véhicule n'est concerné : cette seconde catégorie (paiement sécurisé/séquestre façon LBC/Vinted) reste hors MVP et soumise à l'action n°69 (DAC7, régime TVA marketplace, prestataire agréé — voir §6.6 Résultat n°7c), non traitée par cette décision.
 
 ### 5.1 Modèle de coût marginal par annonce et par pro (établi le 2026-07-28)
 

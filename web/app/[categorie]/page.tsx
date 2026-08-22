@@ -9,7 +9,7 @@ import { db } from "@/lib/db/client";
 import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { annonceToRowData, getCoverUrls } from "@/lib/annonce-display";
-import { buildAnnonceConditions, optionCounts, typeAnnonceCounts, vendeurCounts } from "@/lib/annonce-filters";
+import { buildAnnonceConditions, optionCounts, typeAnnonceCounts, urgentCount, vendeurCounts } from "@/lib/annonce-filters";
 import { auth } from "@/lib/auth";
 import { listerFavorisIds } from "@/lib/favoris";
 
@@ -52,7 +52,7 @@ export default async function CategorieListingPage({
 
   const session = await auth();
 
-  const [rowsWithVendeur, optionEntries, typeAnnonceComptes, vendeurComptes, favorisIds] = await Promise.all([
+  const [rowsWithVendeur, optionEntries, typeAnnonceComptes, vendeurComptes, urgentComptes, favorisIds] = await Promise.all([
     db
       .select({ annonce: annonces, vendeurNom: users.displayName })
       .from(annonces)
@@ -66,6 +66,7 @@ export default async function CategorieListingPage({
     ),
     typeAnnonceCounts(categorie, sp),
     vendeurCounts(categorie, sp),
+    urgentCount(categorie, sp),
     session ? listerFavorisIds(session.user.id) : Promise.resolve(new Set<string>()),
   ]);
   const options = Object.fromEntries(optionEntries);
@@ -93,6 +94,7 @@ export default async function CategorieListingPage({
           options={options}
           typeAnnonceCounts={typeAnnonceComptes}
           vendeurCounts={vendeurComptes}
+          urgentCount={urgentComptes}
           currentTri={tri}
           resultCount={count}
         />

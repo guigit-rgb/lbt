@@ -9,7 +9,7 @@ export interface FakeAd {
   fraicheur: string;
   thumbClass: string;
   photoUrl?: string;
-  badges?: { label: string; variant?: "histovec" | "expert" }[];
+  badges?: { label: string; variant?: "histovec" | "expert" | "urgent" }[];
   favori?: boolean;
   vendeur?: { initiale: string; couleur: string; nom: string };
 }

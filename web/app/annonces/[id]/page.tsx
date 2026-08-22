@@ -12,7 +12,7 @@ import { db } from "@/lib/db/client";
 import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
 import { getFiltersForCategory } from "@/lib/listing-config";
-import { libelleEtat, formatPrix, detailInformationsCles, getAutresAnnoncesVendeur } from "@/lib/annonce-display";
+import { libelleEtat, formatPrix, detailInformationsCles, getAutresAnnoncesVendeur, estUrgente } from "@/lib/annonce-display";
 import { couleurAvatar } from "@/lib/avatar";
 import { AnnonceFeedbackGate } from "./AnnonceFeedbackGate";
 
@@ -135,7 +135,10 @@ export default async function AnnonceDetailPage({
           <aside className="ad-detail-side">
             <div className="ad-detail-price-card">
               <p className="ad-detail-price">{formatPrix(row.annonce.prixCents)}</p>
-              <h1 className="ad-detail-title">{row.annonce.titre}</h1>
+              <h1 className="ad-detail-title">
+                {estUrgente(row.annonce) && <span className="ad-row-urgent">Urgent</span>}
+                {row.annonce.titre}
+              </h1>
               {row.annonce.ville && <p className="ad-detail-side-loc">{row.annonce.ville}</p>}
 
               {!isOwner && row.vendeurTelephone && (

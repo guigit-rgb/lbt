@@ -123,6 +123,10 @@ export const annonces = pgTable(
     typeAnimal: text("type_animal"),
     // Catégories génériques (11 restantes)
     attributs: jsonb("attributs").notNull().default({}),
+    // "Annonce urgente" (§5, Résultat n°6) : même geste commercial que le
+    // boost déjà décidé (remontée 48h), avec en plus un badge visible et un
+    // critère de recherche filtrable. Nul ou expiré = pas de badge.
+    urgentJusqua: timestamp("urgent_jusqua", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     publishedAt: timestamp("published_at", { withTimezone: true }),
@@ -180,6 +184,35 @@ export const annonceImages = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("annonce_images_annonce_idx").on(table.annonceId)]
+);
+
+// Paiements que LBT encaisse pour son propre compte (modification payante,
+// annonce urgente/boost — plus tard l'abonnement pro). Ne couvre jamais un
+// paiement entre acheteur et vendeur du véhicule (hors MVP, cf. cahier des
+// charges §6.6 Résultat n°7c) : ce cloisonnement est volontaire.
+export const paiements = pgTable(
+  "paiements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    annonceId: uuid("annonce_id").references(() => annonces.id, { onDelete: "cascade" }),
+    type: text("type", { enum: ["modification", "urgent"] }).notNull(),
+    montantCents: integer("montant_cents").notNull(),
+    statut: text("statut", { enum: ["en_attente", "paye", "echec", "annule"] })
+      .notNull()
+      .default("en_attente"),
+    stripeSessionId: text("stripe_session_id").notNull().unique(),
+    // Pour `type = "modification"` : les champs à écrire sur l'annonce une
+    // fois le paiement confirmé — jamais appliqués avant, pour ne jamais
+    // modifier gratuitement si la carte est refusée ou l'utilisateur ferme
+    // l'onglet Stripe.
+    donnees: jsonb("donnees").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    payeA: timestamp("paye_a", { withTimezone: true }),
+  },
+  (table) => [index("paiements_user_idx").on(table.userId)]
 );
 
 export const travaux = pgTable(

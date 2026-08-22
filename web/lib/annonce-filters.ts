@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, isNotNull, lte, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, ilike, isNotNull, lte, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { annonces, users, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
@@ -106,6 +106,11 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
     else if (veutPro && !veutParticulier) conditions.push(eq(users.estPro, true));
     // Les deux cochés (ou aucun) : pas de restriction.
   }
+  // Annonce urgente (§5 Résultat n°6) : un badge + un filtre, jamais un effet
+  // sur le tri (`_eval()`/`sort_by`, §14.2/§14.4).
+  if (params.urgent === "1") {
+    conditions.push(gt(annonces.urgentJusqua, new Date()));
+  }
   return conditions;
 }
 
@@ -188,5 +193,20 @@ export async function vendeurCounts(
     particulier: rows.find((r) => !r.estPro)?.total ?? 0,
     pro: rows.find((r) => r.estPro)?.total ?? 0,
   };
+}
+
+// Annonces urgentes (§5 Résultat n°6) : une seule case à cocher, pas une paire
+// d'options — compte à part comme vendeurCounts, pour la même raison (le
+// critère n'est ni une colonne SELECT_COLUMNS ni un attribut JSONB).
+export async function urgentCount(categorie: Categorie, params: Record<string, string | undefined>): Promise<number> {
+  const reste = { ...params };
+  delete reste.urgent;
+  const conditions = buildAnnonceConditions(categorie, reste);
+  const [ligne] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(annonces)
+    .innerJoin(users, eq(annonces.userId, users.id))
+    .where(and(...conditions, gt(annonces.urgentJusqua, new Date())));
+  return ligne?.total ?? 0;
 }
 

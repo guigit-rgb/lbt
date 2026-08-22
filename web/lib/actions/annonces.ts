@@ -6,16 +6,12 @@ import { and, eq, sql } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
-import {
-  annonces,
-  annonceImages,
-  annoncePrixHistorique,
-  CATEGORIES,
-  type Categorie,
-} from "@/lib/db/schema";
+import { annonces, annonceImages, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { deleteFromR2 } from "@/lib/storage/r2";
 import { estFinDeVie } from "@/lib/annonce-display";
 import { geocoderAdresse } from "@/lib/geocodage";
+import { enregistrerPrixObserve } from "@/lib/prix-trajectoire";
+import { demarrerModificationPayante } from "@/lib/actions/paiements";
 
 const DUREE_PUBLICATION_JOURS = 60;
 
@@ -45,28 +41,6 @@ function dansNJours(n: number): Date {
 }
 
 type Annonce = typeof annonces.$inferSelect;
-
-type SourcePrix = (typeof annoncePrixHistorique.$inferInsert)["source"];
-
-// Enregistre un prix *observé* dans la trajectoire de l'annonce (§6.6 R3).
-// Deux règles, et elles ont chacune une raison :
-//  - on n'écrit que si le prix a réellement changé, sinon toute modification
-//    de texte gonflerait la table de doublons et fausserait le comptage des
-//    baisses (« trois baisses en quarante jours » doit rester lisible) ;
-//  - on n'écrit jamais d'`update` : une trajectoire ne se corrige pas, elle
-//    s'allonge. Une correction de modération est une observation `back_office`.
-async function enregistrerPrixObserve(
-  annonceId: string,
-  prixCents: number | null | undefined,
-  source: SourcePrix,
-  prixPrecedent?: number | null
-): Promise<void> {
-  const valeur = prixCents ?? null;
-  if (prixPrecedent !== undefined && (prixPrecedent ?? null) === valeur) {
-    return;
-  }
-  await db.insert(annoncePrixHistorique).values({ annonceId, prixCents: valeur, source });
-}
 
 type Possession =
   | { ok: false; error: string }
@@ -456,23 +430,48 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     ? await geocoderAdresse(ville, codePostal)
     : { lat: annonce.lat, lng: annonce.lng };
 
+  const donnees = {
+    titre,
+    description,
+    prixCents,
+    ville,
+    codePostal,
+    lat: coordonnees?.lat ?? null,
+    lng: coordonnees?.lng ?? null,
+    marque,
+    modele,
+    annee,
+    kilometrage,
+    attributs,
+  };
+
+  // Modification payante (4€, cahier des charges §5 Résultat n°6) — sauf si
+  // le seul effet du formulaire est de baisser le prix affiché : cette
+  // exception est volontaire, pour ne jamais décourager un vendeur de
+  // corriger un prix trop haut, signal que la trajectoire de prix (§6.6)
+  // a justement été construite pour valoriser.
+  const prixInchange = prixCents === annonce.prixCents;
+  const prixEnBaisse = prixCents !== null && annonce.prixCents !== null && prixCents < annonce.prixCents;
+  const autresChampsInchanges =
+    titre === annonce.titre &&
+    description === annonce.description &&
+    ville === annonce.ville &&
+    codePostal === annonce.codePostal &&
+    marque === (annonce.marque ?? undefined) &&
+    modele === (annonce.modele ?? undefined) &&
+    annee === (annonce.annee ?? undefined) &&
+    kilometrage === (annonce.kilometrage ?? undefined) &&
+    JSON.stringify(attributs) === JSON.stringify(annonce.attributs ?? {});
+  const modificationGratuite = autresChampsInchanges && (prixInchange || prixEnBaisse);
+
+  if (!modificationGratuite) {
+    const url = await demarrerModificationPayante(result.session.user.id, id, donnees);
+    redirect(url);
+  }
+
   await db
     .update(annonces)
-    .set({
-      titre,
-      description,
-      prixCents,
-      ville,
-      codePostal,
-      lat: coordonnees?.lat ?? null,
-      lng: coordonnees?.lng ?? null,
-      marque,
-      modele,
-      annee,
-      kilometrage,
-      attributs,
-      updatedAt: new Date(),
-    })
+    .set({ ...donnees, updatedAt: new Date() })
     .where(and(eq(annonces.id, id), eq(annonces.userId, result.session.user.id)));
 
   // Cet `update` écrasait la valeur précédente sans trace : c'est la baisse de

@@ -40,6 +40,7 @@ function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): 
   if (filtres.type_annonce === "demande") morceaux.push("Type d'annonces : Demandes");
   if (filtres.vendeur === "pro") morceaux.push("Type de vendeurs : Professionnels");
   if (filtres.vendeur === "particulier") morceaux.push("Type de vendeurs : Particuliers");
+  if (filtres.urgent === "1") morceaux.push("Annonces urgentes uniquement");
 
   return morceaux.length > 0 ? morceaux.join(" · ") : "Toutes les annonces";
 }
