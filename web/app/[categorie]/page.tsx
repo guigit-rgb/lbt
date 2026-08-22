@@ -9,7 +9,7 @@ import { db } from "@/lib/db/client";
 import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { annonceToRowData, getCoverUrls } from "@/lib/annonce-display";
-import { buildAnnonceConditions, distinctOptions } from "@/lib/annonce-filters";
+import { buildAnnonceConditions, optionCounts, typeAnnonceCounts, vendeurCounts } from "@/lib/annonce-filters";
 import { auth } from "@/lib/auth";
 import { listerFavorisIds } from "@/lib/favoris";
 
@@ -39,13 +39,20 @@ export default async function CategorieListingPage({
   const config = getFiltersForCategory(categorie);
   const conditions = buildAnnonceConditions(categorie, sp);
 
-  const tri = sp.tri === "prix_asc" || sp.tri === "prix_desc" ? sp.tri : "pertinence";
+  const TRIS = ["pertinence", "recentes", "anciennes", "prix_asc", "prix_desc"] as const;
+  const tri = (TRIS as readonly string[]).includes(sp.tri ?? "") ? (sp.tri as (typeof TRIS)[number]) : "pertinence";
   const orderBy =
-    tri === "prix_asc" ? asc(annonces.prixCents) : tri === "prix_desc" ? desc(annonces.prixCents) : desc(annonces.createdAt);
+    tri === "prix_asc"
+      ? asc(annonces.prixCents)
+      : tri === "prix_desc"
+        ? desc(annonces.prixCents)
+        : tri === "anciennes"
+          ? asc(annonces.createdAt)
+          : desc(annonces.createdAt);
 
   const session = await auth();
 
-  const [rowsWithVendeur, optionEntries, favorisIds] = await Promise.all([
+  const [rowsWithVendeur, optionEntries, typeAnnonceComptes, vendeurComptes, favorisIds] = await Promise.all([
     db
       .select({ annonce: annonces, vendeurNom: users.displayName })
       .from(annonces)
@@ -54,9 +61,11 @@ export default async function CategorieListingPage({
       .orderBy(orderBy),
     Promise.all(
       config.filters
-        .filter((f) => f.widget === "select")
-        .map(async (f) => [f.key, await distinctOptions(categorie, f.key)] as const)
+        .filter((f) => f.widget === "select" || f.widget === "checkbox")
+        .map(async (f) => [f.key, await optionCounts(categorie, sp, f.key)] as const)
     ),
+    typeAnnonceCounts(categorie, sp),
+    vendeurCounts(categorie, sp),
     session ? listerFavorisIds(session.user.id) : Promise.resolve(new Set<string>()),
   ]);
   const options = Object.fromEntries(optionEntries);
@@ -82,6 +91,8 @@ export default async function CategorieListingPage({
           filters={config.filters}
           currentValues={currentValues}
           options={options}
+          typeAnnonceCounts={typeAnnonceComptes}
+          vendeurCounts={vendeurComptes}
           currentTri={tri}
           resultCount={count}
         />

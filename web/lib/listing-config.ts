@@ -1,6 +1,6 @@
 import { CATEGORIES, type Categorie } from "./db/schema";
 
-export type FilterWidget = "location" | "select" | "range" | "text";
+export type FilterWidget = "location" | "select" | "checkbox" | "range" | "text";
 
 export interface FilterField {
   key: string;
@@ -36,6 +36,7 @@ const ENRICHED: Record<string, ListingConfig> = {
       { key: "kilometrage", label: "Kilométrage", widget: "range" },
       { key: "puissanceDin", label: "Puissance DIN", widget: "range" },
       { key: "critAir", label: "Crit'air", widget: "select" },
+      { key: "permis", label: "Permis", widget: "checkbox" },
       PRIX_FILTER,
     ],
     popularFilters: [

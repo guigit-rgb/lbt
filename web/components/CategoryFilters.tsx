@@ -7,12 +7,39 @@ import type { FilterField } from "@/lib/listing-config";
 import { sauvegarderRecherche } from "@/lib/actions/recherches";
 import { LocationFilter } from "@/components/LocationFilter";
 
+const TRI_OPTIONS = [
+  { value: "pertinence", label: "Pertinence" },
+  { value: "recentes", label: "Plus récentes" },
+  { value: "anciennes", label: "Plus anciennes" },
+  { value: "prix_asc", label: "Prix croissants" },
+  { value: "prix_desc", label: "Prix décroissants" },
+] as const;
+
+// Valeurs stockées en base (identiques au dépôt d'annonce) réécrites pour
+// l'affichage du filtre — un seul endroit à étendre si une future valeur
+// brute a besoin d'un libellé différent de celui saisi au dépôt.
+const LABEL_OVERRIDES: Record<string, Record<string, string>> = {
+  permis: { "Permis B": "Avec permis", "Sans permis (voiturette)": "Sans permis" },
+};
+
+function labelFor(key: string, value: string): string {
+  return LABEL_OVERRIDES[key]?.[value] ?? value;
+}
+
+function toggleInList(current: string, value: string): string {
+  const values = current ? current.split(",").filter(Boolean) : [];
+  const next = values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
+  return next.join(",");
+}
+
 export default function CategoryFilters({
   basePath,
   categorie,
   filters,
   currentValues,
   options,
+  typeAnnonceCounts,
+  vendeurCounts,
   currentTri,
   resultCount,
 }: {
@@ -20,13 +47,16 @@ export default function CategoryFilters({
   categorie: Categorie;
   filters: FilterField[];
   currentValues: Record<string, string>;
-  options: Record<string, string[]>;
+  options: Record<string, { value: string; count: number }[]>;
+  typeAnnonceCounts: { value: "offre" | "demande"; count: number }[];
+  vendeurCounts: { particulier: number; pro: number };
   currentTri: string;
   resultCount: number;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [etatSauvegarde, setEtatSauvegarde] = useState<"idle" | "enregistrement" | "ok" | "erreur">("idle");
+  const [recherchesTexte, setRecherchesTexte] = useState<Record<string, string>>({});
 
   async function handleSauvegarder() {
     setEtatSauvegarde("enregistrement");
@@ -75,6 +105,10 @@ export default function CategoryFilters({
     router.push(`${basePath}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
+  function toggleValue(key: string, value: string) {
+    navigateWith(key, toggleInList(currentValues[key] ?? "", value));
+  }
+
   const nombreFiltresActifs = Object.keys(currentValues).length;
 
   return (
@@ -89,9 +123,11 @@ export default function CategoryFilters({
         </button>
 
         <select className="filter-pill" value={currentTri} onChange={(e) => navigateTri(e.target.value)}>
-          <option value="pertinence">Tri : Pertinence</option>
-          <option value="prix_asc">Prix croissant</option>
-          <option value="prix_desc">Prix décroissant</option>
+          {TRI_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              Tri : {option.label}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -106,26 +142,6 @@ export default function CategoryFilters({
             </div>
 
             <div className="filter-drawer-body">
-              <section className="filter-drawer-section">
-                <h3>Tri</h3>
-                {[
-                  { value: "pertinence", label: "Pertinence" },
-                  { value: "prix_asc", label: "Prix croissants" },
-                  { value: "prix_desc", label: "Prix décroissants" },
-                ].map((option) => (
-                  <label key={option.value} className="filter-drawer-radio">
-                    <input
-                      type="radio"
-                      name="tri"
-                      value={option.value}
-                      checked={currentTri === option.value}
-                      onChange={() => navigateTri(option.value)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
-              </section>
-
               {filters.map((filter) => {
                 if (filter.widget === "location") {
                   return (
@@ -149,14 +165,15 @@ export default function CategoryFilters({
                     <section key={filter.key} className="filter-drawer-section">
                       <h3>{filter.label}</h3>
                       {opts.map((opt) => (
-                        <label key={opt} className="filter-drawer-radio">
+                        <label key={opt.value} className="filter-drawer-radio">
                           <input
                             type="radio"
                             name={filter.key}
-                            checked={currentValues[filter.key] === opt}
-                            onChange={() => navigateWith(filter.key, opt)}
+                            checked={currentValues[filter.key] === opt.value}
+                            onChange={() => navigateWith(filter.key, opt.value)}
                           />
-                          {opt}
+                          {labelFor(filter.key, opt.value)}
+                          <span className="filter-drawer-count">{opt.count}</span>
                         </label>
                       ))}
                       {currentValues[filter.key] && (
@@ -172,7 +189,49 @@ export default function CategoryFilters({
                   );
                 }
 
-                // widget === "range" : prix ou kilométrage, un champ min et un champ max
+                if (filter.widget === "checkbox") {
+                  const opts = options[filter.key] ?? [];
+                  const selected = (currentValues[filter.key] ?? "").split(",").filter(Boolean);
+                  const recherche = (recherchesTexte[filter.key] ?? "").trim().toLowerCase();
+                  const optsFiltres = recherche
+                    ? opts.filter((opt) => labelFor(filter.key, opt.value).toLowerCase().includes(recherche))
+                    : opts;
+                  return (
+                    <section key={filter.key} className="filter-drawer-section">
+                      <h3>{filter.label}</h3>
+                      <input
+                        type="search"
+                        className="filter-drawer-search"
+                        placeholder="Rechercher une valeur"
+                        value={recherchesTexte[filter.key] ?? ""}
+                        onChange={(e) => setRecherchesTexte((prev) => ({ ...prev, [filter.key]: e.target.value }))}
+                      />
+                      {optsFiltres.map((opt) => (
+                        <label key={opt.value} className="filter-drawer-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={selected.includes(opt.value)}
+                            onChange={() => toggleValue(filter.key, opt.value)}
+                          />
+                          {labelFor(filter.key, opt.value)}
+                          <span className="filter-drawer-count">{opt.count}</span>
+                        </label>
+                      ))}
+                      {selected.length > 0 && (
+                        <button
+                          type="button"
+                          className="filter-drawer-reset"
+                          onClick={() => navigateWith(filter.key, "")}
+                        >
+                          Effacer
+                        </button>
+                      )}
+                    </section>
+                  );
+                }
+
+                // widget === "range" : prix, kilométrage, année ou puissance —
+                // un champ min et un champ max.
                 const minKey = `${filter.key}_min`;
                 const maxKey = `${filter.key}_max`;
                 return (
@@ -193,9 +252,83 @@ export default function CategoryFilters({
                         placeholder="Max"
                       />
                     </div>
+                    {(currentValues[minKey] || currentValues[maxKey]) && (
+                      <button
+                        type="button"
+                        className="filter-drawer-reset"
+                        onClick={() => navigateWithMultiple({ [minKey]: null, [maxKey]: null })}
+                      >
+                        Effacer
+                      </button>
+                    )}
                   </section>
                 );
               })}
+
+              <section className="filter-drawer-section">
+                <h3>Tri</h3>
+                {TRI_OPTIONS.map((option) => (
+                  <label key={option.value} className="filter-drawer-radio">
+                    <input
+                      type="radio"
+                      name="tri"
+                      value={option.value}
+                      checked={currentTri === option.value}
+                      onChange={() => navigateTri(option.value)}
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </section>
+
+              <section className="filter-drawer-section">
+                <h3>Type d&apos;annonces</h3>
+                {typeAnnonceCounts.map((opt) => (
+                  <label key={opt.value} className="filter-drawer-radio">
+                    <input
+                      type="radio"
+                      name="type_annonce"
+                      checked={currentValues.type_annonce === opt.value}
+                      onChange={() => navigateWith("type_annonce", opt.value)}
+                    />
+                    {opt.value === "offre" ? "Offres" : "Demandes"}
+                    <span className="filter-drawer-count">{opt.count}</span>
+                  </label>
+                ))}
+                {currentValues.type_annonce && (
+                  <button type="button" className="filter-drawer-reset" onClick={() => navigateWith("type_annonce", "")}>
+                    Effacer
+                  </button>
+                )}
+              </section>
+
+              <section className="filter-drawer-section">
+                <h3>Type de vendeurs</h3>
+                {(
+                  [
+                    { value: "particulier", label: "Particuliers", count: vendeurCounts.particulier },
+                    { value: "pro", label: "Professionnels", count: vendeurCounts.pro },
+                  ] as const
+                ).map((opt) => {
+                  const selected = (currentValues.vendeur ?? "").split(",").filter(Boolean);
+                  return (
+                    <label key={opt.value} className="filter-drawer-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(opt.value)}
+                        onChange={() => toggleValue("vendeur", opt.value)}
+                      />
+                      {opt.label}
+                      <span className="filter-drawer-count">{opt.count}</span>
+                    </label>
+                  );
+                })}
+                {currentValues.vendeur && (
+                  <button type="button" className="filter-drawer-reset" onClick={() => navigateWith("vendeur", "")}>
+                    Effacer
+                  </button>
+                )}
+              </section>
             </div>
 
             <div className="filter-drawer-save">
@@ -212,7 +345,7 @@ export default function CategoryFilters({
                 Tout effacer
               </button>
               <button type="button" className="btn btn-accent" onClick={() => setOpen(false)}>
-                Voir les résultats ({resultCount.toLocaleString("fr-FR")})
+                Rechercher ({resultCount.toLocaleString("fr-FR")})
               </button>
             </div>
           </aside>

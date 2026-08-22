@@ -794,6 +794,12 @@
 .filter-drawer-section { padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
 .filter-drawer-section h3 { margin: 0 0 0.7rem; font-size: 0.95rem; }
 .filter-drawer-radio { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.92rem; }
+.filter-drawer-checkbox { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; font-size: 0.92rem; }
+.filter-drawer-count { color: var(--muted); font-size: 0.82rem; margin-left: auto; }
+.filter-drawer-search {
+  width: 100%; padding: 0.6rem 0.7rem; margin-bottom: 0.5rem; border: 1px solid var(--line); border-radius: 999px;
+  font: inherit;
+}
 .filter-drawer-input {
   width: 100%; padding: 0.6rem 0.7rem; border: 1px solid var(--line); border-radius: 8px; font: inherit;
 }

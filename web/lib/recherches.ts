@@ -1,6 +1,6 @@
 import { and, count, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { annonces, recherchesSauvegardees, type Categorie } from "@/lib/db/schema";
+import { annonces, recherchesSauvegardees, users, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { buildAnnonceConditions } from "@/lib/annonce-filters";
 
@@ -25,8 +25,8 @@ function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): 
   }
 
   for (const filtre of config.filters) {
-    if (filtre.widget === "select" && filtres[filtre.key]) {
-      morceaux.push(`${filtre.label} : ${filtres[filtre.key]}`);
+    if ((filtre.widget === "select" || filtre.widget === "checkbox") && filtres[filtre.key]) {
+      morceaux.push(`${filtre.label} : ${filtres[filtre.key].split(",").join(", ")}`);
     }
     if (filtre.widget === "range") {
       const min = filtres[`${filtre.key}_min`];
@@ -34,6 +34,12 @@ function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): 
       if (min || max) morceaux.push(`${filtre.label} : ${min || "0"}–${max || "∞"}`);
     }
   }
+
+  // Filtres globaux (toutes catégories), pas dans config.filters — rendus à
+  // part dans CategoryFilters.tsx (Type d'annonces, Type de vendeurs).
+  if (filtres.type_annonce === "demande") morceaux.push("Type d'annonces : Demandes");
+  if (filtres.vendeur === "pro") morceaux.push("Type de vendeurs : Professionnels");
+  if (filtres.vendeur === "particulier") morceaux.push("Type de vendeurs : Particuliers");
 
   return morceaux.length > 0 ? morceaux.join(" · ") : "Toutes les annonces";
 }
@@ -49,9 +55,12 @@ export async function listerRecherchesSauvegardees(userId: string): Promise<Rech
     rows.map(async (r) => {
       const filtres = r.filtres as Record<string, string>;
       const conditions = buildAnnonceConditions(r.categorie, filtres);
+      // Jointure users nécessaire même si cette recherche n'a pas de filtre
+      // "vendeur" : buildAnnonceConditions peut référencer users.estPro.
       const [{ value: nombreResultats }] = await db
         .select({ value: count() })
         .from(annonces)
+        .innerJoin(users, eq(annonces.userId, users.id))
         .where(and(...conditions));
 
       const params = new URLSearchParams(filtres);

@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, gte, ilike, isNotNull, lte, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { annonces, type Categorie } from "@/lib/db/schema";
+import { annonces, users, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
 
 // Colonne réelle derrière chaque filtre "select" — tenue à part de
@@ -13,6 +13,7 @@ export const SELECT_COLUMNS = {
   sous_categorie: annonces.sousCategorie,
   etat_produit: annonces.etatProduit,
   type_animal: annonces.typeAnimal,
+  type_annonce: annonces.typeAnnonce,
 } as const;
 
 // Critères véhicule stockés dans la colonne JSONB `attributs` (pas de colonne
@@ -21,6 +22,16 @@ export const SELECT_COLUMNS = {
 // connaît que les vraies colonnes Drizzle.
 export const ATTRIBUT_SELECT_KEYS = ["typeVehicule", "carburant", "boite", "critAir"] as const;
 export const ATTRIBUT_RANGE_KEYS = ["puissanceDin"] as const;
+// Permis : seul critère où on autorise de cocher plusieurs valeurs à la fois
+// (ex. "Avec permis" + "Sans permis" cochés ensemble = pas de restriction).
+export const ATTRIBUT_MULTI_KEYS = ["permis"] as const;
+
+function isAttributSelectKey(key: string): key is (typeof ATTRIBUT_SELECT_KEYS)[number] {
+  return (ATTRIBUT_SELECT_KEYS as readonly string[]).includes(key);
+}
+function isAttributMultiKey(key: string): key is (typeof ATTRIBUT_MULTI_KEYS)[number] {
+  return (ATTRIBUT_MULTI_KEYS as readonly string[]).includes(key);
+}
 
 // Reconstruit les conditions SQL d'une recherche filtrée à partir des mêmes
 // clés que l'URL de la page catégorie — utilisé à la fois par la page
@@ -69,29 +80,113 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
     if (min) conditions.push(sql`(nullif(${annonces.attributs} ->> ${key}, ''))::numeric >= ${Number(min)}`);
     if (max) conditions.push(sql`(nullif(${annonces.attributs} ->> ${key}, ''))::numeric <= ${Number(max)}`);
   }
+  for (const key of ATTRIBUT_MULTI_KEYS) {
+    const raw = params[key];
+    if (!raw) continue;
+    const valeurs = raw.split(",").filter(Boolean);
+    if (valeurs.length === 1) {
+      conditions.push(sql`${annonces.attributs} ->> ${key} = ${valeurs[0]}`);
+    } else if (valeurs.length > 1) {
+      conditions.push(
+        sql`${annonces.attributs} ->> ${key} in (${sql.join(
+          valeurs.map((v) => sql`${v}`),
+          sql`, `
+        )})`
+      );
+    }
+  }
+  // Type de vendeur : nécessite la jointure `users`, déjà présente partout où
+  // buildAnnonceConditions est appelé (page catégorie et comptage des
+  // recherches sauvegardées — voir lib/recherches.ts).
+  if (params.vendeur) {
+    const valeurs = params.vendeur.split(",").filter(Boolean);
+    const veutParticulier = valeurs.includes("particulier");
+    const veutPro = valeurs.includes("pro");
+    if (veutParticulier && !veutPro) conditions.push(eq(users.estPro, false));
+    else if (veutPro && !veutParticulier) conditions.push(eq(users.estPro, true));
+    // Les deux cochés (ou aucun) : pas de restriction.
+  }
   return conditions;
 }
 
-export async function distinctOptions(categorie: Categorie, key: string): Promise<string[]> {
-  if ((ATTRIBUT_SELECT_KEYS as readonly string[]).includes(key)) {
+// Nombre d'annonces par valeur possible d'un filtre "select"/"checkbox",
+// calculé avec tous les AUTRES filtres actifs mais sans celui-ci — pour que
+// cocher une valeur du filtre `key` ne fasse pas disparaître ses propres
+// alternatives (comptage à facettes standard).
+export async function optionCounts(
+  categorie: Categorie,
+  params: Record<string, string | undefined>,
+  key: string
+): Promise<{ value: string; count: number }[]> {
+  const reste = { ...params };
+  delete reste[key];
+  const conditions = buildAnnonceConditions(categorie, reste);
+
+  // Jointure users systématique : buildAnnonceConditions peut référencer
+  // users.estPro dès qu'un filtre "vendeur" est actif à côté de celui-ci, et
+  // cette fonction ne sait pas d'avance quels autres filtres accompagnent `key`.
+  if (isAttributSelectKey(key) || isAttributMultiKey(key)) {
     const valeur = sql<string>`${annonces.attributs} ->> ${key}`;
+    const total = sql<number>`count(*)::int`;
     const rows = await db
-      .selectDistinct({ valeur })
+      .select({ valeur, total })
       .from(annonces)
-      .where(and(eq(annonces.categorie, categorie), annonceVisiblePublic(), sql`${annonces.attributs} ? ${key}`))
-      // ORDER BY doit référencer la position de la colonne sélectionnée, pas
-      // ré-émettre l'expression : avec SELECT DISTINCT, Postgres refuse un
-      // ORDER BY qui n'apparaît pas littéralement dans la liste SELECT — deux
-      // interpolations `${key}` produisent deux paramètres distincts ($1/$2),
-      // pas la même expression syntaxique aux yeux du parseur.
+      .innerJoin(users, eq(annonces.userId, users.id))
+      // GROUP BY / ORDER BY référencent la position 1 de la liste SELECT,
+      // pas l'expression ré-émise : chaque interpolation `${key}` crée un
+      // paramètre distinct ($1, $6…) aux yeux de Postgres, même identique en
+      // valeur — une position numérique évite la divergence de paramètres.
+      .where(and(...conditions, sql`${annonces.attributs} ? ${key}`))
+      .groupBy(sql`1`)
       .orderBy(sql`1`);
-    return rows.map((r) => r.valeur).filter(Boolean);
+    return rows.map((r) => ({ value: r.valeur, count: r.total })).filter((r) => r.value);
   }
+
   const column = SELECT_COLUMNS[key as keyof typeof SELECT_COLUMNS];
+  const total = sql<number>`count(*)::int`;
   const rows = await db
-    .selectDistinct({ value: column })
+    .select({ valeur: column, total })
     .from(annonces)
-    .where(and(eq(annonces.categorie, categorie), annonceVisiblePublic(), isNotNull(column)))
+    .innerJoin(users, eq(annonces.userId, users.id))
+    .where(and(...conditions, isNotNull(column)))
+    .groupBy(column)
     .orderBy(key === "annee" ? desc(column) : asc(column));
-  return rows.map((r) => String(r.value)).filter(Boolean);
+  return rows.map((r) => ({ value: String(r.valeur), count: r.total })).filter((r) => r.value);
 }
+
+// Type d'annonce (Offres/Demandes) : les deux choix doivent toujours être
+// proposés, même si l'un des deux n'a aucune annonce pour l'instant — pas
+// dérivé des valeurs distinctes en base comme les autres filtres "select".
+export async function typeAnnonceCounts(
+  categorie: Categorie,
+  params: Record<string, string | undefined>
+): Promise<{ value: "offre" | "demande"; count: number }[]> {
+  const comptes = await optionCounts(categorie, params, "type_annonce");
+  const parValeur = new Map(comptes.map((c) => [c.value, c.count]));
+  return [
+    { value: "offre", count: parValeur.get("offre") ?? 0 },
+    { value: "demande", count: parValeur.get("demande") ?? 0 },
+  ];
+}
+
+// Type de vendeur (Particuliers/Professionnels) : nécessite une jointure
+// `users` dédiée, `optionCounts` ne le sait pas faire génériquement.
+export async function vendeurCounts(
+  categorie: Categorie,
+  params: Record<string, string | undefined>
+): Promise<{ particulier: number; pro: number }> {
+  const reste = { ...params };
+  delete reste.vendeur;
+  const conditions = buildAnnonceConditions(categorie, reste);
+  const rows = await db
+    .select({ estPro: users.estPro, total: sql<number>`count(*)::int` })
+    .from(annonces)
+    .innerJoin(users, eq(annonces.userId, users.id))
+    .where(and(...conditions))
+    .groupBy(users.estPro);
+  return {
+    particulier: rows.find((r) => !r.estPro)?.total ?? 0,
+    pro: rows.find((r) => r.estPro)?.total ?? 0,
+  };
+}
+
