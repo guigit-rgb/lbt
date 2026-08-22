@@ -6,6 +6,7 @@ import {
   smallint,
   boolean,
   jsonb,
+  real,
   timestamp,
   bigserial,
   primaryKey,
@@ -73,6 +74,12 @@ export const annonces = pgTable(
     prixCents: integer("prix_cents"),
     ville: text("ville"),
     codePostal: text("code_postal"),
+    // Géocodage automatique (ville + code postal, API adresse.data.gouv.fr)
+    // au dépôt/à la modification — jamais saisi à la main, jamais l'adresse
+    // exacte du vendeur (LBT ne la collecte pas). Nul tant que le géocodage
+    // n'a pas encore eu lieu (annonces créées avant cette fonctionnalité).
+    lat: real("lat"),
+    lng: real("lng"),
     // Quatre fins de vie distinctes, et une seule est une décision de LBT
     // (cf. cahier des charges §6.6 Résultat n°0, §6.7) :
     //   - `vendue`             : l'auteur déclare la vente

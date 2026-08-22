@@ -15,6 +15,7 @@ import {
 } from "@/lib/db/schema";
 import { deleteFromR2 } from "@/lib/storage/r2";
 import { estFinDeVie } from "@/lib/annonce-display";
+import { geocoderAdresse } from "@/lib/geocodage";
 
 const DUREE_PUBLICATION_JOURS = 60;
 
@@ -352,6 +353,8 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
     typeAnimal = optionalString(formData, "typeAnimal");
   }
 
+  const coordonnees = await geocoderAdresse(ville, codePostal);
+
   await db
     .update(annonces)
     .set({
@@ -362,6 +365,8 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
       prixCents,
       ville,
       codePostal,
+      lat: coordonnees?.lat ?? null,
+      lng: coordonnees?.lng ?? null,
       etat: "en_ligne",
       expiresAt: dansNJours(DUREE_PUBLICATION_JOURS),
       marque,
@@ -443,6 +448,13 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     }
   }
 
+  // Ne regéocode que si la localisation a changé — un enregistrement sans
+  // toucher à la ville ne doit pas déclencher un appel réseau supplémentaire.
+  const localisationChangee = ville !== annonce.ville || codePostal !== annonce.codePostal;
+  const coordonnees = localisationChangee
+    ? await geocoderAdresse(ville, codePostal)
+    : { lat: annonce.lat, lng: annonce.lng };
+
   await db
     .update(annonces)
     .set({
@@ -451,6 +463,8 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
       prixCents,
       ville,
       codePostal,
+      lat: coordonnees?.lat ?? null,
+      lng: coordonnees?.lng ?? null,
       marque,
       modele,
       annee,

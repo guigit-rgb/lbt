@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { Categorie } from "@/lib/db/schema";
 import type { FilterField } from "@/lib/listing-config";
 import { sauvegarderRecherche } from "@/lib/actions/recherches";
+import { LocationFilter } from "@/components/LocationFilter";
 
 export default function CategoryFilters({
   basePath,
@@ -64,6 +65,16 @@ export default function CategoryFilters({
     router.push(`${basePath}${params.toString() ? `?${params.toString()}` : ""}`);
   }
 
+  function navigateWithMultiple(updates: Record<string, string | null>) {
+    const params = new URLSearchParams(currentValues);
+    if (currentTri !== "pertinence") params.set("tri", currentTri);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    router.push(`${basePath}${params.toString() ? `?${params.toString()}` : ""}`);
+  }
+
   const nombreFiltresActifs = Object.keys(currentValues).length;
 
   return (
@@ -118,17 +129,17 @@ export default function CategoryFilters({
               {filters.map((filter) => {
                 if (filter.widget === "location") {
                   return (
-                    <section key={filter.key} className="filter-drawer-section">
-                      <h3>{filter.label}</h3>
-                      <input
-                        key={currentValues[filter.key] ?? ""}
-                        type="text"
-                        className="filter-drawer-input"
-                        defaultValue={currentValues[filter.key] ?? ""}
-                        onBlur={(e) => navigateWith(filter.key, e.target.value.trim())}
-                        placeholder="Ville ou code postal"
-                      />
-                    </section>
+                    <LocationFilter
+                      key={filter.key}
+                      label={filter.label}
+                      initialLocalisation={currentValues[filter.key] ?? ""}
+                      initialLat={currentValues.lat ?? ""}
+                      initialLng={currentValues.lng ?? ""}
+                      initialRayon={currentValues.rayon ?? ""}
+                      onApply={({ localisation, lat, lng, rayon }) =>
+                        navigateWithMultiple({ [filter.key]: localisation, lat, lng, rayon })
+                      }
+                    />
                   );
                 }
 

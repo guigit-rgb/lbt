@@ -20,7 +20,9 @@ function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): 
   const config = getFiltersForCategory(categorie);
   const morceaux: string[] = [];
 
-  if (filtres.localisation) morceaux.push(filtres.localisation);
+  if (filtres.localisation) {
+    morceaux.push(filtres.rayon ? `${filtres.localisation} (${filtres.rayon} km)` : filtres.localisation);
+  }
 
   for (const filtre of config.filters) {
     if (filtre.widget === "select" && filtres[filtre.key]) {

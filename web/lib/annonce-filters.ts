@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, ilike, isNotNull, lte, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, ilike, isNotNull, lte, sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { annonces, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
@@ -24,7 +24,21 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
   const conditions = [eq(annonces.categorie, categorie), annonceVisiblePublic()].filter(
     (c): c is SQL => c !== undefined
   );
-  if (params.localisation) conditions.push(ilike(annonces.ville, `%${params.localisation}%`));
+  // Recherche par rayon (lat/lng/rayon, choisis via l'autocomplétion adresse)
+  // prioritaire sur l'ancien filtre texte — les deux ne coexistent jamais
+  // puisque `LocationFilter` écrit toujours les trois ensemble ou aucun.
+  // Distance à vol d'oiseau (formule de la loi des cosinus sphérique) :
+  // suffisante pour un rayon de recherche, pas pour une distance routière.
+  if (params.lat && params.lng && params.rayon) {
+    const lat = Number(params.lat);
+    const lng = Number(params.lng);
+    const rayonKm = Number(params.rayon);
+    conditions.push(
+      sql`${annonces.lat} is not null and ${annonces.lng} is not null and (6371 * acos(least(1, cos(radians(${lat})) * cos(radians(${annonces.lat})) * cos(radians(${annonces.lng}) - radians(${lng})) + sin(radians(${lat})) * sin(radians(${annonces.lat}))))) <= ${rayonKm}`
+    );
+  } else if (params.localisation) {
+    conditions.push(ilike(annonces.ville, `%${params.localisation}%`));
+  }
   if (params.prix_min) conditions.push(gte(annonces.prixCents, Number(params.prix_min) * 100));
   if (params.prix_max) conditions.push(lte(annonces.prixCents, Number(params.prix_max) * 100));
   if (params.kilometrage_min) conditions.push(gte(annonces.kilometrage, Number(params.kilometrage_min)));

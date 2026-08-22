@@ -7,6 +7,7 @@ import AdCard from "@/components/AdCard";
 import AdGallery from "@/components/AdGallery";
 import { ContactVendeurForm } from "@/components/ContactVendeurForm";
 import { RevealPhoneButton } from "@/components/RevealPhoneButton";
+import { LocationMap } from "@/components/LocationMapLoader";
 import { db } from "@/lib/db/client";
 import { annonces, annonceImages, users } from "@/lib/db/schema";
 import { auth } from "@/lib/auth";
@@ -122,6 +123,11 @@ export default async function AnnonceDetailPage({
                 <p className="ad-detail-loc">
                   {row.annonce.ville} {row.annonce.codePostal ? `(${row.annonce.codePostal})` : ""}
                 </p>
+                {row.annonce.lat != null && row.annonce.lng != null && (
+                  <div className="ad-detail-map">
+                    <LocationMap lat={row.annonce.lat} lng={row.annonce.lng} />
+                  </div>
+                )}
               </section>
             )}
           </div>

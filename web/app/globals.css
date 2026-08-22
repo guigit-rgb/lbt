@@ -822,6 +822,31 @@
 .filter-drawer-save-btn:hover { background: var(--surface-2); }
 .filter-drawer-save-error { color: var(--brand-red, #e2231a); font-size: 0.82rem; margin: 0.4rem 0 0; }
 
+/* ---- filtre de localisation par rayon (panneau de filtres) ---- */
+.filter-location-chip {
+  display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.8rem;
+  border: 1px solid var(--line); border-radius: 999px; font-size: 0.9rem; margin-bottom: 1rem;
+}
+.filter-location-chip button {
+  background: none; border: none; cursor: pointer; color: var(--muted); font-size: 0.8rem; padding: 0;
+}
+.filter-location-radius-label { margin: 0 0 0.5rem; font-size: 0.92rem; }
+.filter-location-slider { width: 100%; margin-bottom: 0.3rem; }
+.filter-location-minmax { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.78rem; margin-bottom: 1rem; }
+.filter-location-map { border-radius: 10px; overflow: hidden; margin-bottom: 0.5rem; }
+.filter-location-souscat { font-weight: 600; font-size: 0.85rem; margin: 0.8rem 0 0.4rem; }
+.filter-location-suggestions { list-style: none; margin: 0; padding: 0; }
+.filter-location-suggestions li button {
+  display: block; width: 100%; text-align: left; background: none; border: none; cursor: pointer;
+  padding: 0.5rem 0.2rem; font: inherit; font-size: 0.9rem; border-radius: 6px;
+}
+.filter-location-suggestions li button:hover { background: var(--surface-2); }
+.filter-location-actions { display: flex; gap: 0.6rem; margin-top: 0.8rem; }
+.filter-location-actions .filter-drawer-clear { flex: 1; }
+.filter-location-actions .btn { flex: 1; justify-content: center; }
+
+.ad-detail-map { margin-top: 0.9rem; }
+
 @media (max-width: 480px) {
   .filter-drawer { width: 100%; }
 }
