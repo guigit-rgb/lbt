@@ -21,6 +21,10 @@ const TRI_OPTIONS = [
 // brute a besoin d'un libellé différent de celui saisi au dépôt.
 const LABEL_OVERRIDES: Record<string, Record<string, string>> = {
   permis: { "Permis B": "Avec permis", "Sans permis (voiturette)": "Sans permis" },
+  // "1" est la seule valeur jamais écrite pour ascenseur (cf.
+  // lib/actions/annonces.ts) — une simple case à cocher réutilisant le
+  // widget "checkbox" générique plutôt qu'une section dédiée comme "urgent".
+  ascenseur: { "1": "Oui" },
 };
 
 function labelFor(key: string, value: string): string {

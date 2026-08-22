@@ -91,10 +91,37 @@ const ENRICHED: Record<string, ListingConfig> = {
     h1: "Annonces Animaux, chiot, chaton",
     filters: [LOCATION_FILTER, PRIX_FILTER, { key: "type_animal", label: "Type d'animal", widget: "select" }],
   },
+  immobilier: {
+    categorie: "immobilier",
+    label: "Immobilier",
+    h1: "Annonces Immobilier",
+    // Relevé exhaustif des filtres leboncoin.fr (Immobilier > Ventes
+    // immobilières, fourni par Nicolas le 2026-08-23) — ordre identique à la
+    // référence. typeBien/typeVente/etage/exposition/etatBien/dpe/ascenseur
+    // sont en widget "checkbox" (cocher plusieurs valeurs acceptées à la
+    // fois), pas "select" : voir lib/annonce-filters.ts ATTRIBUT_MULTI_KEYS.
+    filters: [
+      LOCATION_FILTER,
+      { key: "typeBien", label: "Type de bien", widget: "checkbox" },
+      PRIX_FILTER,
+      { key: "surfaceHabitable", label: "Surface habitable", widget: "range" },
+      { key: "typeVente", label: "Type de vente", widget: "checkbox" },
+      { key: "surfaceTerrain", label: "Surface du terrain", widget: "range" },
+      { key: "pieces", label: "Pièces", widget: "range" },
+      { key: "chambres", label: "Chambres", widget: "range" },
+      { key: "exterieur", label: "Extérieur", widget: "checkbox" },
+      { key: "etage", label: "Étage de l'appartement", widget: "checkbox" },
+      { key: "ascenseur", label: "Avec ascenseur", widget: "checkbox" },
+      { key: "exposition", label: "Exposition", widget: "checkbox" },
+      { key: "caracteristiques", label: "Caractéristiques", widget: "checkbox" },
+      { key: "etatBien", label: "État du bien", widget: "checkbox" },
+      { key: "dpe", label: "Classe énergie (DPE)", widget: "checkbox" },
+    ],
+    popularFilters: ["Maison", "Appartement", "Terrain", "Parking", "Balcon", "Jardin", "Piscine", "Avec ascenseur"],
+  },
 };
 
 const GENERIC_LABELS: Record<string, string> = {
-  immobilier: "Immobilier",
   "locations-vacances": "Locations de vacances",
   emploi: "Emploi",
   mode: "Mode",

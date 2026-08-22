@@ -75,6 +75,10 @@ function sousLigne(row: AnnonceRow): string {
     parts.push(row.sousCategorie);
   } else if (row.categorie === "animaux" && row.typeAnimal) {
     parts.push(row.typeAnimal);
+  } else if (row.categorie === "immobilier") {
+    const attributs = row.attributs as Record<string, string>;
+    if (attributs.typeBien) parts.push(attributs.typeBien);
+    if (attributs.surfaceHabitable) parts.push(`${attributs.surfaceHabitable} m²`);
   }
   if (row.ville) parts.push(row.ville);
   return parts.join(" · ") || "France";
@@ -151,6 +155,14 @@ function specsListe(row: AnnonceRow): AdRowSpec[] {
   }
   if (row.categorie === "animaux" && row.typeAnimal) {
     return [{ label: "Type", value: row.typeAnimal }];
+  }
+  if (row.categorie === "immobilier") {
+    const specs: AdRowSpec[] = [];
+    const attributs = row.attributs as Record<string, string>;
+    if (attributs.typeBien) specs.push({ label: "Type", value: attributs.typeBien });
+    if (attributs.surfaceHabitable) specs.push({ label: "Surface", value: `${attributs.surfaceHabitable} m²` });
+    if (attributs.pieces) specs.push({ label: "Pièces", value: attributs.pieces });
+    return specs;
   }
   return [];
 }
@@ -237,6 +249,29 @@ export function detailInformationsCles(row: AnnonceRow): AdDetailSpec[] {
   }
   if (row.categorie === "animaux" && row.typeAnimal) {
     return [{ icon: "🐾", label: "Type", value: row.typeAnimal }];
+  }
+  if (row.categorie === "immobilier") {
+    const specs: AdDetailSpec[] = [];
+    const attributs = row.attributs as Record<string, string | string[]>;
+    const texte = attributs as Record<string, string>;
+    if (texte.typeBien) specs.push({ icon: "🏠", label: "Type de bien", value: texte.typeBien });
+    if (texte.typeVente) specs.push({ icon: "📜", label: "Type de vente", value: texte.typeVente });
+    if (texte.surfaceHabitable) specs.push({ icon: "📐", label: "Surface habitable", value: `${texte.surfaceHabitable} m²` });
+    if (texte.surfaceTerrain) specs.push({ icon: "🌳", label: "Surface du terrain", value: `${texte.surfaceTerrain} m²` });
+    if (texte.pieces) specs.push({ icon: "🚪", label: "Pièces", value: texte.pieces });
+    if (texte.chambres) specs.push({ icon: "🛏️", label: "Chambres", value: texte.chambres });
+    if (texte.etage) specs.push({ icon: "🏢", label: "Étage", value: texte.etage });
+    if (texte.ascenseur === "1") specs.push({ icon: "🛗", label: "Ascenseur", value: "Oui" });
+    if (texte.exposition) specs.push({ icon: "🧭", label: "Exposition", value: texte.exposition });
+    if (texte.etatBien) specs.push({ icon: "✅", label: "État du bien", value: texte.etatBien });
+    if (texte.dpe) specs.push({ icon: "⚡", label: "Classe énergie (DPE)", value: texte.dpe });
+    if (Array.isArray(attributs.exterieur) && attributs.exterieur.length > 0) {
+      specs.push({ icon: "🌿", label: "Extérieur", value: attributs.exterieur.join(", ") });
+    }
+    if (Array.isArray(attributs.caracteristiques) && attributs.caracteristiques.length > 0) {
+      specs.push({ icon: "🧩", label: "Caractéristiques", value: attributs.caracteristiques.join(", ") });
+    }
+    return specs;
   }
   return [];
 }

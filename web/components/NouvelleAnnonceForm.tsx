@@ -8,6 +8,16 @@ import { enregistrerBrouillon, publierAnnonce, type CreerAnnonceResult } from "@
 import PhotoGrid, { type Photo } from "@/components/PhotoGrid";
 import { MARQUES_COURANTES, MARQUES_AUTRES } from "@/lib/marques";
 import { TYPES_VEHICULE } from "@/lib/vehicule-types";
+import {
+  TYPES_BIEN,
+  TYPES_VENTE,
+  EXTERIEURS,
+  ETAGES,
+  EXPOSITIONS,
+  CARACTERISTIQUES,
+  ETATS_BIEN,
+  DPE_CLASSES,
+} from "@/lib/immobilier-types";
 
 interface Suggestion {
   categorie: Categorie;
@@ -138,6 +148,24 @@ export default function NouvelleAnnonceForm() {
   const [etatProduit, setEtatProduit] = useState("");
   const [typeAnimal, setTypeAnimal] = useState("");
 
+  const [typeBien, setTypeBien] = useState("");
+  const [typeVente, setTypeVente] = useState("");
+  const [surfaceHabitable, setSurfaceHabitable] = useState("");
+  const [surfaceTerrain, setSurfaceTerrain] = useState("");
+  const [pieces, setPieces] = useState("");
+  const [chambres, setChambres] = useState("");
+  const [exterieur, setExterieur] = useState<string[]>([]);
+  const [etage, setEtage] = useState("");
+  const [ascenseur, setAscenseur] = useState(false);
+  const [exposition, setExposition] = useState("");
+  const [caracteristiques, setCaracteristiques] = useState<string[]>([]);
+  const [etatBien, setEtatBien] = useState("");
+  const [dpe, setDpe] = useState("");
+
+  function toggleDansListe(liste: string[], setListe: (v: string[]) => void, valeur: string) {
+    setListe(liste.includes(valeur) ? liste.filter((v) => v !== valeur) : [...liste, valeur]);
+  }
+
   const [description, setDescription] = useState("");
   const [generatingDescription, setGeneratingDescription] = useState(false);
 
@@ -193,6 +221,12 @@ export default function NouvelleAnnonceForm() {
       if (etatProduit) details["État"] = etatProduit;
     } else if (categorie === "animaux") {
       if (typeAnimal) details["Type d'animal"] = typeAnimal;
+    } else if (categorie === "immobilier") {
+      if (typeBien) details["Type de bien"] = typeBien;
+      if (surfaceHabitable) details["Surface habitable"] = `${surfaceHabitable} m²`;
+      if (pieces) details["Pièces"] = pieces;
+      if (chambres) details["Chambres"] = chambres;
+      if (etatBien) details["État"] = etatBien;
     }
 
     try {
@@ -212,7 +246,8 @@ export default function NouvelleAnnonceForm() {
     }
   }
 
-  const hasDetailStep = categorie === "vehicules" || categorie === "loisirs" || categorie === "animaux";
+  const hasDetailStep =
+    categorie === "vehicules" || categorie === "loisirs" || categorie === "animaux" || categorie === "immobilier";
   const totalSteps = hasDetailStep ? 7 : 6;
   const displayStep = hasDetailStep || step < 3 ? step : step - 1;
 
@@ -247,7 +282,9 @@ export default function NouvelleAnnonceForm() {
         ? "Les caractéristiques du véhicule"
         : categorie === "loisirs"
           ? "Parlez-nous de votre objet"
-          : "Quelques précisions"
+          : categorie === "immobilier"
+            ? "Les caractéristiques du bien"
+            : "Quelques précisions"
       : CARD_TITLES[step];
 
   const tip = TIPS[Math.min(step, 7)];
@@ -746,6 +783,158 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
+            {step === 3 && hasDetailStep && categorie === "immobilier" && (
+              <section>
+                <span className="depot-question">Type de bien</span>
+                <div className="depot-chip-row">
+                  {TYPES_BIEN.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`depot-chip${typeBien === t ? " active" : ""}`}
+                      onClick={() => setTypeBien(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                <span className="depot-question">Type de vente</span>
+                <div className="depot-chip-row">
+                  {TYPES_VENTE.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`depot-chip${typeVente === t ? " active" : ""}`}
+                      onClick={() => setTypeVente(t)}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="depot-field-row">
+                  <label>
+                    <span className="depot-question">Surface habitable (m²)</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={surfaceHabitable}
+                      onChange={(e) => setSurfaceHabitable(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Surface du terrain (m²)</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={surfaceTerrain}
+                      onChange={(e) => setSurfaceTerrain(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Pièces</span>
+                    <input type="number" className="depot-input" value={pieces} onChange={(e) => setPieces(e.target.value)} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Chambres</span>
+                    <input
+                      type="number"
+                      className="depot-input"
+                      value={chambres}
+                      onChange={(e) => setChambres(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Étage</span>
+                    <select className="depot-select" value={etage} onChange={(e) => setEtage(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {ETAGES.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Exposition</span>
+                    <select className="depot-select" value={exposition} onChange={(e) => setExposition(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {EXPOSITIONS.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">État du bien</span>
+                    <select className="depot-select" value={etatBien} onChange={(e) => setEtatBien(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {ETATS_BIEN.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Classe énergie (DPE)</span>
+                    <select className="depot-select" value={dpe} onChange={(e) => setDpe(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {DPE_CLASSES.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <label className="depot-offer-option" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
+                  <input type="checkbox" checked={ascenseur} onChange={(e) => setAscenseur(e.target.checked)} />
+                  Avec ascenseur
+                </label>
+
+                <span className="depot-question">Extérieur</span>
+                <div className="depot-chip-row">
+                  {EXTERIEURS.map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`depot-chip${exterieur.includes(val) ? " active" : ""}`}
+                      onClick={() => toggleDansListe(exterieur, setExterieur, val)}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+
+                <span className="depot-question">Caractéristiques</span>
+                <div className="depot-chip-row">
+                  {CARACTERISTIQUES.map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`depot-chip${caracteristiques.includes(val) ? " active" : ""}`}
+                      onClick={() => toggleDansListe(caracteristiques, setCaracteristiques, val)}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
             {step === 4 && (
               <section>
                 <button
@@ -853,6 +1042,13 @@ export default function NouvelleAnnonceForm() {
                       <strong>Type :</strong> {typeAnimal}
                     </li>
                   )}
+                  {categorie === "immobilier" && (
+                    <li>
+                      <strong>Bien :</strong> {typeBien} — {surfaceHabitable && `${surfaceHabitable} m², `}
+                      {pieces && `${pieces} pièces, `}
+                      {chambres && `${chambres} chambres`}
+                    </li>
+                  )}
                   <li>
                     <strong>Description :</strong> {description}
                   </li>
@@ -902,6 +1098,23 @@ export default function NouvelleAnnonceForm() {
                     </>
                   )}
                   {categorie === "animaux" && <input type="hidden" name="typeAnimal" value={typeAnimal} />}
+                  {categorie === "immobilier" && (
+                    <>
+                      <input type="hidden" name="typeBien" value={typeBien} />
+                      <input type="hidden" name="typeVente" value={typeVente} />
+                      <input type="hidden" name="surfaceHabitable" value={surfaceHabitable} />
+                      <input type="hidden" name="surfaceTerrain" value={surfaceTerrain} />
+                      <input type="hidden" name="pieces" value={pieces} />
+                      <input type="hidden" name="chambres" value={chambres} />
+                      <input type="hidden" name="exterieur" value={exterieur.join(",")} />
+                      <input type="hidden" name="etage" value={etage} />
+                      <input type="hidden" name="ascenseur" value={ascenseur ? "1" : ""} />
+                      <input type="hidden" name="exposition" value={exposition} />
+                      <input type="hidden" name="caracteristiques" value={caracteristiques.join(",")} />
+                      <input type="hidden" name="etatBien" value={etatBien} />
+                      <input type="hidden" name="dpe" value={dpe} />
+                    </>
+                  )}
 
                   {"error" in state && state.error ? (
                     <p role="alert" style={{ color: "var(--brand-red)" }}>

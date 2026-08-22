@@ -10,6 +10,16 @@ import type { annonces } from "@/lib/db/schema";
 import { modifierAnnonce, type CreerAnnonceResult } from "@/lib/actions/annonces";
 import { MARQUES_COURANTES, MARQUES_AUTRES } from "@/lib/marques";
 import { TYPES_VEHICULE } from "@/lib/vehicule-types";
+import {
+  TYPES_BIEN,
+  TYPES_VENTE,
+  EXTERIEURS,
+  ETAGES,
+  EXPOSITIONS,
+  CARACTERISTIQUES,
+  ETATS_BIEN,
+  DPE_CLASSES,
+} from "@/lib/immobilier-types";
 
 type Annonce = typeof annonces.$inferSelect;
 
@@ -36,10 +46,20 @@ export default function ModifierAnnonceForm({
   annonce: Annonce;
   photosInitiales: Photo[];
 }) {
-  const attributs = annonce.attributs as Record<string, string>;
+  const attributs = annonce.attributs as Record<string, string | string[]>;
+  const attributsTexte = attributs as Record<string, string>;
 
-  const [carburant, setCarburant] = useState(attributs.carburant ?? "");
-  const [boite, setBoite] = useState(attributs.boite ?? "");
+  const [carburant, setCarburant] = useState(attributsTexte.carburant ?? "");
+  const [boite, setBoite] = useState(attributsTexte.boite ?? "");
+  const [ascenseur, setAscenseur] = useState(attributsTexte.ascenseur === "1");
+  const [exterieur, setExterieur] = useState<string[]>(Array.isArray(attributs.exterieur) ? attributs.exterieur : []);
+  const [caracteristiques, setCaracteristiques] = useState<string[]>(
+    Array.isArray(attributs.caracteristiques) ? attributs.caracteristiques : []
+  );
+
+  function toggleDansListe(liste: string[], setListe: (v: string[]) => void, valeur: string) {
+    setListe(liste.includes(valeur) ? liste.filter((v) => v !== valeur) : [...liste, valeur]);
+  }
   const [photos, setPhotos] = useState<Photo[]>(photosInitiales);
   const [prix, setPrix] = useState(annonce.prixCents != null ? (annonce.prixCents / 100).toString() : "");
   const [ville, setVille] = useState(annonce.ville ?? "");
@@ -259,7 +279,7 @@ export default function ModifierAnnonceForm({
                 <div className="depot-field-row">
                   <label>
                     <span className="depot-question">Nombre de portes</span>
-                    <select name="portes" className="depot-select" defaultValue={attributs.portes ?? ""}>
+                    <select name="portes" className="depot-select" defaultValue={attributsTexte.portes ?? ""}>
                       <option value="">Choisissez</option>
                       {PORTES.map((p) => (
                         <option key={p} value={p}>
@@ -270,7 +290,7 @@ export default function ModifierAnnonceForm({
                   </label>
                   <label>
                     <span className="depot-question">Nombre de places</span>
-                    <select name="places" className="depot-select" defaultValue={attributs.places ?? ""}>
+                    <select name="places" className="depot-select" defaultValue={attributsTexte.places ?? ""}>
                       <option value="">Choisissez</option>
                       {PLACES.map((p) => (
                         <option key={p} value={p}>
@@ -281,7 +301,7 @@ export default function ModifierAnnonceForm({
                   </label>
                   <label>
                     <span className="depot-question">Type de véhicule</span>
-                    <select name="typeVehicule" className="depot-select" defaultValue={attributs.typeVehicule ?? ""}>
+                    <select name="typeVehicule" className="depot-select" defaultValue={attributsTexte.typeVehicule ?? ""}>
                       <option value="">Choisissez</option>
                       {TYPES_VEHICULE.map((t) => (
                         <option key={t} value={t}>
@@ -292,7 +312,7 @@ export default function ModifierAnnonceForm({
                   </label>
                   <label>
                     <span className="depot-question">État du véhicule</span>
-                    <select name="etatVehicule" className="depot-select" defaultValue={attributs.etatVehicule ?? ""}>
+                    <select name="etatVehicule" className="depot-select" defaultValue={attributsTexte.etatVehicule ?? ""}>
                       <option value="">Choisissez</option>
                       {ETATS_VEHICULE.map((e) => (
                         <option key={e} value={e}>
@@ -303,7 +323,7 @@ export default function ModifierAnnonceForm({
                   </label>
                   <label>
                     <span className="depot-question">Couleur</span>
-                    <select name="couleur" className="depot-select" defaultValue={attributs.couleur ?? ""}>
+                    <select name="couleur" className="depot-select" defaultValue={attributsTexte.couleur ?? ""}>
                       <option value="">Choisissez</option>
                       {COULEURS.map((c) => (
                         <option key={c} value={c}>
@@ -314,7 +334,7 @@ export default function ModifierAnnonceForm({
                   </label>
                   <label>
                     <span className="depot-question">Sellerie</span>
-                    <select name="sellerie" className="depot-select" defaultValue={attributs.sellerie ?? ""}>
+                    <select name="sellerie" className="depot-select" defaultValue={attributsTexte.sellerie ?? ""}>
                       <option value="">Choisissez</option>
                       {SELLERIES.map((s) => (
                         <option key={s} value={s}>
@@ -325,7 +345,7 @@ export default function ModifierAnnonceForm({
                   </label>
                   <label>
                     <span className="depot-question">Permis</span>
-                    <select name="permis" className="depot-select" defaultValue={attributs.permis ?? ""}>
+                    <select name="permis" className="depot-select" defaultValue={attributsTexte.permis ?? ""}>
                       <option value="">Choisissez</option>
                       {PERMIS_OPTIONS.map((p) => (
                         <option key={p} value={p}>
@@ -340,7 +360,7 @@ export default function ModifierAnnonceForm({
                       name="puissanceFiscale"
                       type="number"
                       className="depot-input"
-                      defaultValue={attributs.puissanceFiscale ?? ""}
+                      defaultValue={attributsTexte.puissanceFiscale ?? ""}
                     />
                   </label>
                   <label>
@@ -349,7 +369,7 @@ export default function ModifierAnnonceForm({
                       name="puissanceDin"
                       type="number"
                       className="depot-input"
-                      defaultValue={attributs.puissanceDin ?? ""}
+                      defaultValue={attributsTexte.puissanceDin ?? ""}
                     />
                   </label>
                   <label>
@@ -358,7 +378,7 @@ export default function ModifierAnnonceForm({
                       name="miseEnCirculation"
                       className="depot-input"
                       placeholder="03/2018"
-                      defaultValue={attributs.miseEnCirculation ?? ""}
+                      defaultValue={attributsTexte.miseEnCirculation ?? ""}
                     />
                   </label>
                   <label>
@@ -368,12 +388,12 @@ export default function ModifierAnnonceForm({
                       type="number"
                       className="depot-input"
                       placeholder="2026"
-                      defaultValue={attributs.controleTechnique ?? ""}
+                      defaultValue={attributsTexte.controleTechnique ?? ""}
                     />
                   </label>
                   <label>
                     <span className="depot-question">Crit&apos;air</span>
-                    <select name="critAir" className="depot-select" defaultValue={attributs.critAir ?? ""}>
+                    <select name="critAir" className="depot-select" defaultValue={attributsTexte.critAir ?? ""}>
                       <option value="">Choisissez</option>
                       {CRIT_AIR_OPTIONS.map((c) => (
                         <option key={c} value={c}>
@@ -390,9 +410,150 @@ export default function ModifierAnnonceForm({
                     name="equipements"
                     className="depot-input"
                     placeholder="Climatisation, GPS, Toit ouvrant…"
-                    defaultValue={attributs.equipements ?? ""}
+                    defaultValue={attributsTexte.equipements ?? ""}
                   />
                 </label>
+              </fieldset>
+            )}
+
+            {annonce.categorie === "immobilier" && (
+              <fieldset style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "1.25rem", marginBottom: "1.25rem" }}>
+                <legend style={{ padding: "0 0.5rem", fontWeight: 600 }}>Bien</legend>
+                <div className="depot-field-row">
+                  <label>
+                    <span className="depot-question">Type de bien</span>
+                    <select name="typeBien" className="depot-select" defaultValue={attributsTexte.typeBien ?? ""}>
+                      <option value="">Choisissez</option>
+                      {TYPES_BIEN.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Type de vente</span>
+                    <select name="typeVente" className="depot-select" defaultValue={attributsTexte.typeVente ?? ""}>
+                      <option value="">Choisissez</option>
+                      {TYPES_VENTE.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Surface habitable (m²)</span>
+                    <input
+                      name="surfaceHabitable"
+                      type="number"
+                      className="depot-input"
+                      defaultValue={attributsTexte.surfaceHabitable ?? ""}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Surface du terrain (m²)</span>
+                    <input
+                      name="surfaceTerrain"
+                      type="number"
+                      className="depot-input"
+                      defaultValue={attributsTexte.surfaceTerrain ?? ""}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Pièces</span>
+                    <input name="pieces" type="number" className="depot-input" defaultValue={attributsTexte.pieces ?? ""} />
+                  </label>
+                  <label>
+                    <span className="depot-question">Chambres</span>
+                    <input
+                      name="chambres"
+                      type="number"
+                      className="depot-input"
+                      defaultValue={attributsTexte.chambres ?? ""}
+                    />
+                  </label>
+                  <label>
+                    <span className="depot-question">Étage</span>
+                    <select name="etage" className="depot-select" defaultValue={attributsTexte.etage ?? ""}>
+                      <option value="">Choisissez</option>
+                      {ETAGES.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Exposition</span>
+                    <select name="exposition" className="depot-select" defaultValue={attributsTexte.exposition ?? ""}>
+                      <option value="">Choisissez</option>
+                      {EXPOSITIONS.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">État du bien</span>
+                    <select name="etatBien" className="depot-select" defaultValue={attributsTexte.etatBien ?? ""}>
+                      <option value="">Choisissez</option>
+                      {ETATS_BIEN.map((e) => (
+                        <option key={e} value={e}>
+                          {e}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span className="depot-question">Classe énergie (DPE)</span>
+                    <select name="dpe" className="depot-select" defaultValue={attributsTexte.dpe ?? ""}>
+                      <option value="">Choisissez</option>
+                      {DPE_CLASSES.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                <label className="depot-offer-option" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
+                  <input type="checkbox" checked={ascenseur} onChange={(e) => setAscenseur(e.target.checked)} />
+                  Avec ascenseur
+                </label>
+                <input type="hidden" name="ascenseur" value={ascenseur ? "1" : ""} />
+
+                <span className="depot-question">Extérieur</span>
+                <div className="depot-chip-row">
+                  {EXTERIEURS.map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`depot-chip${exterieur.includes(val) ? " active" : ""}`}
+                      onClick={() => toggleDansListe(exterieur, setExterieur, val)}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+                <input type="hidden" name="exterieur" value={exterieur.join(",")} />
+
+                <span className="depot-question">Caractéristiques</span>
+                <div className="depot-chip-row">
+                  {CARACTERISTIQUES.map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`depot-chip${caracteristiques.includes(val) ? " active" : ""}`}
+                      onClick={() => toggleDansListe(caracteristiques, setCaracteristiques, val)}
+                    >
+                      {val}
+                    </button>
+                  ))}
+                </div>
+                <input type="hidden" name="caracteristiques" value={caracteristiques.join(",")} />
               </fieldset>
             )}
 

@@ -20,7 +20,11 @@ export const SELECT_COLUMNS = {
 // en plage min/max comme kilométrage. Traités à part de SELECT_COLUMNS qui ne
 // connaît que les vraies colonnes Drizzle.
 export const ATTRIBUT_SELECT_KEYS = ["carburant", "boite", "critAir"] as const;
-export const ATTRIBUT_RANGE_KEYS = ["puissanceDin"] as const;
+// Surfaces/pièces/chambres immobilier (même logique que puissanceDin) :
+// une seule valeur numérique par annonce, filtrée en plage min/max. Le
+// panneau de filtres saisit "8+" comme un simple minimum à 8 sans maximum,
+// plutôt que de dupliquer la liste fermée de boutons 1-8+ de leboncoin.
+export const ATTRIBUT_RANGE_KEYS = ["puissanceDin", "surfaceHabitable", "surfaceTerrain", "pieces", "chambres"] as const;
 // Permis : cocher plusieurs valeurs à la fois dans le panneau de filtres
 // (ex. "Avec permis" + "Sans permis" cochés ensemble = pas de restriction).
 // typeVehicule : le panneau de filtres reste en sélection unique (widget
@@ -28,13 +32,39 @@ export const ATTRIBUT_RANGE_KEYS = ["puissanceDin"] as const;
 // plusieurs types à la fois pour son bouton "Voiture" (Berline + Citadine +
 // SUV + ... en une seule requête) — d'où le support multi ici, sans rien
 // changer au panneau (lib/vehicule-types.ts, TYPES_VOITURE).
-export const ATTRIBUT_MULTI_KEYS = ["permis", "typeVehicule"] as const;
+// Immobilier (typeBien/typeVente/etage/exposition/etatBien/dpe/ascenseur) :
+// une seule valeur par annonce (un bien a un type, un état, une exposition
+// principale...), mais le panneau de filtres doit pouvoir cocher plusieurs
+// valeurs acceptées à la fois (ex. "Maison" + "Appartement"), même logique
+// que permis/typeVehicule. `ascenseur` est une case unique ("1" si coché au
+// dépôt, absent sinon) — traitée ici plutôt qu'en doublon du mécanisme
+// `urgent` pour réutiliser tel quel le widget "checkbox" générique.
+export const ATTRIBUT_MULTI_KEYS = [
+  "permis",
+  "typeVehicule",
+  "typeBien",
+  "typeVente",
+  "etage",
+  "exposition",
+  "etatBien",
+  "dpe",
+  "ascenseur",
+] as const;
+// Extérieur/Caractéristiques immobilier : contrairement aux clés ci-dessus,
+// une même annonce peut cumuler PLUSIEURS valeurs à la fois (un bien peut
+// avoir à la fois un balcon ET un jardin) — stockées comme un tableau JSON
+// dans `attributs`, et non comme une chaîne unique. Le filtre matche une
+// annonce dès qu'elle porte au moins une des valeurs cochées.
+export const ATTRIBUT_ARRAY_KEYS = ["exterieur", "caracteristiques"] as const;
 
 function isAttributSelectKey(key: string): key is (typeof ATTRIBUT_SELECT_KEYS)[number] {
   return (ATTRIBUT_SELECT_KEYS as readonly string[]).includes(key);
 }
 function isAttributMultiKey(key: string): key is (typeof ATTRIBUT_MULTI_KEYS)[number] {
   return (ATTRIBUT_MULTI_KEYS as readonly string[]).includes(key);
+}
+function isAttributArrayKey(key: string): key is (typeof ATTRIBUT_ARRAY_KEYS)[number] {
+  return (ATTRIBUT_ARRAY_KEYS as readonly string[]).includes(key);
 }
 
 // Reconstruit les conditions SQL d'une recherche filtrée à partir des mêmes
@@ -121,6 +151,23 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
       );
     }
   }
+  // `?|` (opérateur jsonb standard) : vrai si au moins une des valeurs
+  // cochées figure dans le tableau JSON stocké pour cette clé — c'est
+  // délibérément un OR, pas un sous-ensemble (`<@`), pour matcher une
+  // annonce dès qu'elle a au moins un des extérieurs/caractéristiques
+  // demandés plutôt que d'exiger qu'elle les ait tous.
+  for (const key of ATTRIBUT_ARRAY_KEYS) {
+    const raw = params[key];
+    if (!raw) continue;
+    const valeurs = raw.split(",").filter(Boolean);
+    if (valeurs.length === 0) continue;
+    conditions.push(
+      sql`${annonces.attributs} -> ${key} ?| array[${sql.join(
+        valeurs.map((v) => sql`${v}`),
+        sql`, `
+      )}]::text[]`
+    );
+  }
   // Type de vendeur : nécessite la jointure `users`, déjà présente partout où
   // buildAnnonceConditions est appelé (page catégorie et comptage des
   // recherches sauvegardées — voir lib/recherches.ts).
@@ -156,6 +203,28 @@ export async function optionCounts(
   // Jointure users systématique : buildAnnonceConditions peut référencer
   // users.estPro dès qu'un filtre "vendeur" est actif à côté de celui-ci, et
   // cette fonction ne sait pas d'avance quels autres filtres accompagnent `key`.
+  if (isAttributArrayKey(key)) {
+    // Comptage par élément (pas par valeur brute entière) : une annonce avec
+    // ["Balcon", "Jardin"] doit incrémenter le compteur de "Balcon" ET celui
+    // de "Jardin", ce qu'un simple GROUP BY sur la valeur JSON ne ferait pas
+    // (il compterait "Balcon,Jardin" comme une troisième valeur à part).
+    // Repose sur le driver Neon qui désérialise déjà `attributs -> key` (une
+    // colonne jsonb) en tableau JS, comme pour tout autre accès à `attributs`
+    // dans ce fichier — pas de fonction SQL `jsonb_array_elements` nécessaire.
+    const rows = await db
+      .select({ valeurs: sql<string[]>`${annonces.attributs} -> ${key}` })
+      .from(annonces)
+      .innerJoin(users, eq(annonces.userId, users.id))
+      .where(and(...conditions, sql`${annonces.attributs} ? ${key}`));
+    const compteurs = new Map<string, number>();
+    for (const row of rows) {
+      for (const valeur of Array.isArray(row.valeurs) ? row.valeurs : []) {
+        compteurs.set(valeur, (compteurs.get(valeur) ?? 0) + 1);
+      }
+    }
+    return [...compteurs.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([value, count]) => ({ value, count }));
+  }
+
   if (isAttributSelectKey(key) || isAttributMultiKey(key)) {
     const valeur = sql<string>`${annonces.attributs} ->> ${key}`;
     const total = sql<number>`count(*)::int`;

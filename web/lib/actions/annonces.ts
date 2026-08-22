@@ -34,6 +34,24 @@ const VEHICULE_ATTRIBUTS_TEXTE = [
   "critAir",
 ] as const;
 
+// Caractéristiques immobilier à valeur unique — sur le modèle de
+// VEHICULE_ATTRIBUTS_TEXTE. `exterieur` et `caracteristiques` en sont
+// volontairement absents : une annonce peut en cumuler plusieurs à la fois,
+// et sont donc traités à part comme un tableau (cf. lib/annonce-filters.ts
+// ATTRIBUT_ARRAY_KEYS).
+const IMMOBILIER_ATTRIBUTS_TEXTE = [
+  "typeBien",
+  "typeVente",
+  "surfaceHabitable",
+  "surfaceTerrain",
+  "pieces",
+  "chambres",
+  "etage",
+  "exposition",
+  "etatBien",
+  "dpe",
+] as const;
+
 function dansNJours(n: number): Date {
   const date = new Date();
   date.setDate(date.getDate() + n);
@@ -241,6 +259,17 @@ function optionalInt(formData: FormData, key: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+// Champs multi-valeurs immobilier (exterieur, caracteristiques) : le
+// formulaire de dépôt envoie une liste jointe par des virgules dans un champ
+// caché, à ranger en tableau JSON dans `attributs` plutôt qu'en chaîne — voir
+// lib/annonce-filters.ts ATTRIBUT_ARRAY_KEYS pour le filtrage côté recherche.
+function optionalStringList(formData: FormData, key: string): string[] | undefined {
+  const raw = optionalString(formData, key);
+  if (!raw) return undefined;
+  const valeurs = raw.split(",").filter(Boolean);
+  return valeurs.length > 0 ? valeurs : undefined;
+}
+
 export async function publierAnnonce(id: string, formData: FormData): Promise<CreerAnnonceResult> {
   // Le brouillon (titre/catégorie/type/photos) existe déjà en base à ce
   // stade — cette fonction complète les champs restants et fait passer
@@ -306,7 +335,7 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
   let sousCategorie: string | undefined;
   let etatProduit: string | undefined;
   let typeAnimal: string | undefined;
-  const attributs: Record<string, string> = {};
+  const attributs: Record<string, string | string[]> = {};
 
   if (categorie === "vehicules") {
     marque = optionalString(formData, "marque");
@@ -326,6 +355,17 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
     etatProduit = optionalString(formData, "etatProduit");
   } else if (categorie === "animaux") {
     typeAnimal = optionalString(formData, "typeAnimal");
+  } else if (categorie === "immobilier") {
+    for (const champ of IMMOBILIER_ATTRIBUTS_TEXTE) {
+      const valeur = optionalString(formData, champ);
+      if (valeur) attributs[champ] = valeur;
+    }
+    const ascenseur = optionalString(formData, "ascenseur");
+    if (ascenseur) attributs.ascenseur = ascenseur;
+    const exterieur = optionalStringList(formData, "exterieur");
+    if (exterieur) attributs.exterieur = exterieur;
+    const caracteristiques = optionalStringList(formData, "caracteristiques");
+    if (caracteristiques) attributs.caracteristiques = caracteristiques;
   }
 
   const coordonnees = await geocoderAdresse(ville, codePostal);
@@ -402,7 +442,7 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     prixCents = Math.round(prix * 100);
   }
 
-  const attributs = { ...(annonce.attributs as Record<string, string>) };
+  const attributs = { ...(annonce.attributs as Record<string, string | string[]>) };
   let marque = annonce.marque ?? undefined;
   let modele = annonce.modele ?? undefined;
   let annee = annonce.annee ?? undefined;
@@ -420,6 +460,30 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     for (const champ of VEHICULE_ATTRIBUTS_TEXTE) {
       const valeur = optionalString(formData, champ);
       if (valeur) attributs[champ] = valeur;
+    }
+  } else if (annonce.categorie === "immobilier") {
+    for (const champ of IMMOBILIER_ATTRIBUTS_TEXTE) {
+      const valeur = optionalString(formData, champ);
+      if (valeur) attributs[champ] = valeur;
+    }
+    const ascenseur = optionalString(formData, "ascenseur");
+    // Contrairement aux autres champs (silencieusement conservés si absents
+    // du formulaire), l'ascenseur doit pouvoir repasser à "non" — une case
+    // décochée n'envoie aucune valeur, ce qui la distinguerait sinon d'un
+    // champ simplement non modifié.
+    if (formData.has("ascenseur")) {
+      if (ascenseur) attributs.ascenseur = ascenseur;
+      else delete attributs.ascenseur;
+    }
+    const exterieur = optionalStringList(formData, "exterieur");
+    if (formData.has("exterieur")) {
+      if (exterieur) attributs.exterieur = exterieur;
+      else delete attributs.exterieur;
+    }
+    const caracteristiques = optionalStringList(formData, "caracteristiques");
+    if (formData.has("caracteristiques")) {
+      if (caracteristiques) attributs.caracteristiques = caracteristiques;
+      else delete attributs.caracteristiques;
     }
   }
 
