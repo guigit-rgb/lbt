@@ -9,7 +9,7 @@ import { db } from "@/lib/db/client";
 import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { annonceToRowData, getCoverUrls } from "@/lib/annonce-display";
-import { SELECT_COLUMNS, buildAnnonceConditions, distinctOptions } from "@/lib/annonce-filters";
+import { buildAnnonceConditions, distinctOptions } from "@/lib/annonce-filters";
 import { auth } from "@/lib/auth";
 import { listerFavorisIds } from "@/lib/favoris";
 
@@ -55,7 +55,7 @@ export default async function CategorieListingPage({
     Promise.all(
       config.filters
         .filter((f) => f.widget === "select")
-        .map(async (f) => [f.key, await distinctOptions(categorie, f.key as keyof typeof SELECT_COLUMNS)] as const)
+        .map(async (f) => [f.key, await distinctOptions(categorie, f.key)] as const)
     ),
     session ? listerFavorisIds(session.user.id) : Promise.resolve(new Set<string>()),
   ]);

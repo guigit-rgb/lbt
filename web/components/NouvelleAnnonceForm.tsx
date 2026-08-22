@@ -40,6 +40,7 @@ const TYPES_VEHICULE = ["Berline", "Citadine", "SUV / 4x4", "Break", "Coupé", "
 const COULEURS = ["Noir", "Blanc", "Gris", "Bleu", "Rouge", "Vert", "Marron", "Beige", "Jaune", "Orange"];
 const SELLERIES = ["Tissu", "Cuir", "Simili-cuir"];
 const PERMIS_OPTIONS = ["Permis B", "Sans permis (voiturette)"];
+const CRIT_AIR_OPTIONS = ["Crit'Air E", "Crit'Air 1", "Crit'Air 2", "Crit'Air 3", "Crit'Air 4", "Crit'Air 5", "Non classé"];
 
 const initialState: CreerAnnonceResult = { success: true, id: "" };
 
@@ -130,6 +131,7 @@ export default function NouvelleAnnonceForm() {
   const [permis, setPermis] = useState("");
   const [controleTechnique, setControleTechnique] = useState("");
   const [miseEnCirculation, setMiseEnCirculation] = useState("");
+  const [critAir, setCritAir] = useState("");
 
   const [sousCategorie, setSousCategorie] = useState("");
   const [etatProduit, setEtatProduit] = useState("");
@@ -621,6 +623,17 @@ export default function NouvelleAnnonceForm() {
                       onChange={(e) => setControleTechnique(e.target.value)}
                     />
                   </label>
+                  <label>
+                    <span className="depot-question">Crit&apos;air</span>
+                    <select className="depot-select" value={critAir} onChange={(e) => setCritAir(e.target.value)}>
+                      <option value="">Choisissez</option>
+                      {CRIT_AIR_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
 
                 <label>
@@ -861,6 +874,7 @@ export default function NouvelleAnnonceForm() {
                       <input type="hidden" name="permis" value={permis} />
                       <input type="hidden" name="controleTechnique" value={controleTechnique} />
                       <input type="hidden" name="miseEnCirculation" value={miseEnCirculation} />
+                      <input type="hidden" name="critAir" value={critAir} />
                     </>
                   )}
                   {categorie === "loisirs" && (

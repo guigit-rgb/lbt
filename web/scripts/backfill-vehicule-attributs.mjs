@@ -32,6 +32,7 @@ const EQUIPEMENTS = [
   "Climatisation, toit ouvrant",
   "Climatisation",
 ];
+const CRIT_AIR = ["Crit'Air 1", "Crit'Air 1", "Crit'Air 2", "Crit'Air 2", "Crit'Air 3", "Crit'Air E"];
 
 function miseEnCirculationDepuisAnnee(annee) {
   if (!annee) return undefined;
@@ -60,6 +61,7 @@ async function main() {
       puissanceDin: String(60 + Math.floor(Math.random() * 140)),
       permis: "Permis B",
       controleTechnique: String(2025 + Math.floor(Math.random() * 3)),
+      critAir: pick(CRIT_AIR),
     };
     const miseEnCirculation = miseEnCirculationDepuisAnnee(row.annee);
     if (miseEnCirculation) attributs.miseEnCirculation = miseEnCirculation;

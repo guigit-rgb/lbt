@@ -15,6 +15,13 @@ export const SELECT_COLUMNS = {
   type_animal: annonces.typeAnimal,
 } as const;
 
+// Critères véhicule stockés dans la colonne JSONB `attributs` (pas de colonne
+// dédiée) — typeVehicule/carburant/boite/critAir en choix unique, puissanceDin
+// en plage min/max comme kilométrage. Traités à part de SELECT_COLUMNS qui ne
+// connaît que les vraies colonnes Drizzle.
+export const ATTRIBUT_SELECT_KEYS = ["typeVehicule", "carburant", "boite", "critAir"] as const;
+export const ATTRIBUT_RANGE_KEYS = ["puissanceDin"] as const;
+
 // Reconstruit les conditions SQL d'une recherche filtrée à partir des mêmes
 // clés que l'URL de la page catégorie — utilisé à la fois par la page
 // catégorie elle-même et par le comptage des recherches sauvegardées
@@ -43,6 +50,8 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
   if (params.prix_max) conditions.push(lte(annonces.prixCents, Number(params.prix_max) * 100));
   if (params.kilometrage_min) conditions.push(gte(annonces.kilometrage, Number(params.kilometrage_min)));
   if (params.kilometrage_max) conditions.push(lte(annonces.kilometrage, Number(params.kilometrage_max)));
+  if (params.annee_min) conditions.push(gte(annonces.annee, Number(params.annee_min)));
+  if (params.annee_max) conditions.push(lte(annonces.annee, Number(params.annee_max)));
   for (const key of Object.keys(SELECT_COLUMNS) as (keyof typeof SELECT_COLUMNS)[]) {
     const value = params[key];
     if (value) {
@@ -50,11 +59,35 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
       conditions.push(key === "annee" ? eq(column, Number(value)) : eq(column, value));
     }
   }
+  for (const key of ATTRIBUT_SELECT_KEYS) {
+    const value = params[key];
+    if (value) conditions.push(sql`${annonces.attributs} ->> ${key} = ${value}`);
+  }
+  for (const key of ATTRIBUT_RANGE_KEYS) {
+    const min = params[`${key}_min`];
+    const max = params[`${key}_max`];
+    if (min) conditions.push(sql`(nullif(${annonces.attributs} ->> ${key}, ''))::numeric >= ${Number(min)}`);
+    if (max) conditions.push(sql`(nullif(${annonces.attributs} ->> ${key}, ''))::numeric <= ${Number(max)}`);
+  }
   return conditions;
 }
 
-export async function distinctOptions(categorie: Categorie, key: keyof typeof SELECT_COLUMNS): Promise<string[]> {
-  const column = SELECT_COLUMNS[key];
+export async function distinctOptions(categorie: Categorie, key: string): Promise<string[]> {
+  if ((ATTRIBUT_SELECT_KEYS as readonly string[]).includes(key)) {
+    const valeur = sql<string>`${annonces.attributs} ->> ${key}`;
+    const rows = await db
+      .selectDistinct({ valeur })
+      .from(annonces)
+      .where(and(eq(annonces.categorie, categorie), annonceVisiblePublic(), sql`${annonces.attributs} ? ${key}`))
+      // ORDER BY doit référencer la position de la colonne sélectionnée, pas
+      // ré-émettre l'expression : avec SELECT DISTINCT, Postgres refuse un
+      // ORDER BY qui n'apparaît pas littéralement dans la liste SELECT — deux
+      // interpolations `${key}` produisent deux paramètres distincts ($1/$2),
+      // pas la même expression syntaxique aux yeux du parseur.
+      .orderBy(sql`1`);
+    return rows.map((r) => r.valeur).filter(Boolean);
+  }
+  const column = SELECT_COLUMNS[key as keyof typeof SELECT_COLUMNS];
   const rows = await db
     .selectDistinct({ value: column })
     .from(annonces)

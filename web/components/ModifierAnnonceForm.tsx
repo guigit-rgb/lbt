@@ -19,6 +19,7 @@ const TYPES_VEHICULE = ["Berline", "Citadine", "SUV / 4x4", "Break", "Coupé", "
 const COULEURS = ["Noir", "Blanc", "Gris", "Bleu", "Rouge", "Vert", "Marron", "Beige", "Jaune", "Orange"];
 const SELLERIES = ["Tissu", "Cuir", "Simili-cuir"];
 const PERMIS_OPTIONS = ["Permis B", "Sans permis (voiturette)"];
+const CRIT_AIR_OPTIONS = ["Crit'Air E", "Crit'Air 1", "Crit'Air 2", "Crit'Air 3", "Crit'Air 4", "Crit'Air 5", "Non classé"];
 
 const initialState: CreerAnnonceResult = { success: true, id: "" };
 
@@ -343,6 +344,17 @@ export default function ModifierAnnonceForm({
                       placeholder="2026"
                       defaultValue={attributs.controleTechnique ?? ""}
                     />
+                  </label>
+                  <label>
+                    <span className="depot-question">Crit&apos;air</span>
+                    <select name="critAir" className="depot-select" defaultValue={attributs.critAir ?? ""}>
+                      <option value="">Choisissez</option>
+                      {CRIT_AIR_OPTIONS.map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                 </div>
 

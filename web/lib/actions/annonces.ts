@@ -35,6 +35,7 @@ const VEHICULE_ATTRIBUTS_TEXTE = [
   "permis",
   "controleTechnique",
   "miseEnCirculation",
+  "critAir",
 ] as const;
 
 function dansNJours(n: number): Date {
