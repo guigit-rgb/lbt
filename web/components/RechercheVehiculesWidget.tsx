@@ -14,6 +14,18 @@ const GROUPES_TYPE: Record<TypeIcone, readonly string[]> = {
   moto: TYPES_MOTO,
 };
 
+// Exemples qui s'auto-tapent puis s'effacent en boucle dans le champ IA, pour
+// attirer l'œil sur la fonctionnalité (retour de Nicolas du 2026-08-22,
+// reproduit depuis son enregistrement d'écran). Ne s'affiche jamais une fois
+// que l'internaute a lui-même tapé quelque chose : c'est un placeholder animé,
+// pas un texte réellement saisi.
+const EXEMPLES_IA = [
+  "Une familiale hybride à 23 000€ sur Paris",
+  "Un SUV automatique à moins de 30 000€",
+  "Une citadine diesel de moins de 5 ans",
+  "Un utilitaire avec attelage à moins de 15 000€",
+];
+
 export default function RechercheVehiculesWidget() {
   const router = useRouter();
   const [onglet, setOnglet] = useState<"acheter" | "vendre">("acheter");
@@ -27,6 +39,48 @@ export default function RechercheVehiculesWidget() {
   const [count, setCount] = useState<number | null>(null);
   const [erreur, setErreur] = useState("");
   const [recherche, setRecherche] = useState(false);
+  const [placeholderAnime, setPlaceholderAnime] = useState("");
+
+  // Effet machine à écrire du placeholder — tape puis efface chaque exemple
+  // en boucle. `setTimeout` s'enchaîne lui-même (pas de `setInterval` à
+  // vitesse fixe) pour pouvoir marquer une pause plus longue en fin de
+  // phrase avant d'effacer. `annule` coupe la chaîne au démontage.
+  useEffect(() => {
+    let annule = false;
+    let indexPhrase = 0;
+    let indexCaractere = 0;
+    let enSuppression = false;
+
+    function etape() {
+      if (annule) return;
+      const phrase = EXEMPLES_IA[indexPhrase];
+      if (!enSuppression) {
+        indexCaractere++;
+        setPlaceholderAnime(phrase.slice(0, indexCaractere));
+        if (indexCaractere >= phrase.length) {
+          enSuppression = true;
+          setTimeout(etape, 2200);
+          return;
+        }
+        setTimeout(etape, 45);
+      } else {
+        indexCaractere--;
+        setPlaceholderAnime(phrase.slice(0, indexCaractere));
+        if (indexCaractere <= 0) {
+          enSuppression = false;
+          indexPhrase = (indexPhrase + 1) % EXEMPLES_IA.length;
+          setTimeout(etape, 500);
+          return;
+        }
+        setTimeout(etape, 20);
+      }
+    }
+    const demarrage = setTimeout(etape, 600);
+    return () => {
+      annule = true;
+      clearTimeout(demarrage);
+    };
+  }, []);
 
   // Modèles en cascade — le reset (marque vidée ou changée) se fait dans le
   // onChange du <select> Marque, pas ici : un effet ne doit déclencher
@@ -205,16 +259,18 @@ export default function RechercheVehiculesWidget() {
           <label className="recherche-widget-ia-label">
             Décrivez votre voiture idéale <span className="recherche-widget-beta">BETA</span>
           </label>
-          <input
-            type="text"
-            className="recherche-widget-ia-input"
-            placeholder="Un SUV automatique à moins de 15 000 €…"
-            value={texteIA}
-            onChange={(e) => {
-              setTexteIA(e.target.value);
-              if (e.target.value.trim()) setCount(null);
-            }}
-          />
+          <div className="recherche-widget-ia-wrap">
+            <input
+              type="text"
+              className="recherche-widget-ia-input"
+              placeholder={placeholderAnime}
+              value={texteIA}
+              onChange={(e) => {
+                setTexteIA(e.target.value);
+                if (e.target.value.trim()) setCount(null);
+              }}
+            />
+          </div>
 
           {erreur && <p className="recherche-widget-erreur">{erreur}</p>}
 

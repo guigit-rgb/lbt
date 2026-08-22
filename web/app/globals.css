@@ -609,9 +609,36 @@
     display: inline-block; background: var(--ink); color: var(--paper); font-size: 0.62rem; font-weight: 700;
     letter-spacing: 0.04em; padding: 0.12rem 0.4rem; border-radius: 3px; vertical-align: middle; margin-left: 0.3rem;
   }
+  /* ---- halo animé du champ IA (reproduit l'enregistrement d'écran fourni
+     le 2026-08-22) : un dégradé conique flouté tourne en continu derrière
+     le champ, façon "IA" — @property permet d'animer l'angle en douceur au
+     lieu de faire tourner tout l'élément (ce qui tournerait aussi le texte). */
+  @property --recherche-ia-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+  }
+  .recherche-widget-ia-wrap { position: relative; margin-bottom: 1.1rem; }
+  .recherche-widget-ia-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 999px;
+    background: conic-gradient(from var(--recherche-ia-angle), #e2231a, #7c3aed, #2563eb, #e2231a);
+    filter: blur(11px);
+    opacity: 0.7;
+    z-index: 0;
+    animation: recherche-ia-rotation 3.5s linear infinite;
+  }
+  @keyframes recherche-ia-rotation {
+    to { --recherche-ia-angle: 360deg; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .recherche-widget-ia-wrap::before { animation: none; }
+  }
   .recherche-widget-ia-input {
-    width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 999px; font: inherit;
-    margin-bottom: 1.1rem; background: var(--surface); color: var(--ink);
+    position: relative; z-index: 1; width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--line);
+    border-radius: 999px; font: inherit; background: var(--surface); color: var(--ink);
   }
   .recherche-widget-ia-input:focus { outline: none; border-color: var(--brand-red); }
   .recherche-widget-erreur { color: var(--brand-red); font-size: 0.85rem; margin: -0.6rem 0 0.8rem; }
