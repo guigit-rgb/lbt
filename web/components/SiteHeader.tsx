@@ -94,6 +94,20 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
 export default function SiteHeader({ activeCategorie }: { activeCategorie?: Categorie }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session } = useSession();
+  const [recherchesCount, setRecherchesCount] = useState(0);
+
+  // Badge "Mes recherches" (nombre de recherches sauvegardées) — SiteHeader
+  // est un composant client sur toutes les pages, il ne peut pas lire la
+  // base directement, d'où l'aller-retour vers une route dédiée.
+  useEffect(() => {
+    if (!session) return;
+    const controller = new AbortController();
+    fetch("/api/compte/recherches/count", { signal: controller.signal })
+      .then((r) => r.json())
+      .then((data) => setRecherchesCount(data.count ?? 0))
+      .catch(() => {});
+    return () => controller.abort();
+  }, [session]);
 
   return (
     <div className="site-top">
@@ -118,6 +132,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             </Link>
             <Link className="icon-link" href="/compte/recherches">
               <span className="glyph">☆</span>Mes recherches
+              {recherchesCount > 0 && <span className="badge-count">{recherchesCount}</span>}
             </Link>
             {session ? (
               <>
@@ -191,6 +206,7 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             </Link>
             <Link className="icon-link" href="/compte/recherches" onClick={() => setMobileMenuOpen(false)}>
               <span className="glyph">☆</span>Mes recherches
+              {recherchesCount > 0 && <span className="badge-count">{recherchesCount}</span>}
             </Link>
           </nav>
         )}
