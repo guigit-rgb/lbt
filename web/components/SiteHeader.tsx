@@ -6,6 +6,19 @@ import { useSession, signOut } from "next-auth/react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY, type MegaMenuEntry } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
 
+// "Mes recherches" — icône ligne (pas un emoji comme les autres) : retour de
+// Nicolas du 2026-08-22, qui voulait un rendu plus "stylisé" que le pictogramme
+// emoji d'origine (⭐ puis ⚙️). `currentColor` reprend la couleur du texte de
+// `.icon-link`, donc s'accorde avec le thème sans réglage séparé.
+function IconeCloche() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </svg>
+  );
+}
+
 function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; activeCategorie?: Categorie }) {
   const itemRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -131,7 +144,10 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
               <span className="glyph">♡</span>Favoris
             </Link>
             <Link className="icon-link" href="/compte/recherches">
-              <span className="glyph glyph-recherches">⚙️</span>Mes recherches
+              <span className="glyph glyph-recherches">
+                <IconeCloche />
+              </span>
+              Mes recherches
               {recherchesCount > 0 && <span className="badge-count">{recherchesCount}</span>}
             </Link>
             {session ? (
@@ -205,7 +221,10 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
               <span className="glyph">♡</span>Favoris
             </Link>
             <Link className="icon-link" href="/compte/recherches" onClick={() => setMobileMenuOpen(false)}>
-              <span className="glyph glyph-recherches">⚙️</span>Mes recherches
+              <span className="glyph glyph-recherches">
+                <IconeCloche />
+              </span>
+              Mes recherches
               {recherchesCount > 0 && <span className="badge-count">{recherchesCount}</span>}
             </Link>
           </nav>
