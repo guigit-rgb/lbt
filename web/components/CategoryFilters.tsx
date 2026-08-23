@@ -25,6 +25,7 @@ const LABEL_OVERRIDES: Record<string, Record<string, string>> = {
   // lib/actions/annonces.ts) — une simple case à cocher réutilisant le
   // widget "checkbox" générique plutôt qu'une section dédiée comme "urgent".
   ascenseur: { "1": "Oui" },
+  dons: { "1": "Oui" },
 };
 
 function labelFor(key: string, value: string): string {

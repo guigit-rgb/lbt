@@ -20,6 +20,8 @@ import {
   ETATS_BIEN,
   DPE_CLASSES,
 } from "@/lib/immobilier-types";
+import { SUBCATEGORY_FILTERS, LOCATIONS_VACANCES } from "@/lib/subcategory-filters";
+import AttributsDynamiques from "@/components/AttributsDynamiques";
 
 type Annonce = typeof annonces.$inferSelect;
 
@@ -56,6 +58,29 @@ export default function ModifierAnnonceForm({
   const [caracteristiques, setCaracteristiques] = useState<string[]>(
     Array.isArray(attributs.caracteristiques) ? attributs.caracteristiques : []
   );
+
+  // Matériel pro, Électronique, Emploi, Mode, Maison & Jardin, Famille,
+  // Services, Animaux, Locations de vacances (et, en bonus, Loisirs — même
+  // mécanisme) : la sous-catégorie n'est pas modifiable ici, seuls ses
+  // champs le sont (cf. AttributsDynamiques).
+  const champsGeneriques =
+    annonce.categorie === "locations-vacances"
+      ? LOCATIONS_VACANCES
+      : (SUBCATEGORY_FILTERS[annonce.categorie]?.[annonce.sousCategorie ?? ""] ?? []);
+  const [attributsGeneriques, setAttributsGeneriques] = useState<Record<string, string>>(() => {
+    const init: Record<string, string> = {};
+    for (const champ of champsGeneriques) {
+      if (champ.key === "etat_produit") {
+        init[champ.key] = annonce.etatProduit ?? "";
+      } else if (champ.key === "type_animal") {
+        init[champ.key] = annonce.typeAnimal ?? "";
+      } else {
+        const valeur = attributs[champ.key];
+        init[champ.key] = Array.isArray(valeur) ? valeur.join(",") : (valeur ?? "");
+      }
+    }
+    return init;
+  });
 
   function toggleDansListe(liste: string[], setListe: (v: string[]) => void, valeur: string) {
     setListe(liste.includes(valeur) ? liste.filter((v) => v !== valeur) : [...liste, valeur]);
@@ -554,6 +579,22 @@ export default function ModifierAnnonceForm({
                   ))}
                 </div>
                 <input type="hidden" name="caracteristiques" value={caracteristiques.join(",")} />
+              </fieldset>
+            )}
+
+            {champsGeneriques.length > 0 && (
+              <fieldset style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "1.25rem", marginBottom: "1.25rem" }}>
+                <legend style={{ padding: "0 0.5rem", fontWeight: 600 }}>
+                  {annonce.sousCategorie ?? getFiltersForCategory(annonce.categorie).label}
+                </legend>
+                <AttributsDynamiques
+                  fields={champsGeneriques}
+                  values={attributsGeneriques}
+                  onChange={(k, v) => setAttributsGeneriques((prev) => ({ ...prev, [k]: v }))}
+                />
+                {Object.entries(attributsGeneriques).map(([k, v]) => (
+                  <input key={k} type="hidden" name={k} value={v} />
+                ))}
               </fieldset>
             )}
 

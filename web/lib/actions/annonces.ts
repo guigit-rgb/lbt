@@ -12,6 +12,9 @@ import { estFinDeVie } from "@/lib/annonce-display";
 import { geocoderAdresse } from "@/lib/geocodage";
 import { enregistrerPrixObserve } from "@/lib/prix-trajectoire";
 import { demarrerModificationPayante } from "@/lib/actions/paiements";
+import { SUBCATEGORY_FILTERS, LOCATIONS_VACANCES } from "@/lib/subcategory-filters";
+import { ATTRIBUT_ARRAY_KEYS } from "@/lib/attribut-keys";
+import type { FilterField } from "@/lib/filter-field";
 
 const DUREE_PUBLICATION_JOURS = 60;
 
@@ -51,6 +54,41 @@ const IMMOBILIER_ATTRIBUTS_TEXTE = [
   "etatBien",
   "dpe",
 ] as const;
+
+// Champs des ~50 sous-catégories génériques (lib/subcategory-filters.ts —
+// Matériel pro, Électronique, Emploi, Mode, Maison & Jardin, Famille,
+// Services, Animaux, Locations de vacances) : contrairement à
+// VEHICULE_ATTRIBUTS_TEXTE, la liste des champs dépend de la sous-catégorie
+// choisie, d'où une lecture générique plutôt qu'une liste figée. "etat_produit"
+// et "type_animal" restent des colonnes dédiées (déjà utilisées ailleurs —
+// annonce-display.ts, lib/annonce-filters.ts SELECT_COLUMNS) : ce sont les
+// deux seules clés à ne PAS atterrir dans `attributs`.
+function champsSousCategorie(categorie: Categorie, sousCategorie: string | undefined): FilterField[] {
+  if (categorie === "locations-vacances") return LOCATIONS_VACANCES;
+  return SUBCATEGORY_FILTERS[categorie]?.[sousCategorie ?? ""] ?? [];
+}
+
+function lireChampsDynamiques(
+  formData: FormData,
+  champs: FilterField[],
+  attributs: Record<string, string | string[]>
+): { etatProduit?: string; typeAnimal?: string } {
+  const colonnesDediees: { etatProduit?: string; typeAnimal?: string } = {};
+  for (const champ of champs) {
+    const valeur = optionalString(formData, champ.key);
+    if (!valeur) continue;
+    if (champ.key === "etat_produit") {
+      colonnesDediees.etatProduit = valeur;
+    } else if (champ.key === "type_animal") {
+      colonnesDediees.typeAnimal = valeur;
+    } else {
+      attributs[champ.key] = (ATTRIBUT_ARRAY_KEYS as readonly string[]).includes(champ.key)
+        ? valeur.split(",").filter(Boolean)
+        : valeur;
+    }
+  }
+  return colonnesDediees;
+}
 
 function dansNJours(n: number): Date {
   const date = new Date();
@@ -353,8 +391,6 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
   } else if (categorie === "loisirs") {
     sousCategorie = optionalString(formData, "sousCategorie");
     etatProduit = optionalString(formData, "etatProduit");
-  } else if (categorie === "animaux") {
-    typeAnimal = optionalString(formData, "typeAnimal");
   } else if (categorie === "immobilier") {
     for (const champ of IMMOBILIER_ATTRIBUTS_TEXTE) {
       const valeur = optionalString(formData, champ);
@@ -366,6 +402,13 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
     if (exterieur) attributs.exterieur = exterieur;
     const caracteristiques = optionalStringList(formData, "caracteristiques");
     if (caracteristiques) attributs.caracteristiques = caracteristiques;
+  } else {
+    // Matériel pro, Électronique, Emploi, Mode, Maison & Jardin, Famille,
+    // Services, Animaux, Locations de vacances — voir champsSousCategorie.
+    sousCategorie = optionalString(formData, "sousCategorie");
+    const dediees = lireChampsDynamiques(formData, champsSousCategorie(categorie, sousCategorie), attributs);
+    if (dediees.etatProduit) etatProduit = dediees.etatProduit;
+    if (dediees.typeAnimal) typeAnimal = dediees.typeAnimal;
   }
 
   const coordonnees = await geocoderAdresse(ville, codePostal);
@@ -447,6 +490,9 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
   let modele = annonce.modele ?? undefined;
   let annee = annonce.annee ?? undefined;
   let kilometrage = annonce.kilometrage ?? undefined;
+  let etatProduit = annonce.etatProduit ?? undefined;
+  let typeAnimal = annonce.typeAnimal ?? undefined;
+  const sousCategorie = annonce.sousCategorie ?? undefined;
 
   if (annonce.categorie === "vehicules") {
     marque = optionalString(formData, "marque") ?? marque;
@@ -485,6 +531,14 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
       if (caracteristiques) attributs.caracteristiques = caracteristiques;
       else delete attributs.caracteristiques;
     }
+  } else {
+    // Matériel pro, Électronique, Emploi, Mode, Maison & Jardin, Famille,
+    // Services, Animaux, Locations de vacances — la sous-catégorie n'est pas
+    // modifiable ici (cf. AttributsDynamiques dans ModifierAnnonceForm), donc
+    // toujours celle déjà enregistrée.
+    const dediees = lireChampsDynamiques(formData, champsSousCategorie(annonce.categorie, sousCategorie), attributs);
+    if (dediees.etatProduit) etatProduit = dediees.etatProduit;
+    if (dediees.typeAnimal) typeAnimal = dediees.typeAnimal;
   }
 
   // Ne regéocode que si la localisation a changé — un enregistrement sans
@@ -506,6 +560,8 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     modele,
     annee,
     kilometrage,
+    etatProduit,
+    typeAnimal,
     attributs,
   };
 
@@ -525,6 +581,8 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     modele === (annonce.modele ?? undefined) &&
     annee === (annonce.annee ?? undefined) &&
     kilometrage === (annonce.kilometrage ?? undefined) &&
+    etatProduit === (annonce.etatProduit ?? undefined) &&
+    typeAnimal === (annonce.typeAnimal ?? undefined) &&
     JSON.stringify(attributs) === JSON.stringify(annonce.attributs ?? {});
   const modificationGratuite = autresChampsInchanges && (prixInchange || prixEnBaisse);
 

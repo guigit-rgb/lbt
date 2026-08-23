@@ -9,22 +9,10 @@ import {
   ETATS_BIEN,
   DPE_CLASSES,
 } from "./immobilier-types";
+import type { FilterField } from "./filter-field";
+import { SOUS_CATEGORIES, SUBCATEGORY_FILTERS, LOCATIONS_VACANCES, DONS } from "./subcategory-filters";
 
-export type FilterWidget = "location" | "select" | "checkbox" | "marque" | "range" | "text";
-
-export interface FilterField {
-  key: string;
-  label: string;
-  widget: FilterWidget;
-  // Liste fermée de valeurs toujours proposées (même à 0 annonce) — sur le
-  // modèle du catalogue Marque (lib/marques.ts) : un acheteur doit voir
-  // "Piscine" comme option de recherche même si aucune annonce n'en a une
-  // aujourd'hui, plutôt qu'une section de filtre vide tant que le catalogue
-  // d'annonces est encore jeune (cf. retour de Nicolas du 2026-08-23, panneau
-  // Immobilier vide à son ouverture). Absent pour les filtres qui restent
-  // purement dérivés des valeurs déjà en base (ex. Modèle, Catégorie loisirs).
-  catalogue?: readonly string[];
-}
+export type { FilterField, FilterWidget } from "./filter-field";
 
 export interface ListingConfig {
   categorie: Categorie;
@@ -33,10 +21,25 @@ export interface ListingConfig {
   filters: FilterField[];
   supportsAvisExpert?: boolean;
   popularFilters?: string[];
+  // Champs supplémentaires propres à chaque sous-catégorie (lib/
+  // subcategory-filters.ts), fusionnés à `filters` par getFiltersForCategory
+  // une fois qu'une valeur de sous_categorie est active — pas avant, pour ne
+  // pas noyer le panneau de filtres tant qu'aucune sous-catégorie n'est
+  // choisie (cohérent avec le fonctionnement réel de leboncoin.fr : les
+  // filtres fins n'apparaissent qu'une fois entré dans une sous-catégorie).
+  subCategoryFilters?: Record<string, FilterField[]>;
 }
 
 const LOCATION_FILTER: FilterField = { key: "localisation", label: "Choisir une localisation", widget: "location" };
 const PRIX_FILTER: FilterField = { key: "prix", label: "Prix", widget: "range" };
+const SALAIRE_FILTER: FilterField = { key: "prix", label: "Salaire", widget: "range" };
+
+// Filtre de base "sous_categorie" pour une catégorie qui en a plusieurs (même
+// mécanisme que Loisirs, déjà en place) — catalogue toujours affiché, sur le
+// modèle déjà appliqué à Immobilier (retour de Nicolas du 2026-08-23).
+function sousCategorieFilter(categorie: Categorie): FilterField {
+  return { key: "sous_categorie", label: "Catégorie", widget: "select", catalogue: SOUS_CATEGORIES[categorie] };
+}
 
 const ENRICHED: Record<string, ListingConfig> = {
   vehicules: {
@@ -85,6 +88,7 @@ const ENRICHED: Record<string, ListingConfig> = {
       PRIX_FILTER,
     ],
     supportsAvisExpert: true,
+    subCategoryFilters: SUBCATEGORY_FILTERS.loisirs,
     popularFilters: [
       "Vélos",
       "Jeux & Jouets",
@@ -107,7 +111,11 @@ const ENRICHED: Record<string, ListingConfig> = {
     categorie: "animaux",
     label: "Animaux",
     h1: "Annonces Animaux, chiot, chaton",
-    filters: [LOCATION_FILTER, PRIX_FILTER, { key: "type_animal", label: "Type d'animal", widget: "select" }],
+    // "Type d'animal" et "État" ne sont plus systématiques : "Animaux
+    // perdus" (relevé leboncoin) n'a ni Prix ni Type d'animal — désormais
+    // propres à la sous-catégorie choisie, cf. subCategoryFilters ci-dessous.
+    filters: [LOCATION_FILTER, sousCategorieFilter("animaux"), PRIX_FILTER],
+    subCategoryFilters: SUBCATEGORY_FILTERS.animaux,
   },
   immobilier: {
     categorie: "immobilier",
@@ -137,27 +145,89 @@ const ENRICHED: Record<string, ListingConfig> = {
     ],
     popularFilters: ["Maison", "Appartement", "Terrain", "Parking", "Balcon", "Jardin", "Piscine", "Avec ascenseur"],
   },
-};
-
-const GENERIC_LABELS: Record<string, string> = {
-  "locations-vacances": "Locations de vacances",
-  emploi: "Emploi",
-  mode: "Mode",
-  "maison-jardin": "Maison & jardin",
-  electronique: "Électronique",
-  "materiel-pro": "Matériel pro",
-  famille: "Famille",
-  services: "Services",
-  autres: "Autres",
-  dons: "Dons",
+  "materiel-pro": {
+    categorie: "materiel-pro",
+    label: "Matériel pro",
+    h1: "Annonces Matériel professionnel",
+    filters: [LOCATION_FILTER, sousCategorieFilter("materiel-pro"), PRIX_FILTER],
+    subCategoryFilters: SUBCATEGORY_FILTERS["materiel-pro"],
+  },
+  electronique: {
+    categorie: "electronique",
+    label: "Électronique",
+    h1: "Annonces Électronique",
+    filters: [LOCATION_FILTER, sousCategorieFilter("electronique"), PRIX_FILTER, DONS],
+    subCategoryFilters: SUBCATEGORY_FILTERS.electronique,
+  },
+  emploi: {
+    categorie: "emploi",
+    label: "Emploi",
+    h1: "Annonces Emploi",
+    // "Salaire" plutôt que "Prix" (le champ reste `prix`, cf.
+    // lib/annonce-filters.ts) — libellé plus juste pour cette catégorie,
+    // relevé leboncoin ("Tri : Salaires croissants/décroissants").
+    filters: [LOCATION_FILTER, sousCategorieFilter("emploi"), SALAIRE_FILTER],
+    subCategoryFilters: SUBCATEGORY_FILTERS.emploi,
+  },
+  mode: {
+    categorie: "mode",
+    label: "Mode",
+    h1: "Annonces Mode",
+    filters: [LOCATION_FILTER, sousCategorieFilter("mode"), PRIX_FILTER, DONS],
+    subCategoryFilters: SUBCATEGORY_FILTERS.mode,
+  },
+  "maison-jardin": {
+    categorie: "maison-jardin",
+    label: "Maison & jardin",
+    h1: "Annonces Maison & jardin",
+    filters: [LOCATION_FILTER, sousCategorieFilter("maison-jardin"), PRIX_FILTER, DONS],
+    subCategoryFilters: SUBCATEGORY_FILTERS["maison-jardin"],
+  },
+  famille: {
+    categorie: "famille",
+    label: "Famille",
+    h1: "Annonces Famille",
+    filters: [LOCATION_FILTER, sousCategorieFilter("famille"), PRIX_FILTER, DONS],
+    subCategoryFilters: SUBCATEGORY_FILTERS.famille,
+  },
+  services: {
+    categorie: "services",
+    label: "Services",
+    h1: "Annonces Services",
+    filters: [LOCATION_FILTER, sousCategorieFilter("services"), PRIX_FILTER],
+    subCategoryFilters: SUBCATEGORY_FILTERS.services,
+  },
+  "locations-vacances": {
+    categorie: "locations-vacances",
+    label: "Locations de vacances",
+    h1: "Annonces Locations de vacances",
+    // Uniquement les filtres de liste (Type de bien, hébergement,
+    // équipements, capacité) — pas de recherche cartographique par
+    // destination/dates/voyageurs, absente de LBT (voir lib/
+    // subcategory-filters.ts pour le détail de cette limite assumée).
+    filters: [LOCATION_FILTER, PRIX_FILTER, ...LOCATIONS_VACANCES],
+  },
+  autres: {
+    categorie: "autres",
+    label: "Autres",
+    h1: "Annonces Autres",
+    filters: [LOCATION_FILTER, PRIX_FILTER, DONS],
+  },
+  dons: {
+    categorie: "dons",
+    label: "Dons",
+    h1: "Annonces Dons",
+    // Pas de filtre Prix : par construction, une annonce déposée dans cette
+    // catégorie est gratuite (cf. lib/categories.ts DONS_ENTRY).
+    filters: [LOCATION_FILTER],
+  },
 };
 
 function genericConfig(categorie: Categorie): ListingConfig {
-  const label = GENERIC_LABELS[categorie] ?? categorie;
   return {
     categorie,
-    label,
-    h1: `Annonces ${label}`,
+    label: categorie,
+    h1: `Annonces ${categorie}`,
     filters: [LOCATION_FILTER, PRIX_FILTER],
   };
 }
@@ -166,6 +236,13 @@ const FILTERS_BY_CATEGORY: Record<Categorie, ListingConfig> = Object.fromEntries
   CATEGORIES.map((categorie) => [categorie, ENRICHED[categorie] ?? genericConfig(categorie)])
 ) as Record<Categorie, ListingConfig>;
 
-export function getFiltersForCategory(categorie: Categorie): ListingConfig {
-  return FILTERS_BY_CATEGORY[categorie];
+// `sousCategorie` (valeur de `sous_categorie` déjà sélectionnée, ex. dans
+// l'URL de la page catégorie) ajoute les champs propres à cette
+// sous-catégorie à la fin de `filters` — absent, seuls les filtres de base
+// apparaissent (cf. ListingConfig.subCategoryFilters ci-dessus).
+export function getFiltersForCategory(categorie: Categorie, sousCategorie?: string): ListingConfig {
+  const base = FILTERS_BY_CATEGORY[categorie];
+  const extra = sousCategorie ? base.subCategoryFilters?.[sousCategorie] : undefined;
+  if (!extra || extra.length === 0) return base;
+  return { ...base, filters: [...base.filters, ...extra] };
 }

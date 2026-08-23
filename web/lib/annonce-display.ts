@@ -2,6 +2,31 @@ import { and, desc, eq, gt, inArray, isNull, ne, or, type SQL } from "drizzle-or
 import { db } from "@/lib/db/client";
 import { annonceImages, annonces } from "@/lib/db/schema";
 import type { FakeAd } from "@/lib/fake-data";
+import { getFiltersForCategory } from "@/lib/listing-config";
+
+// Clés déjà affichées à part (sous_categorie, état) ou qui ne sont pas des
+// caractéristiques du bien (localisation, prix) — à exclure du fallback
+// générique ci-dessous pour ne pas les répéter.
+const CLES_GENERIQUES_EXCLUES = new Set(["localisation", "prix", "sous_categorie", "etat_produit"]);
+
+// Caractéristiques d'une annonce des ~50 sous-catégories génériques
+// (Matériel pro, Électronique, Emploi, Mode, Maison & Jardin, Famille,
+// Services, Animaux, Locations de vacances) à partir de `attributs` et des
+// libellés déjà définis dans lib/subcategory-filters.ts — pas de bloc dédié
+// par sous-catégorie comme pour Véhicules/Immobilier, pour les mêmes raisons
+// que components/AttributsDynamiques.tsx côté dépôt.
+function attributsGeneriquesAffiches(row: AnnonceRow): { label: string; value: string }[] {
+  const config = getFiltersForCategory(row.categorie, row.sousCategorie ?? undefined);
+  const attributs = row.attributs as Record<string, string | string[]>;
+  const specs: { label: string; value: string }[] = [];
+  for (const field of config.filters) {
+    if (CLES_GENERIQUES_EXCLUES.has(field.key)) continue;
+    const valeur = attributs[field.key];
+    if (!valeur || (Array.isArray(valeur) && valeur.length === 0)) continue;
+    specs.push({ label: field.label, value: Array.isArray(valeur) ? valeur.join(", ") : valeur });
+  }
+  return specs;
+}
 
 export type AnnonceRow = typeof annonces.$inferSelect;
 export type EtatAnnonce = AnnonceRow["etat"];
@@ -79,6 +104,8 @@ function sousLigne(row: AnnonceRow): string {
     const attributs = row.attributs as Record<string, string>;
     if (attributs.typeBien) parts.push(attributs.typeBien);
     if (attributs.surfaceHabitable) parts.push(`${attributs.surfaceHabitable} m²`);
+  } else if (row.sousCategorie) {
+    parts.push(row.sousCategorie);
   }
   if (row.ville) parts.push(row.ville);
   return parts.join(" · ") || "France";
@@ -164,7 +191,10 @@ function specsListe(row: AnnonceRow): AdRowSpec[] {
     if (attributs.pieces) specs.push({ label: "Pièces", value: attributs.pieces });
     return specs;
   }
-  return [];
+  const specs: AdRowSpec[] = [];
+  if (row.sousCategorie) specs.push({ label: "Catégorie", value: row.sousCategorie });
+  if (row.etatProduit) specs.push({ label: "État", value: row.etatProduit });
+  return specs.length > 0 ? specs : attributsGeneriquesAffiches(row).slice(0, 2);
 }
 
 // Convertit une ligne réelle vers la forme attendue par <AdRow> — la vue en
@@ -273,7 +303,11 @@ export function detailInformationsCles(row: AnnonceRow): AdDetailSpec[] {
     }
     return specs;
   }
-  return [];
+  const specs: AdDetailSpec[] = [];
+  if (row.sousCategorie) specs.push({ icon: "🏷️", label: "Sous-catégorie", value: row.sousCategorie });
+  if (row.etatProduit) specs.push({ icon: "✅", label: "État", value: row.etatProduit });
+  specs.push(...attributsGeneriquesAffiches(row).map((s) => ({ icon: "•", ...s })));
+  return specs;
 }
 
 // Autres annonces en ligne du même vendeur (hors annonce courante) — pour la

@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, gte, ilike, isNotNull, lte, sql, type SQL } fro
 import { db } from "@/lib/db/client";
 import { annonces, users, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
+import { ATTRIBUT_ARRAY_KEYS } from "./attribut-keys";
 
 // Colonne réelle derrière chaque filtre "select" — tenue à part de
 // lib/listing-config.ts pour ne pas faire dépendre ce fichier partagé
@@ -24,7 +25,19 @@ export const ATTRIBUT_SELECT_KEYS = ["carburant", "boite", "critAir"] as const;
 // une seule valeur numérique par annonce, filtrée en plage min/max. Le
 // panneau de filtres saisit "8+" comme un simple minimum à 8 sans maximum,
 // plutôt que de dupliquer la liste fermée de boutons 1-8+ de leboncoin.
-export const ATTRIBUT_RANGE_KEYS = ["puissanceDin", "surfaceHabitable", "surfaceTerrain", "pieces", "chambres"] as const;
+export const ATTRIBUT_RANGE_KEYS = [
+  "puissanceDin",
+  "surfaceHabitable",
+  "surfaceTerrain",
+  "pieces",
+  "chambres",
+  // Matériel professionnel (lib/subcategory-filters.ts) — kilométrage et
+  // année réutilisent les colonnes dédiées déjà gérées plus bas dans cette
+  // fonction (kilometrage_min/max, annee_min/max), pas cette liste.
+  "puissance",
+  "heures",
+  "poids",
+] as const;
 // Permis : cocher plusieurs valeurs à la fois dans le panneau de filtres
 // (ex. "Avec permis" + "Sans permis" cochés ensemble = pas de restriction).
 // typeVehicule : le panneau de filtres reste en sélection unique (widget
@@ -49,13 +62,67 @@ export const ATTRIBUT_MULTI_KEYS = [
   "etatBien",
   "dpe",
   "ascenseur",
+  // Clés génériques réutilisées par plusieurs sous-catégories (lib/
+  // subcategory-filters.ts) — un même nom (ex. "couleur", "type") porte un
+  // sens différent selon la sous-catégorie active, sans risque de
+  // contamination croisée : la page catégorie/sous-catégorie (`categorie` +
+  // `sous_categorie`, déjà dans SELECT_COLUMNS) reste systématiquement dans
+  // les conditions de la requête, y compris pour le calcul des compteurs
+  // par option (optionCounts ne retire que la clé du filtre courant).
+  "produit",
+  "marqueProduit",
+  "modeleProduit",
+  "couleur",
+  "matiere",
+  "type",
+  "univers",
+  "tailleEcran",
+  "capaciteStockage",
+  "compatibilite",
+  "plateforme",
+  "protectionPanne",
+  "typePose",
+  "typeContrat",
+  "secteurActivite",
+  "fonction",
+  "experience",
+  "niveauEtudes",
+  "tempsTravail",
+  "eligibleCpf",
+  "domaineFormation",
+  "typeEnseignement",
+  "taille",
+  "pointure",
+  "piece",
+  "style",
+  "dimensions",
+  "genreBebe",
+  "trancheAge",
+  "epoque",
+  "conditionnement",
+  "support",
+  "genre",
+  "edition",
+  "packaging",
+  "niveau",
+  "format",
+  "langue",
+  "echelle",
+  "age",
+  "cible",
+  "activite",
+  "tailleVelo",
+  "tailleRoue",
+  "typeHebergement",
+  "servicesInclus",
+  "capacite",
 ] as const;
 // Extérieur/Caractéristiques immobilier : contrairement aux clés ci-dessus,
 // une même annonce peut cumuler PLUSIEURS valeurs à la fois (un bien peut
 // avoir à la fois un balcon ET un jardin) — stockées comme un tableau JSON
 // dans `attributs`, et non comme une chaîne unique. Le filtre matche une
 // annonce dès qu'elle porte au moins une des valeurs cochées.
-export const ATTRIBUT_ARRAY_KEYS = ["exterieur", "caracteristiques"] as const;
+export { ATTRIBUT_ARRAY_KEYS };
 
 function isAttributSelectKey(key: string): key is (typeof ATTRIBUT_SELECT_KEYS)[number] {
   return (ATTRIBUT_SELECT_KEYS as readonly string[]).includes(key);
@@ -184,6 +251,12 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
   if (params.urgent === "1") {
     conditions.push(gt(annonces.urgentJusqua, new Date()));
   }
+  // "Dons uniquement" (lib/subcategory-filters.ts) : pas un attribut stocké,
+  // juste un raccourci vers un prix nul — sur le modèle de `urgent` ci-dessus
+  // plutôt qu'une entrée ATTRIBUT_*_KEYS qui n'aurait aucun sens ici.
+  if (params.dons === "1") {
+    conditions.push(eq(annonces.prixCents, 0));
+  }
   return conditions;
 }
 
@@ -199,6 +272,18 @@ export async function optionCounts(
   const reste = { ...params };
   delete reste[key];
   const conditions = buildAnnonceConditions(categorie, reste);
+
+  // "Dons uniquement" : pas un attribut JSONB, un simple raccourci vers
+  // prix = 0 (cf. buildAnnonceConditions) — une seule case à cocher, sur le
+  // modèle d'ascenseur/urgent plutôt qu'un vrai comptage par valeur.
+  if (key === "dons") {
+    const [ligne] = await db
+      .select({ total: sql<number>`count(*)::int` })
+      .from(annonces)
+      .innerJoin(users, eq(annonces.userId, users.id))
+      .where(and(...conditions, eq(annonces.prixCents, 0)));
+    return [{ value: "1", count: ligne?.total ?? 0 }];
+  }
 
   // Jointure users systématique : buildAnnonceConditions peut référencer
   // users.estPro dès qu'un filtre "vendeur" est actif à côté de celui-ci, et

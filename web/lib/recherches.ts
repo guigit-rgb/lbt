@@ -17,7 +17,7 @@ export interface RechercheSauvegardee {
 // à partir des libellés déjà définis dans lib/listing-config.ts — jamais
 // dupliqués ici.
 function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): string {
-  const config = getFiltersForCategory(categorie);
+  const config = getFiltersForCategory(categorie, filtres.sous_categorie);
   const morceaux: string[] = [];
 
   if (filtres.localisation) {

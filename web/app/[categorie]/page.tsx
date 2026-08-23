@@ -36,7 +36,10 @@ export default async function CategorieListingPage({
     notFound();
   }
 
-  const config = getFiltersForCategory(categorie);
+  // sous_categorie est déjà l'un des filtres actifs (`sp`) : les champs
+  // propres à cette sous-catégorie ne rejoignent le panneau qu'une fois
+  // qu'elle est choisie (cf. lib/listing-config.ts ListingConfig.subCategoryFilters).
+  const config = getFiltersForCategory(categorie, sp.sous_categorie);
   const conditions = buildAnnonceConditions(categorie, sp);
 
   const TRIS = ["pertinence", "recentes", "anciennes", "prix_asc", "prix_desc"] as const;

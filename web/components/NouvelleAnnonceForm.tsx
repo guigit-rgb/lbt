@@ -18,6 +18,25 @@ import {
   ETATS_BIEN,
   DPE_CLASSES,
 } from "@/lib/immobilier-types";
+import { SOUS_CATEGORIES, SUBCATEGORY_FILTERS, LOCATIONS_VACANCES } from "@/lib/subcategory-filters";
+import AttributsDynamiques from "@/components/AttributsDynamiques";
+import type { Categorie as CategorieType } from "@/lib/db/schema";
+
+// Catégories dont les champs de dépôt dépendent entièrement de la
+// sous-catégorie choisie (lib/subcategory-filters.ts) — un seul moteur
+// générique (AttributsDynamiques) plutôt qu'un bloc JSX par catégorie,
+// contrairement à Véhicules/Loisirs/Immobilier qui ont leurs propres champs
+// dédiés depuis avant cette session.
+const CATEGORIES_SOUS_CATEGORIE_GENERIQUE: readonly CategorieType[] = [
+  "materiel-pro",
+  "electronique",
+  "emploi",
+  "mode",
+  "maison-jardin",
+  "famille",
+  "services",
+  "animaux",
+];
 
 interface Suggestion {
   categorie: Categorie;
@@ -43,7 +62,6 @@ const LOISIRS_SOUS_CATEGORIES = MEGA_MENU.find((e) => e.categorie === "loisirs")
 
 const CARBURANTS = ["Essence", "Diesel", "Hybride", "Électrique", "Autre"];
 const ETATS_PRODUIT = ["Neuf", "Très bon état", "Bon état", "Satisfaisant"];
-const TYPES_ANIMAUX = ["Chien", "Chat", "Oiseau", "Rongeur", "Autre"];
 
 const PORTES = ["2", "3", "4", "5"];
 const PLACES = ["2", "4", "5", "7", "9"];
@@ -146,7 +164,13 @@ export default function NouvelleAnnonceForm() {
 
   const [sousCategorie, setSousCategorie] = useState("");
   const [etatProduit, setEtatProduit] = useState("");
-  const [typeAnimal, setTypeAnimal] = useState("");
+
+  // Matériel pro, Électronique, Emploi, Mode, Maison & Jardin, Famille,
+  // Services, Animaux (sous_categorie + champs génériques) et Locations de
+  // vacances (champs génériques seuls, pas de sous-catégorie) — un seul
+  // moteur (AttributsDynamiques) au lieu d'un bloc dédié par catégorie.
+  const [sousCategorieGenerique, setSousCategorieGenerique] = useState("");
+  const [attributsGeneriques, setAttributsGeneriques] = useState<Record<string, string>>({});
 
   const [typeBien, setTypeBien] = useState("");
   const [typeVente, setTypeVente] = useState("");
@@ -220,7 +244,7 @@ export default function NouvelleAnnonceForm() {
       if (sousCategorie) details["Catégorie"] = sousCategorie;
       if (etatProduit) details["État"] = etatProduit;
     } else if (categorie === "animaux") {
-      if (typeAnimal) details["Type d'animal"] = typeAnimal;
+      if (attributsGeneriques.type_animal) details["Type d'animal"] = attributsGeneriques.type_animal;
     } else if (categorie === "immobilier") {
       if (typeBien) details["Type de bien"] = typeBien;
       if (surfaceHabitable) details["Surface habitable"] = `${surfaceHabitable} m²`;
@@ -247,7 +271,11 @@ export default function NouvelleAnnonceForm() {
   }
 
   const hasDetailStep =
-    categorie === "vehicules" || categorie === "loisirs" || categorie === "animaux" || categorie === "immobilier";
+    categorie === "vehicules" ||
+    categorie === "loisirs" ||
+    categorie === "immobilier" ||
+    categorie === "locations-vacances" ||
+    (categorie !== "" && CATEGORIES_SOUS_CATEGORIE_GENERIQUE.includes(categorie));
   const totalSteps = hasDetailStep ? 7 : 6;
   const displayStep = hasDetailStep || step < 3 ? step : step - 1;
 
@@ -756,21 +784,36 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
-            {step === 3 && hasDetailStep && categorie === "animaux" && (
+            {step === 3 && hasDetailStep && CATEGORIES_SOUS_CATEGORIE_GENERIQUE.includes(categorie) && (
               <section>
-                <span className="depot-question">Type d&apos;animal</span>
-                <div className="depot-chip-row">
-                  {TYPES_ANIMAUX.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`depot-chip${typeAnimal === t ? " active" : ""}`}
-                      onClick={() => setTypeAnimal(t)}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
+                {(SOUS_CATEGORIES[categorie] ?? []).length > 0 && (
+                  <>
+                    <span className="depot-question">Sous-catégorie</span>
+                    <div className="depot-chip-row">
+                      {(SOUS_CATEGORIES[categorie] ?? []).map((sc) => (
+                        <button
+                          key={sc}
+                          type="button"
+                          className={`depot-chip${sousCategorieGenerique === sc ? " active" : ""}`}
+                          onClick={() => {
+                            setSousCategorieGenerique(sc);
+                            setAttributsGeneriques({});
+                          }}
+                        >
+                          {sc}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {sousCategorieGenerique && (
+                  <AttributsDynamiques
+                    fields={SUBCATEGORY_FILTERS[categorie]?.[sousCategorieGenerique] ?? []}
+                    values={attributsGeneriques}
+                    onChange={(k, v) => setAttributsGeneriques((prev) => ({ ...prev, [k]: v }))}
+                  />
+                )}
 
                 <div className="depot-actions">
                   <button type="button" className="btn btn-outline" onClick={back}>
@@ -935,6 +978,25 @@ export default function NouvelleAnnonceForm() {
               </section>
             )}
 
+            {step === 3 && hasDetailStep && categorie === "locations-vacances" && (
+              <section>
+                <AttributsDynamiques
+                  fields={LOCATIONS_VACANCES}
+                  values={attributsGeneriques}
+                  onChange={(k, v) => setAttributsGeneriques((prev) => ({ ...prev, [k]: v }))}
+                />
+
+                <div className="depot-actions">
+                  <button type="button" className="btn btn-outline" onClick={back}>
+                    Retour
+                  </button>
+                  <button type="button" className="btn btn-accent" onClick={next}>
+                    Continuer
+                  </button>
+                </div>
+              </section>
+            )}
+
             {step === 4 && (
               <section>
                 <button
@@ -1037,16 +1099,16 @@ export default function NouvelleAnnonceForm() {
                       <strong>Détails :</strong> {sousCategorie} — {etatProduit}
                     </li>
                   )}
-                  {categorie === "animaux" && (
-                    <li>
-                      <strong>Type :</strong> {typeAnimal}
-                    </li>
-                  )}
                   {categorie === "immobilier" && (
                     <li>
                       <strong>Bien :</strong> {typeBien} — {surfaceHabitable && `${surfaceHabitable} m², `}
                       {pieces && `${pieces} pièces, `}
                       {chambres && `${chambres} chambres`}
+                    </li>
+                  )}
+                  {categorie !== "" && CATEGORIES_SOUS_CATEGORIE_GENERIQUE.includes(categorie) && sousCategorieGenerique && (
+                    <li>
+                      <strong>Sous-catégorie :</strong> {sousCategorieGenerique}
                     </li>
                   )}
                   <li>
@@ -1097,7 +1159,6 @@ export default function NouvelleAnnonceForm() {
                       <input type="hidden" name="etatProduit" value={etatProduit} />
                     </>
                   )}
-                  {categorie === "animaux" && <input type="hidden" name="typeAnimal" value={typeAnimal} />}
                   {categorie === "immobilier" && (
                     <>
                       <input type="hidden" name="typeBien" value={typeBien} />
@@ -1115,6 +1176,12 @@ export default function NouvelleAnnonceForm() {
                       <input type="hidden" name="dpe" value={dpe} />
                     </>
                   )}
+                  {categorie !== "" && CATEGORIES_SOUS_CATEGORIE_GENERIQUE.includes(categorie) && (
+                    <input type="hidden" name="sousCategorie" value={sousCategorieGenerique} />
+                  )}
+                  {((categorie !== "" && CATEGORIES_SOUS_CATEGORIE_GENERIQUE.includes(categorie)) ||
+                    categorie === "locations-vacances") &&
+                    Object.entries(attributsGeneriques).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
 
                   {"error" in state && state.error ? (
                     <p role="alert" style={{ color: "var(--brand-red)" }}>
