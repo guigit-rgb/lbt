@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY, type MegaMenuEntry } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
+import { hrefRubriqueMegaMenu, hrefLienMegaMenu } from "@/lib/mega-menu-href";
 
 // "Mes recherches" — icône ligne (pas un emoji comme les autres) : retour de
 // Nicolas du 2026-08-22, qui voulait un rendu plus "stylisé" que le pictogramme
@@ -80,17 +81,17 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
             {column.map((group, groupIndex) => (
               <div className="mega-group" key={groupIndex}>
                 {group.heading && (
-                  <Link href={`/${entry.categorie}`}>
+                  <Link href={hrefRubriqueMegaMenu(entry.categorie, group.heading)}>
                     <h4>{group.heading}</h4>
                   </Link>
                 )}
                 {group.links.length === 1 && !group.heading ? (
-                  <Link className="mega-head" href={`/${entry.categorie}`}>
+                  <Link className="mega-head" href={hrefLienMegaMenu(entry.categorie, group.heading, group.links[0].label)}>
                     {group.links[0].label}
                   </Link>
                 ) : (
                   group.links.map((link) => (
-                    <Link key={link.label} href={`/${entry.categorie}`}>
+                    <Link key={link.label} href={hrefLienMegaMenu(entry.categorie, group.heading, link.label)}>
                       {link.label}
                     </Link>
                   ))
