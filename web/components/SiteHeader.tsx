@@ -64,7 +64,7 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
         <span className="ic">{entry.icon}</span>
         <span className="t">{entry.label}</span>
       </button>
-      <div className={`submenu mega${entry.columns.length >= 4 ? " cols-4" : ""}`}>
+      <div className={`submenu mega cols-${Math.min(entry.columns.length, 4)}`}>
         <div className="mega-side">
           <span className="mega-side-label">
             <span className="mega-side-ic">{entry.icon}</span>
