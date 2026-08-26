@@ -132,7 +132,10 @@ export default async function AnnonceDetailPage({
 
               {!isOwner && row.vendeurTelephone && (
                 <div className="ad-detail-phone">
-                  <RevealPhoneButton telephone={row.vendeurTelephone} />
+                  <RevealPhoneButton
+                    telephone={row.vendeurTelephone}
+                    annonceId={row.annonce.id}
+                  />
                 </div>
               )}
 

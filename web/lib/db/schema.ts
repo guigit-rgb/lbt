@@ -311,6 +311,87 @@ export const messages = pgTable(
   (table) => [index("messages_conversation_idx").on(table.conversationId)]
 );
 
+// Journal des mises en relation acheteur → vendeur (cahier des charges §5.3
+// Résultat n°6, version dégradée de l'action §17 n°209). C'est l'instrument
+// de mesure de λ — le nombre de contacts livrés par garage et par mois — donc
+// le seul critère de sortie du go/no-go (§13.2 Résultat n°3). Avant cette
+// table, LBT ne produisait aucune trace de contact, pas même un log.
+//
+// AJOUT SEUL. Jamais d'`update`, jamais de `delete` : la §5.3 fait du compteur
+// le résultat d'une fonction pure rejouable appliquée à ce journal, et une
+// ligne modifiée après coup rend tout l'historique de facturation
+// incontestable au mauvais sens du terme.
+//
+// CE QUI N'EST PAS ICI, ET C'EST VOLONTAIRE : ni `statut`, ni
+// `motif_exclusion`, ni le code `Q1..Q4 / N1..N8` de la §5.3. Ce sont des
+// *sorties* de `compter(evenements, periode, version_regles)`, pas des faits.
+// Les figer à l'écriture interdirait précisément le rejeu que la §5.3 exige
+// (un mois clos doit se recalculer avec la version de règles de ce mois-là).
+// Le journal ne porte donc que les faits dont les règles ont besoin :
+// l'événement, le canal, le vendeur, l'annonce, et l'état de vérification de
+// l'acheteur à l'instant du contact.
+export const evenementContact = pgTable(
+  "evenement_contact",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    horodatageUtc: timestamp("horodatage_utc", { withTimezone: true }).notNull().defaultNow(),
+    // Fait observé, pas qualification. Correspondance avec la §5.3 :
+    //   - `affichage_numero`     → N2 (intention, jamais un contact facturable :
+    //                               le garage ne peut ni le voir ni le contester)
+    //   - `premier_message`      → Q1, sous réserve de `acheteur_verifie`
+    //   - `notification_interet` → N1 (geste de favori, pas une prise de contact)
+    // `appel_abouti` et `formulaire` viendront avec le CPaaS (lot complet §5.3).
+    evenement: text("evenement", {
+      enum: ["affichage_numero", "premier_message", "notification_interet"],
+    }).notNull(),
+    canal: text("canal", { enum: ["telephone", "messagerie", "formulaire"] }).notNull(),
+    idVendeur: uuid("id_vendeur")
+      .notNull()
+      .references(() => users.id),
+    idAnnonce: uuid("id_annonce").references(() => annonces.id, { onDelete: "set null" }),
+    // Instantané du statut pro du vendeur au moment du contact. `users.est_pro`
+    // est modifiable à tout instant : lu au moment de la facturation, il ferait
+    // basculer rétroactivement des contacts d'un régime à l'autre.
+    vendeurEstPro: boolean("vendeur_est_pro").notNull().default(false),
+    // Empreinte HMAC-SHA256 de l'identifiant de l'acheteur (§5.3 R6, §8.7 R4).
+    // Le numéro E.164 n'est pas encore disponible (pas d'OTP au MVP) : voir
+    // `empreinte_source`, qui dit de quoi l'empreinte est calculée et donc ce
+    // que la déduplication vaut réellement.
+    empreinteAcheteur: text("empreinte_acheteur").notNull(),
+    // `telephone_verifie` : OTP (cible §5.3 R4) — déduplication par personne.
+    //   `compte`         : identifiant du compte connecté — déduplication par
+    //                      compte, contournable par création de comptes.
+    //   `navigateur`     : IP + user-agent d'un visiteur non connecté — ce
+    //                      n'est PAS une identité : même IP partagée = même
+    //                      empreinte, navigation privée = empreinte neuve.
+    // Un comptage qui mélangerait les trois sources produirait un λ faux sans
+    // le dire ; cette colonne est ce qui permet de les compter séparément.
+    empreinteSource: text("empreinte_source", {
+      enum: ["telephone_verifie", "compte", "navigateur"],
+    }).notNull(),
+    // Condition du Q1 de la §5.3, enregistrée comme fait et non déduite plus
+    // tard : faux partout tant que l'OTP acheteur n'existe pas.
+    acheteurVerifie: boolean("acheteur_verifie").notNull().default(false),
+    // Clé de déduplication `(empreinte_acheteur, id_vendeur)` sur 30 jours
+    // glissants (§5.3 R2). Stockée plutôt que calculée pour rester stable
+    // quand le poivre tournera (action n°202).
+    cleDedup: text("cle_dedup").notNull(),
+    // Lien vers la preuve, jamais la preuve : identifiant de conversation pour
+    // la messagerie, futur identifiant de CDR pour le téléphone.
+    idPreuve: text("id_preuve"),
+    // Tronqué à 120 caractères à l'écriture : sert à écarter les robots
+    // (§5.3 R5), pas à profiler.
+    userAgentTronque: text("user_agent_tronque"),
+    // Version du jeu de règles en vigueur à l'instant de l'événement — sans
+    // elle, une évolution des règles réécrit l'historique de facturation.
+    versionRegles: text("version_regles").notNull().default("v0-degradee"),
+  },
+  (table) => [
+    index("evenement_contact_vendeur_idx").on(table.idVendeur, table.horodatageUtc),
+    index("evenement_contact_dedup_idx").on(table.cleDedup, table.horodatageUtc),
+  ]
+);
+
 export const recherchesSauvegardees = pgTable(
   "recherches_sauvegardees",
   {
