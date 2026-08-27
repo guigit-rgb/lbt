@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { desc, asc, eq, and } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import AdRow from "@/components/AdRow";
@@ -9,7 +9,17 @@ import { db } from "@/lib/db/client";
 import { annonces, users, CATEGORIES, type Categorie } from "@/lib/db/schema";
 import { getFiltersForCategory } from "@/lib/listing-config";
 import { annonceToRowData, getCoverUrls } from "@/lib/annonce-display";
-import { buildAnnonceConditions, optionCounts, typeAnnonceCounts, urgentCount, vendeurCounts } from "@/lib/annonce-filters";
+import {
+  buildAnnonceConditions,
+  buildAnnonceOrderBy,
+  normaliserTri,
+  optionCounts,
+  trisDisponibles,
+  typeAnnonceCounts,
+  urgentCount,
+  vendeurCounts,
+} from "@/lib/annonce-filters";
+import { requeteTexte } from "@/lib/recherche-texte";
 import { auth } from "@/lib/auth";
 import { listerFavorisIds } from "@/lib/favoris";
 
@@ -42,16 +52,12 @@ export default async function CategorieListingPage({
   const config = getFiltersForCategory(categorie, sp.sous_categorie);
   const conditions = buildAnnonceConditions(categorie, sp);
 
-  const TRIS = ["pertinence", "recentes", "anciennes", "prix_asc", "prix_desc"] as const;
-  const tri = (TRIS as readonly string[]).includes(sp.tri ?? "") ? (sp.tri as (typeof TRIS)[number]) : "pertinence";
-  const orderBy =
-    tri === "prix_asc"
-      ? asc(annonces.prixCents)
-      : tri === "prix_desc"
-        ? desc(annonces.prixCents)
-        : tri === "anciennes"
-          ? asc(annonces.createdAt)
-          : desc(annonces.createdAt);
+  // Le tri « Pertinence » ne se réduit plus à la fraîcheur : quand la page
+  // porte une requête texte (`?q=`), il applique les paliers de pertinence de
+  // la §14.2 ; quand elle porte un rayon, la distance. Cf. buildAnnonceOrderBy.
+  const tri = normaliserTri(sp.tri, sp);
+  const orderBy = buildAnnonceOrderBy(tri, sp);
+  const requete = requeteTexte(sp.q);
 
   const session = await auth();
 
@@ -61,7 +67,7 @@ export default async function CategorieListingPage({
       .from(annonces)
       .innerJoin(users, eq(annonces.userId, users.id))
       .where(and(...conditions))
-      .orderBy(orderBy),
+      .orderBy(...orderBy),
     Promise.all(
       config.filters
         .filter((f) => f.widget === "select" || f.widget === "checkbox" || f.widget === "marque")
@@ -86,7 +92,7 @@ export default async function CategorieListingPage({
 
   return (
     <>
-      <SiteHeader activeCategorie={categorie} />
+      <SiteHeader activeCategorie={categorie} valeurRecherche={sp.q ?? ""} />
 
       <section className="filter-bar">
         <CategoryFilters
@@ -99,13 +105,14 @@ export default async function CategorieListingPage({
           vendeurCounts={vendeurComptes}
           urgentCount={urgentComptes}
           currentTri={tri}
+          trisDisponibles={trisDisponibles(sp)}
           resultCount={count}
         />
       </section>
 
       <section className="results-head">
         <div className="wrap">
-          <h1>{config.h1}</h1>
+          <h1>{requete ? `${sp.q} — ${config.label}` : config.h1}</h1>
           <p className="results-count">{count.toLocaleString("fr-FR")} annonces</p>
         </div>
       </section>
@@ -113,7 +120,19 @@ export default async function CategorieListingPage({
       <section className="results-grid-section">
         <div className="wrap">
           {ads.length === 0 && (
-            <p className="empty-state">Aucune annonce ne correspond à ces filtres pour le moment.</p>
+            <p className="empty-state">
+              {requete ? (
+                <>
+                  Aucune annonce ne correspond à « {sp.q} » dans {config.label}.{" "}
+                  <Link href={`/recherche?q=${encodeURIComponent(sp.q ?? "")}`}>
+                    Chercher dans toutes les rubriques
+                  </Link>
+                  .
+                </>
+              ) : (
+                "Aucune annonce ne correspond à ces filtres pour le moment."
+              )}
+            </p>
           )}
           <div className="ad-row-list">
             {ads.map((ad) => (

@@ -13,6 +13,7 @@ import {
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const CATEGORIES = [
   "vehicules",
@@ -134,6 +135,23 @@ export const annonces = pgTable(
   (table) => [
     index("annonces_categorie_etat_idx").on(table.categorie, table.etat),
     index("annonces_user_idx").on(table.userId),
+    // Recherche plein texte (§14.7). L'expression doit rester **identique au
+    // caractère près** à `EXPRESSION_VECTEUR` de lib/recherche-texte.ts : un
+    // index d'expression n'est utilisé par Postgres que si l'expression de la
+    // requête lui correspond exactement. Une divergence ne casse rien de
+    // visible — la recherche continue en balayage séquentiel — d'où le
+    // contrôle `EXPLAIN` en fin de scripts/migration-2026-08-27-recherche-plein-texte.sql.
+    //
+    // Déclaré ici *et* dans le script de migration, à dessein. `drizzle-kit
+    // generate` sait bien émettre cet index d'expression — vérifié le
+    // 2026-08-27, il sort le `CREATE INDEX ... USING gin (to_tsvector(...))`
+    // attendu —, mais la déclaration reste indispensable pour une autre
+    // raison : sans elle, le prochain `db:push` verrait l'index comme un objet
+    // inconnu de la base et le supprimerait, silencieusement.
+    index("annonces_recherche_idx").using(
+      "gin",
+      sql`to_tsvector('french', translate(lower(coalesce(${table.titre}, '') || ' ' || coalesce(${table.description}, '')), 'àâäáãåçéèêëíìîïñòóôöõùúûüýÿ', 'aaaaaaceeeeiiiinooooouuuuyy'))`
+    ),
   ]
 );
 

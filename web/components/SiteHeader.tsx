@@ -105,7 +105,13 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
   );
 }
 
-export default function SiteHeader({ activeCategorie }: { activeCategorie?: Categorie }) {
+export default function SiteHeader({
+  activeCategorie,
+  valeurRecherche = "",
+}: {
+  activeCategorie?: Categorie;
+  valeurRecherche?: string;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session } = useSession();
   const [recherchesCount, setRecherchesCount] = useState(0);
@@ -131,8 +137,20 @@ export default function SiteHeader({ activeCategorie }: { activeCategorie?: Cate
             <span>lebon</span>
             <span className="truc">truc</span>
           </Link>
-          <form className="nav-search" role="search" action="#">
-            <input type="search" placeholder="Une Clio, un vinyle, un utilitaire…" aria-label="Rechercher une annonce" />
+          {/* Formulaire GET vers /recherche : le champ portait `action="#"`
+              depuis l'origine — il était inerte (§13.2, Résultat n°2). Un GET
+              plutôt qu'un `router.push` pour que la recherche reste une URL
+              partageable, indexable et rechargeable, et qu'elle fonctionne sans
+              JavaScript. `defaultValue` (et non `value`) : le champ reste libre
+              après le rendu serveur, sans état contrôlé à synchroniser. */}
+          <form className="nav-search" role="search" action="/recherche" method="get">
+            <input
+              type="search"
+              name="q"
+              defaultValue={valeurRecherche}
+              placeholder="Une Clio, un vinyle, un utilitaire…"
+              aria-label="Rechercher une annonce"
+            />
             <button type="submit" className="nav-search-btn" aria-label="Rechercher">
               ⌕
             </button>

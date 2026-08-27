@@ -2,7 +2,18 @@ import { and, asc, desc, eq, gt, gte, ilike, isNotNull, lte, sql, type SQL } fro
 import { db } from "@/lib/db/client";
 import { annonces, users, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
+import { conditionTexte, palierPertinence, requeteTexte } from "@/lib/recherche-texte";
 import { ATTRIBUT_ARRAY_KEYS } from "./attribut-keys";
+
+// Distance à vol d'oiseau, en kilomètres, entre un point de référence et
+// l'annonce (loi des cosinus sphérique). Extraite ici parce qu'elle sert
+// désormais à deux choses qui doivent rester cohérentes : le **filtre** de
+// rayon (`<= rayonKm`) et le **tri** par distance de la §14.2 (Résultat n°5,
+// contexte 3). Deux formules distinctes produiraient un résultat trié par une
+// distance différente de celle qui l'a sélectionné.
+export function expressionDistanceKm(lat: number, lng: number): SQL<number> {
+  return sql<number>`(6371 * acos(least(1, cos(radians(${lat})) * cos(radians(${annonces.lat})) * cos(radians(${annonces.lng}) - radians(${lng})) + sin(radians(${lat})) * sin(radians(${annonces.lat})))))`;
+}
 
 // Colonne réelle derrière chaque filtre "select" — tenue à part de
 // lib/listing-config.ts pour ne pas faire dépendre ce fichier partagé
@@ -139,21 +150,36 @@ function isAttributArrayKey(key: string): key is (typeof ATTRIBUT_ARRAY_KEYS)[nu
 // catégorie elle-même et par le comptage des recherches sauvegardées
 // (§17 action n°200), pour ne jamais avoir deux lectures différentes des
 // mêmes filtres.
-export function buildAnnonceConditions(categorie: Categorie, params: Record<string, string | undefined>): SQL[] {
-  const conditions = [eq(annonces.categorie, categorie), annonceVisiblePublic()].filter(
-    (c): c is SQL => c !== undefined
-  );
+export function buildAnnonceConditions(
+  categorie: Categorie | null,
+  params: Record<string, string | undefined>
+): SQL[] {
+  // `categorie === null` : recherche transverse (page /recherche), où le
+  // visiteur cherche « une Clio ou un vinyle » sans avoir choisi de rubrique.
+  // Toutes les autres conditions sont rigoureusement les mêmes — c'est la
+  // raison d'être de ce paramètre nullable plutôt que d'un second constructeur
+  // de conditions qui divergerait au premier filtre ajouté.
+  const conditions = [
+    categorie === null ? undefined : eq(annonces.categorie, categorie),
+    annonceVisiblePublic(),
+  ].filter((c): c is SQL => c !== undefined);
+  // Recherche plein texte (§14.7). Placée ici, et non dans la page, pour que
+  // les trois lecteurs des mêmes filtres — page catégorie, page /recherche et
+  // comptage des recherches sauvegardées — voient exactement le même résultat.
+  const requete = requeteTexte(params.q);
+  if (requete) conditions.push(conditionTexte(requete));
   // Recherche par rayon (lat/lng/rayon, choisis via l'autocomplétion adresse)
   // prioritaire sur l'ancien filtre texte — les deux ne coexistent jamais
   // puisque `LocationFilter` écrit toujours les trois ensemble ou aucun.
   // Distance à vol d'oiseau (formule de la loi des cosinus sphérique) :
   // suffisante pour un rayon de recherche, pas pour une distance routière.
   if (params.lat && params.lng && params.rayon) {
-    const lat = Number(params.lat);
-    const lng = Number(params.lng);
     const rayonKm = Number(params.rayon);
     conditions.push(
-      sql`${annonces.lat} is not null and ${annonces.lng} is not null and (6371 * acos(least(1, cos(radians(${lat})) * cos(radians(${annonces.lat})) * cos(radians(${annonces.lng}) - radians(${lng})) + sin(radians(${lat})) * sin(radians(${annonces.lat}))))) <= ${rayonKm}`
+      sql`${annonces.lat} is not null and ${annonces.lng} is not null and ${expressionDistanceKm(
+        Number(params.lat),
+        Number(params.lng)
+      )} <= ${rayonKm}`
     );
   } else if (params.localisation) {
     conditions.push(ilike(annonces.ville, `%${params.localisation}%`));
@@ -258,6 +284,77 @@ export function buildAnnonceConditions(categorie: Categorie, params: Record<stri
     conditions.push(eq(annonces.prixCents, 0));
   }
   return conditions;
+}
+
+// Les cinq tris proposés dans l'interface, plus `distance`, qui n'apparaît que
+// lorsqu'un point de référence est choisi (cf. `trisDisponibles`).
+export const TRIS = ["pertinence", "recentes", "anciennes", "prix_asc", "prix_desc", "distance"] as const;
+export type Tri = (typeof TRIS)[number];
+
+export function trisDisponibles(params: Record<string, string | undefined>): Tri[] {
+  const geo = Boolean(params.lat && params.lng && params.rayon);
+  return TRIS.filter((t) => t !== "distance" || geo);
+}
+
+export function normaliserTri(valeur: string | undefined, params: Record<string, string | undefined>): Tri {
+  const possibles = trisDisponibles(params);
+  return (possibles as readonly string[]).includes(valeur ?? "") ? (valeur as Tri) : "pertinence";
+}
+
+/**
+ * Ordre de tri d'une liste d'annonces — transposition des **trois contextes**
+ * de la §14.2 (Résultat n°5), dont aucun n'était implémenté : le code ne
+ * connaissait que `desc(createdAt)`, y compris sous l'étiquette « Pertinence ».
+ *
+ *   contexte 1 — page catégorie, pas de requête texte  → fraîcheur
+ *   contexte 2 — requête texte    → paliers de pertinence, popularité, fraîcheur
+ *   contexte 3 — recherche géolocalisée → distance par paliers, prix, fraîcheur
+ *
+ * Et l'arbitrage explicite de la §14.2 quand les deux derniers se rencontrent :
+ * « sur une requête texte **avec** rayon, la pertinence gagne et la distance
+ * passe en filtre seul » — c'est l'ordre des tests ci-dessous, texte d'abord.
+ *
+ * Deux écarts assumés par rapport à la §14.2, faute des champs correspondants :
+ *  - `score_popularite` (entier recalculé par lot) n'existe pas ; `vues` en tient
+ *    lieu, ce qui en est le principal ingrédient mais pas la définition.
+ *  - `date_mise_en_avant` (date de tri, distincte de `date_maj`) n'existe pas non
+ *    plus ; `created_at` en tient lieu. Conséquence connue et non corrigée ici :
+ *    un import de masse par flux pro donnerait à tout un stock la même fraîcheur
+ *    (§14.2, Résultat n°6 — action n°38, toujours ouverte).
+ */
+export function buildAnnonceOrderBy(tri: Tri, params: Record<string, string | undefined>): SQL[] {
+  if (tri === "prix_asc") return [asc(annonces.prixCents)];
+  if (tri === "prix_desc") return [desc(annonces.prixCents)];
+  if (tri === "recentes") return [desc(annonces.createdAt)];
+  if (tri === "anciennes") return [asc(annonces.createdAt)];
+
+  const geo =
+    params.lat && params.lng && params.rayon
+      ? { lat: Number(params.lat), lng: Number(params.lng) }
+      : null;
+
+  if (tri === "distance" && geo) return ordreDistance(geo.lat, geo.lng);
+
+  // tri === "pertinence" : le contexte décide.
+  const requete = requeteTexte(params.q);
+  if (requete) {
+    return [desc(palierPertinence(requete)), desc(annonces.vues), desc(annonces.createdAt)];
+  }
+  if (geo) return ordreDistance(geo.lat, geo.lng);
+  return [desc(annonces.createdAt)];
+}
+
+// `greatest(distance, 30)` reproduit l'`exclude_radius: 30 km` de la §14.2 :
+// tout ce qui est à moins de 30 km est réputé à égale distance et se départage
+// sur le prix, au-delà la distance réelle reprend la main. Sans ce palier, un
+// tri par distance classe au kilomètre près et rend le prix invisible dans
+// toute une agglomération.
+function ordreDistance(lat: number, lng: number): SQL[] {
+  return [
+    asc(sql`greatest(${expressionDistanceKm(lat, lng)}, 30)`),
+    asc(annonces.prixCents),
+    desc(annonces.createdAt),
+  ];
 }
 
 // Nombre d'annonces par valeur possible d'un filtre "select"/"checkbox",
@@ -394,6 +491,27 @@ export async function vendeurCounts(
 // Annonces urgentes (§5 Résultat n°6) : une seule case à cocher, pas une paire
 // d'options — compte à part comme vendeurCounts, pour la même raison (le
 // critère n'est ni une colonne SELECT_COLUMNS ni un attribut JSONB).
+// Répartition des résultats d'une recherche transverse par rubrique — les
+// « facettes » de la page /recherche. Volontairement calculée sans le filtre
+// `categorie` (comme `optionCounts` retire la clé du filtre courant), pour que
+// choisir une rubrique ne fasse pas disparaître les autres du sélecteur.
+export async function compterParCategorie(
+  params: Record<string, string | undefined>
+): Promise<{ categorie: Categorie; count: number }[]> {
+  const reste = { ...params };
+  delete reste.categorie;
+  const conditions = buildAnnonceConditions(null, reste);
+  const rows = await db
+    .select({ categorie: annonces.categorie, total: sql<number>`count(*)::int` })
+    .from(annonces)
+    .innerJoin(users, eq(annonces.userId, users.id))
+    .where(and(...conditions))
+    .groupBy(annonces.categorie);
+  return rows
+    .map((r) => ({ categorie: r.categorie, count: r.total }))
+    .sort((a, b) => b.count - a.count);
+}
+
 export async function urgentCount(categorie: Categorie, params: Record<string, string | undefined>): Promise<number> {
   const reste = { ...params };
   delete reste.urgent;

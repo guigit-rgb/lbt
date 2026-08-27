@@ -20,6 +20,14 @@ function libelleFiltres(categorie: Categorie, filtres: Record<string, string>): 
   const config = getFiltersForCategory(categorie, filtres.sous_categorie);
   const morceaux: string[] = [];
 
+  // La requête texte en tête du résumé : c'est le critère le plus parlant
+  // d'une recherche sauvegardée (« clio essence » dit plus que « Marque :
+  // Renault »), et il est désormais compté dans les résultats comme les autres
+  // filtres, puisqu'il vit dans buildAnnonceConditions.
+  if (filtres.q) {
+    morceaux.push(`« ${filtres.q} »`);
+  }
+
   if (filtres.localisation) {
     morceaux.push(filtres.rayon ? `${filtres.localisation} (${filtres.rayon} km)` : filtres.localisation);
   }

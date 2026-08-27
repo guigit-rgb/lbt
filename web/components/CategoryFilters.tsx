@@ -14,6 +14,11 @@ const TRI_OPTIONS = [
   { value: "anciennes", label: "Plus anciennes" },
   { value: "prix_asc", label: "Prix croissants" },
   { value: "prix_desc", label: "Prix décroissants" },
+  // "distance" n'est proposé que si un point de référence est choisi — la
+  // liste effective vient du serveur (`trisDisponibles`), qui est aussi celui
+  // qui refuse un `?tri=distance` sans coordonnées. Proposer une option que le
+  // serveur ignore silencieusement est pire que ne pas la proposer.
+  { value: "distance", label: "Les plus proches" },
 ] as const;
 
 // Valeurs stockées en base (identiques au dépôt d'annonce) réécrites pour
@@ -67,6 +72,7 @@ export default function CategoryFilters({
   vendeurCounts,
   urgentCount,
   currentTri,
+  trisDisponibles,
   resultCount,
 }: {
   basePath: string;
@@ -78,6 +84,7 @@ export default function CategoryFilters({
   vendeurCounts: { particulier: number; pro: number };
   urgentCount: number;
   currentTri: string;
+  trisDisponibles: readonly string[];
   resultCount: number;
 }) {
   const router = useRouter();
@@ -136,7 +143,10 @@ export default function CategoryFilters({
     navigateWith(key, toggleInList(currentValues[key] ?? "", value));
   }
 
-  const nombreFiltresActifs = Object.keys(currentValues).length;
+  // `q` transite dans `currentValues` (c'est ce qui le fait survivre à chaque
+  // changement de filtre, cf. navigateWith) mais n'est pas un filtre du
+  // panneau : il ne doit pas gonfler le badge « Filtres ».
+  const nombreFiltresActifs = Object.keys(currentValues).filter((k) => k !== "q").length;
 
   return (
     <>
@@ -150,7 +160,7 @@ export default function CategoryFilters({
         </button>
 
         <select className="filter-pill" value={currentTri} onChange={(e) => navigateTri(e.target.value)}>
-          {TRI_OPTIONS.map((option) => (
+          {TRI_OPTIONS.filter((option) => trisDisponibles.includes(option.value)).map((option) => (
             <option key={option.value} value={option.value}>
               Tri : {option.label}
             </option>
