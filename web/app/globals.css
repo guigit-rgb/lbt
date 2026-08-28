@@ -1005,6 +1005,27 @@
 .results-count { color: var(--muted); font-size: 0.85rem; margin-top: 0.3rem; }
 .results-grid-section { padding-bottom: 2.5rem; }
 
+/* ---- « Compris comme » : interprétation de la requête par le normaliseur de
+   requête auto (cahier des charges §14.3). Volontairement discret — c'est une
+   explication, pas un contrôle : les filtres déduits sont modifiables dans le
+   panneau latéral, qui les affiche comme s'ils avaient été cochés à la main.
+   La puce grisée signale un critère reconnu mais qu'aucun champ ne porte
+   (génération, nombre de places), retiré de la recherche texte plutôt que
+   transformé en filtre faux. ---- */
+.query-understood {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  margin-top: 0.55rem; font-size: 0.8rem; color: var(--muted);
+}
+.qu-label { font-weight: 700; }
+.qu-chip {
+  padding: 0.2rem 0.6rem; border-radius: 999px;
+  background: #eaf1fc; color: #154a8a; font-weight: 600;
+}
+.qu-chip-inerte { background: var(--surface-2); color: var(--muted); font-weight: 400; font-style: italic; }
+.qu-chip-texte { background: var(--surface-2); color: var(--ink); font-weight: 400; }
+.qu-brut { text-decoration: underline; color: var(--muted); }
+.qu-brut:hover { color: var(--ink); }
+
 /* ---- liste détaillée d'une page de résultats par catégorie (vs. la vignette
    compacte .card de l'accueil) — une ligne par annonce, sur le principe des
    pages de résultats leboncoin ---- */

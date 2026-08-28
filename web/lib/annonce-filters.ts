@@ -2,7 +2,8 @@ import { and, asc, desc, eq, gt, gte, ilike, isNotNull, lte, sql, type SQL } fro
 import { db } from "@/lib/db/client";
 import { annonces, users, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
-import { conditionTexte, palierPertinence, requeteTexte } from "@/lib/recherche-texte";
+import { colonnePliee, conditionTexte, palierPertinence, plierAccents, requeteTexte } from "@/lib/recherche-texte";
+import { appliquerNormaliseur } from "@/lib/normaliseur-auto";
 import { ATTRIBUT_ARRAY_KEYS } from "./attribut-keys";
 
 // Distance à vol d'oiseau, en kilomètres, entre un point de référence et
@@ -152,8 +153,19 @@ function isAttributArrayKey(key: string): key is (typeof ATTRIBUT_ARRAY_KEYS)[nu
 // mêmes filtres.
 export function buildAnnonceConditions(
   categorie: Categorie | null,
-  params: Record<string, string | undefined>
+  paramsBruts: Record<string, string | undefined>
 ): SQL[] {
+  // Normaliseur de requête auto (§14.3, action n°221) : « clio 3 essence moins
+  // de 8000 € » devient ici un jeu de filtres, et `q` ne garde que ce qui reste
+  // vraiment du texte. Appliqué à cet endroit précis et pas dans la page, pour
+  // la raison qui a déjà servi à la recherche plein texte (§14.7, Résultat n°4) :
+  // les trois lecteurs des mêmes filtres — page catégorie, page /recherche et
+  // comptage des recherches sauvegardées — doivent voir exactement le même
+  // résultat, sinon une recherche sauvegardée « clio essence » compterait toutes
+  // les Clio. La fonction est idempotente et ne s'applique qu'à `vehicules`
+  // (cf. lib/normaliseur-auto.ts), donc la page peut l'appeler aussi pour
+  // l'affichage et les compteurs sans risque de double application.
+  const params = appliquerNormaliseur(categorie, paramsBruts);
   // `categorie === null` : recherche transverse (page /recherche), où le
   // visiteur cherche « une Clio ou un vinyle » sans avoir choisi de rubrique.
   // Toutes les autres conditions sont rigoureusement les mêmes — c'est la
@@ -197,10 +209,35 @@ export function buildAnnonceConditions(
   if (params.annee_min) conditions.push(gte(annonces.annee, Number(params.annee_min)));
   if (params.annee_max) conditions.push(lte(annonces.annee, Number(params.annee_max)));
   for (const key of Object.keys(SELECT_COLUMNS) as (keyof typeof SELECT_COLUMNS)[]) {
+    // `modele` est traité juste après, en comparaison repliée et
+    // multi-valeurs — pas en égalité stricte comme les autres colonnes.
+    if (key === "modele") continue;
     const value = params[key];
     if (value) {
       const column = SELECT_COLUMNS[key];
       conditions.push(key === "annee" ? eq(column, Number(value)) : eq(column, value));
+    }
+  }
+  // Modèle : plusieurs valeurs acceptées et comparaison **repliée** (casse et
+  // accents). Les deux sont nécessaires au normaliseur de la §14.3 et n'ont pas
+  // d'équivalent dans l'égalité stricte d'origine :
+  //  - multi-valeurs, parce qu'un alias vise plusieurs orthographes du même
+  //    modèle (« 320 » → `Serie 3` et `Série 3` ; « picasso » → les quatre
+  //    Picasso du catalogue Citroën) ;
+  //  - repliée, parce que le référentiel écrit « Mégane » et la base contient
+  //    ce que les vendeurs ont saisi. Une égalité stricte échouerait sans le
+  //    moindre signal, ce qui est le mode de défaillance que la §14.3
+  //    (Résultat n°5) désigne comme le plus coûteux : « l'acheteur voit
+  //    "aucun résultat" et part ».
+  if (params.modele) {
+    const valeurs = params.modele.split(",").filter(Boolean).map((v) => plierAccents(v));
+    if (valeurs.length > 0) {
+      conditions.push(
+        sql`${colonnePliee(annonces.modele)} in (${sql.join(
+          valeurs.map((v) => sql`${v}`),
+          sql`, `
+        )})`
+      );
     }
   }
   // Marque : cases à cocher multiples (catalogue lib/marques.ts) et

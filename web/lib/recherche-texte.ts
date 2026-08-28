@@ -1,4 +1,4 @@
-import { sql, type SQL } from "drizzle-orm";
+import { sql, type AnyColumn, type SQL } from "drizzle-orm";
 
 // Recherche plein texte — repli MVP explicitement prévu par le cahier des
 // charges §14.1 (« Postgres seul (repli MVP) ») et acté par la §13.2
@@ -96,6 +96,25 @@ export function requeteTexte(q: string | undefined): string | null {
 
 /** Condition de correspondance plein texte. La requête utilisateur reste un
  *  paramètre lié ; seules les constantes du fichier sont interpolées. */
+/**
+ * Colonne repliée (minuscules + accents) pour une comparaison d'égalité
+ * tolérante. Même table que l'indexation plein texte, et pour la même raison :
+ * le normaliseur de requête auto (§14.3) émet des valeurs de filtre issues de
+ * son référentiel (« Mégane », « Série 3 »), tandis que la base contient ce que
+ * les vendeurs ont saisi (« megane », « MEGANE », « Serie 3 »). Une égalité
+ * stricte y échouerait silencieusement — un filtre faux, c'est-à-dire une page
+ * vide sans explication, exactement ce que la §14.3 (Résultat n°5) proscrit.
+ *
+ * Volontairement sans index dédié : la sélectivité utile vient des autres
+ * conditions (catégorie, état, marque) et le volume du pilote ne le justifie
+ * pas. À revoir si `modele` devient un filtre de tête sur un gros catalogue.
+ */
+export function colonnePliee(colonne: SQL | AnyColumn): SQL<string> {
+  return sql<string>`translate(lower(coalesce(${colonne}, '')), '${sql.raw(PLIAGE_SOURCE)}', '${sql.raw(
+    PLIAGE_CIBLE
+  )}')`;
+}
+
 export function conditionTexte(requete: string): SQL {
   return sql`${sql.raw(EXPRESSION_VECTEUR)} @@ websearch_to_tsquery('${sql.raw(CONFIG)}', ${requete})`;
 }
