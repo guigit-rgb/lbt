@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, gte, ilike, isNotNull, lte, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, ilike, isNotNull, lte, sql, type AnyColumn, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { annonces, users, type Categorie } from "@/lib/db/schema";
 import { annonceVisiblePublic } from "@/lib/annonce-display";
@@ -14,6 +14,54 @@ import { ATTRIBUT_ARRAY_KEYS } from "./attribut-keys";
 // distance différente de celle qui l'a sélectionné.
 export function expressionDistanceKm(lat: number, lng: number): SQL<number> {
   return sql<number>`(6371 * acos(least(1, cos(radians(${lat})) * cos(radians(${annonces.lat})) * cos(radians(${annonces.lng}) - radians(${lng})) + sin(radians(${lat})) * sin(radians(${annonces.lat})))))`;
+}
+
+/**
+ * Filet de la §14.9 (action §17 n°226) : « la colonne est vide, mais le titre,
+ * lui, le dit ».
+ *
+ * Depuis le 2026-08-28 (§14.8), « clio » n'est plus une recherche plein texte
+ * mais un filtre `modele=Clio`. Or `marque` et `modele` sont **facultatifs au
+ * dépôt** : une annonce intitulée « Renault Clio IV » dont le vendeur n'a pas
+ * rempli les listes déroulantes sortait donc des résultats du jour au
+ * lendemain, sans que rien ne le signale — c'est la régression que la §14.8 a
+ * elle-même désignée comme « le seul endroit où elle fait moins bien que la
+ * §14.7 ».
+ *
+ * Le remède de fond est d'écrire les colonnes (`lib/deduction-vehicule.ts`, au
+ * dépôt et par rattrapage) ; cette condition est le filet qui tient d'ici là,
+ * et **au-delà** : elle couvre aussi les annonces dont le titre nomme un modèle
+ * absent du référentiel, que jamais aucun rattrapage ne remplira.
+ *
+ * Trois propriétés voulues :
+ *
+ *  - **elle n'enlève jamais rien** — c'est une branche `or`, donc au pire elle
+ *    ajoute des annonces dont le titre porte le mot, exactement ce que faisait
+ *    la §14.7 la veille ;
+ *  - **elle ne s'applique qu'aux filtres déduits du texte**, jamais à une case
+ *    cochée dans le panneau : quand l'acheteur coche « Renault », il demande la
+ *    colonne, et une annonce à colonne vide n'a pas à s'y inviter ;
+ *  - **elle exige un mot entier** — sans quoi `C3` ramènerait les `C30` et
+ *    `Leon` les `Leonardo`. D'où la bordure `[^a-z0-9]` de part et d'autre,
+ *    appliquée au titre **replié** (§14.7, même table d'accents des deux côtés).
+ *
+ * Coût : un balayage du titre, sans index. Acceptable parce que la condition
+ * est toujours conjointe à `categorie` et à l'état de publication, et parce que
+ * le volume du pilote ne justifie pas un index de plus (§14.7 tient le même
+ * raisonnement pour `colonnePliee`). À revoir au palier national.
+ */
+function colonneVideMaisTitreParle(colonne: AnyColumn, valeurs: string[]): SQL {
+  const motif = valeurs
+    .map((v) => plierAccents(v).replace(/[.*+?^${}()|[\]\\-]/g, "\\$&"))
+    .filter(Boolean)
+    .join("|");
+  // Parenthèses explicites autour de l'ensemble : cette condition est toujours
+  // le membre droit d'un `or`, et sans elles la lecture dépendrait de la
+  // priorité `and` > `or` — vraie, mais qu'un futur remaniement peut casser
+  // sans que rien ne le signale.
+  return sql`((${colonne} is null or btrim(${colonne}) = '') and ${colonnePliee(
+    annonces.titre
+  )} ~ ${`(^|[^a-z0-9])(${motif})([^a-z0-9]|$)`})`;
 }
 
 // Colonne réelle derrière chaque filtre "select" — tenue à part de
@@ -232,11 +280,15 @@ export function buildAnnonceConditions(
   if (params.modele) {
     const valeurs = params.modele.split(",").filter(Boolean).map((v) => plierAccents(v));
     if (valeurs.length > 0) {
+      const surColonne = sql`${colonnePliee(annonces.modele)} in (${sql.join(
+        valeurs.map((v) => sql`${v}`),
+        sql`, `
+      )})`;
+      // Filet : un filtre `modele` **déduit du texte tapé** (et non coché par
+      // l'acheteur) ne doit jamais faire disparaître une annonce que la
+      // recherche plein texte de la §14.7 trouvait la veille.
       conditions.push(
-        sql`${colonnePliee(annonces.modele)} in (${sql.join(
-          valeurs.map((v) => sql`${v}`),
-          sql`, `
-        )})`
+        paramsBruts.modele ? surColonne : sql`(${surColonne} or ${colonneVideMaisTitreParle(annonces.modele, valeurs)})`
       );
     }
   }
@@ -245,14 +297,20 @@ export function buildAnnonceConditions(
   // passage du champ de dépôt en liste fermée (texte libre auparavant).
   if (params.marque) {
     const valeurs = params.marque.split(",").filter(Boolean).map((v) => v.toUpperCase());
-    if (valeurs.length === 1) {
-      conditions.push(sql`upper(${annonces.marque}) = ${valeurs[0]}`);
-    } else if (valeurs.length > 1) {
+    if (valeurs.length > 0) {
+      const surColonne =
+        valeurs.length === 1
+          ? sql`upper(${annonces.marque}) = ${valeurs[0]}`
+          : sql`upper(${annonces.marque}) in (${sql.join(
+              valeurs.map((v) => sql`${v}`),
+              sql`, `
+            )})`;
+      // Même filet que pour `modele` ci-dessus, et pour la même raison : la
+      // marque aussi peut venir du normaliseur plutôt que d'une case cochée.
       conditions.push(
-        sql`upper(${annonces.marque}) in (${sql.join(
-          valeurs.map((v) => sql`${v}`),
-          sql`, `
-        )})`
+        paramsBruts.marque
+          ? surColonne
+          : sql`(${surColonne} or ${colonneVideMaisTitreParle(annonces.marque, valeurs)})`
       );
     }
   }

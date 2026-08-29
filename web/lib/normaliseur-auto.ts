@@ -351,6 +351,31 @@ export const TAILLE_REFERENTIEL = () => ({
   modeles: MODELES_PAR_CLE.size,
 });
 
+/**
+ * Marques sous lesquelles une **valeur** de modèle est indexée (`"Duster"` →
+ * `["DACIA", "RENAULT"]`, `"Classe C"` → `["MERCEDES-BENZ"]`).
+ *
+ * Exposée pour la déduction marque/modèle depuis un titre d'annonce
+ * (lib/deduction-vehicule.ts, action §17 n°226), qui a besoin d'une garantie
+ * que la recherche n'exige pas : à la **lecture**, un filtre `modele` trop
+ * large ne fait qu'ajouter des résultats ; à l'**écriture**, un modèle
+ * appartenant à une autre marque que celle du titre est une donnée fausse
+ * inscrite en base, qu'aucun écran ne signalera jamais.
+ *
+ * Le cas mesuré le 2026-08-29 : « Mercedes Classe C 220 d » produit
+ * `modele = "Classe C,Serie 2,Série 2"` — l'alias de code commercial `220`
+ * appartient à BMW, et l'étage 5b le retient quand même parce qu'il retombe
+ * sur l'ensemble des candidats lorsque aucun ne porte la marque reconnue.
+ * Inoffensif pour une requête, inacceptable pour un `update`.
+ */
+export function marquesDuModele(valeur: string): string[] {
+  const marques = new Set<string>();
+  for (const candidats of MODELES_PAR_CLE.values()) {
+    for (const c of candidats) if (c.valeur === valeur) marques.add(c.marque);
+  }
+  return [...marques];
+}
+
 /** Nombre de mots du plus long n-gramme de modèle indexé (« grand c4 picasso »,
  *  « range rover evoque » → 3). Détermine la largeur de la fenêtre glissante. */
 const LARGEUR_MAX_MODELE = Math.max(...[...MODELES_PAR_CLE.keys()].map((c) => c.split(" ").length));

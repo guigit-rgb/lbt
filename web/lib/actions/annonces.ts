@@ -14,9 +14,39 @@ import { enregistrerPrixObserve } from "@/lib/prix-trajectoire";
 import { demarrerModificationPayante } from "@/lib/actions/paiements";
 import { SUBCATEGORY_FILTERS, LOCATIONS_VACANCES } from "@/lib/subcategory-filters";
 import { ATTRIBUT_ARRAY_KEYS } from "@/lib/attribut-keys";
+import { completerVehicule } from "@/lib/deduction-vehicule";
 import type { FilterField } from "@/lib/filter-field";
 
 const DUREE_PUBLICATION_JOURS = 60;
+
+/**
+ * Trace d'une marque ou d'un modèle **écrit par le site et non par le vendeur**
+ * (§14.9, action §17 n°226).
+ *
+ * Une seule ligne de journal, à dessein. Ce n'est pas le journal du normaliseur
+ * demandé par l'action n°228 — celui-là portera les résidus et les corrections
+ * floues de *toutes* les recherches, et devra aller en base. C'est le minimum
+ * sans lequel une déduction fausse serait strictement invisible : le site aurait
+ * modifié l'annonce d'un vendeur sans que quiconque puisse dire laquelle, ni
+ * d'après quel titre. À rediriger vers le journal de la n°228 le jour où il
+ * existe, plutôt qu'à dupliquer.
+ */
+function journaliserDeduction(
+  id: string,
+  titre: string,
+  complete: { marque?: string; modele?: string; champsDeduits: string[] }
+): void {
+  console.info(
+    JSON.stringify({
+      evenement: "deduction_vehicule",
+      annonce: id,
+      titre,
+      champs: complete.champsDeduits,
+      marque: complete.marque ?? null,
+      modele: complete.modele ?? null,
+    })
+  );
+}
 
 // Caractéristiques véhicule facultatives, toutes de simples chaînes stockées
 // dans `attributs` (au même titre que carburant/boite) — un seul endroit à
@@ -388,6 +418,18 @@ export async function publierAnnonce(id: string, formData: FormData): Promise<Cr
       const valeur = optionalString(formData, champ);
       if (valeur) attributs[champ] = valeur;
     }
+    // Marque et Modèle ne sont pas obligatoires au dépôt, et depuis le
+    // 2026-08-28 la recherche par modèle est un filtre sur la colonne (§14.8) :
+    // les laisser vides, c'est publier une annonce introuvable par le premier
+    // mot que l'acheteur tapera. On complète donc **les seuls champs vides** à
+    // partir du titre que le vendeur vient d'écrire (§14.9, action n°226) — sa
+    // saisie n'est jamais remplacée.
+    const complete = completerVehicule(titre, marque, modele);
+    if (complete.champsDeduits.length > 0) {
+      journaliserDeduction(id, titre, complete);
+    }
+    marque = complete.marque;
+    modele = complete.modele;
   } else if (categorie === "loisirs") {
     sousCategorie = optionalString(formData, "sousCategorie");
     etatProduit = optionalString(formData, "etatProduit");
@@ -548,6 +590,20 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     ? await geocoderAdresse(ville, codePostal)
     : { lat: annonce.lat, lng: annonce.lng };
 
+  // Même complétion qu'au dépôt (§14.9, action n°226), avec une précaution que
+  // le dépôt n'a pas : les valeurs déduites entrent dans `donnees`, **pas**
+  // dans les variables `marque`/`modele` comparées plus bas. Sans cela, un
+  // vendeur qui rouvre puis réenregistre son annonce sans rien changer verrait
+  // la déduction compter comme une modification — et se ferait facturer les 4 €
+  // de la modification payante pour un champ que le site a rempli tout seul.
+  const completeVehicule =
+    annonce.categorie === "vehicules"
+      ? completerVehicule(titre, marque, modele)
+      : { marque, modele, champsDeduits: [] as string[] };
+  if (completeVehicule.champsDeduits.length > 0) {
+    journaliserDeduction(id, titre, completeVehicule);
+  }
+
   const donnees = {
     titre,
     description,
@@ -556,8 +612,8 @@ export async function modifierAnnonce(id: string, formData: FormData): Promise<C
     codePostal,
     lat: coordonnees?.lat ?? null,
     lng: coordonnees?.lng ?? null,
-    marque,
-    modele,
+    marque: completeVehicule.marque,
+    modele: completeVehicule.modele,
     annee,
     kilometrage,
     etatProduit,
