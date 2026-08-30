@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import type { Suggestion } from "@/lib/suggestions-recherche";
 import { MEGA_MENU, AUTRES_ENTRY, DONS_ENTRY, type MegaMenuEntry } from "@/lib/categories";
 import type { Categorie } from "@/lib/db/schema";
 import { hrefRubriqueMegaMenu, hrefLienMegaMenu } from "@/lib/mega-menu-href";
@@ -105,6 +107,147 @@ function MegaMenuItem({ entry, activeCategorie }: { entry: MegaMenuEntry; active
   );
 }
 
+// Barre de suggestions à la frappe (§14.10, action §17 n°222). Volontairement
+// écrite à la main plutôt qu'avec `<datalist>` ou une bibliothèque de
+// combobox : chaque ligne porte une **URL filtrée** (`/vehicules?marque=…`) et
+// non un simple texte à réinjecter dans le champ, ce qui est tout l'intérêt du
+// dispositif — `<datalist>` ne sait rendre que du texte.
+//
+// Le formulaire reste un GET vers /recherche, inchangé : sans JavaScript, la
+// barre n'apparaît pas et la recherche continue de fonctionner.
+function BarreSuggestions({ valeurInitiale }: { valeurInitiale: string }) {
+  const router = useRouter();
+  const [saisie, setSaisie] = useState(valeurInitiale);
+  const [derniereListe, setDerniereListe] = useState<Suggestion[]>([]);
+  const [ouvert, setOuvert] = useState(false);
+  const [actif, setActif] = useState(-1);
+  const conteneur = useRef<HTMLDivElement>(null);
+
+  // La liste affichée est **dérivée** de la saisie, pas remise à zéro dans
+  // l'effet : `react-hooks/set-state-in-effect` interdit (à raison) un
+  // `setState` synchrone dans un effet, qui provoquerait un rendu en cascade à
+  // chaque frappe. Effet de bord recherché au passage : entre deux frappes, la
+  // liste précédente reste affichée pendant les 160 ms de débounce au lieu de
+  // disparaître et revenir — c'est le comportement attendu d'une barre de
+  // suggestions, et il est ici obtenu gratuitement.
+  const terme = saisie.trim();
+  const suggestions = terme.length >= 2 ? derniereListe : [];
+
+  // Débounce 160 ms + annulation de la requête précédente. La route est servie
+  // depuis la mémoire du processus (aucune base), donc le débounce n'est pas là
+  // pour protéger un backend mais pour éviter que la liste ne clignote à chaque
+  // frappe.
+  useEffect(() => {
+    const terme = saisie.trim();
+    if (terme.length < 2) return;
+    const controller = new AbortController();
+    const minuteur = setTimeout(() => {
+      fetch(`/api/recherche/suggestions?q=${encodeURIComponent(terme)}`, { signal: controller.signal })
+        .then((r) => r.json())
+        .then((data) => {
+          setDerniereListe(data.suggestions ?? []);
+          setActif(-1);
+        })
+        .catch(() => {});
+    }, 160);
+    return () => {
+      clearTimeout(minuteur);
+      controller.abort();
+    };
+  }, [saisie]);
+
+  // Fermeture au clic extérieur. Pas `onBlur` : un clic sur une suggestion
+  // provoque un blur du champ AVANT le clic, et la liste disparaîtrait sous le
+  // curseur.
+  useEffect(() => {
+    function auClic(e: MouseEvent) {
+      if (!conteneur.current?.contains(e.target as Node)) setOuvert(false);
+    }
+    document.addEventListener("mousedown", auClic);
+    return () => document.removeEventListener("mousedown", auClic);
+  }, []);
+
+  const visibles = ouvert && suggestions.length > 0;
+
+  function auClavier(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      setOuvert(false);
+      return;
+    }
+    if (!visibles) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      const pas = e.key === "ArrowDown" ? 1 : -1;
+      // `actif` vaut -1 quand rien n'est sélectionné, d'où le décalage de 1 :
+      // le cycle porte sur `suggestions.length + 1` états et repasse par
+      // « rien de sélectionné » entre le dernier et le premier — sans quoi on
+      // ne peut plus revenir à sa propre saisie une fois entré dans la liste.
+      setActif((i) => ((i + 1 + pas + suggestions.length + 1) % (suggestions.length + 1)) - 1);
+      return;
+    }
+    // `suggestions[actif]` peut être absent : la liste rétrécit entre deux
+    // frappes sans que `actif` en soit averti. Sans cette garde, Entrée sur une
+    // sélection devenue hors bornes lèverait une exception au lieu de soumettre
+    // le formulaire.
+    const choisie = actif >= 0 ? suggestions[actif] : undefined;
+    if (e.key === "Enter" && choisie) {
+      // Une suggestion est sélectionnée au clavier : on suit son URL filtrée
+      // au lieu de soumettre le formulaire, qui enverrait la chaîne brute.
+      e.preventDefault();
+      setOuvert(false);
+      router.push(choisie.href);
+    }
+  }
+
+  return (
+    <div className="nav-search-wrap" ref={conteneur}>
+      <form className="nav-search" role="search" action="/recherche" method="get">
+        <input
+          type="search"
+          name="q"
+          value={saisie}
+          onChange={(e) => {
+            setSaisie(e.target.value);
+            setOuvert(true);
+          }}
+          onFocus={() => setOuvert(true)}
+          onKeyDown={auClavier}
+          placeholder="Une Clio, un vinyle, un utilitaire…"
+          aria-label="Rechercher une annonce"
+          role="combobox"
+          aria-expanded={visibles}
+          aria-controls="nav-suggestions"
+          aria-autocomplete="list"
+          aria-activedescendant={actif >= 0 ? `nav-suggestion-${actif}` : undefined}
+          autoComplete="off"
+        />
+        <button type="submit" className="nav-search-btn" aria-label="Rechercher">
+          ⌕
+        </button>
+      </form>
+      {visibles && (
+        <ul className="nav-suggestions" id="nav-suggestions" role="listbox">
+          {suggestions.map((s, i) => (
+            <li
+              key={`${s.type}-${s.href}`}
+              id={`nav-suggestion-${i}`}
+              role="option"
+              aria-selected={i === actif}
+              className={i === actif ? "actif" : undefined}
+              onMouseEnter={() => setActif(i)}
+            >
+              <Link href={s.href} onClick={() => setOuvert(false)}>
+                <span className="suggestion-label">{s.label}</span>
+                {s.contexte && <span className="suggestion-contexte">{s.contexte}</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 export default function SiteHeader({
   activeCategorie,
   valeurRecherche = "",
@@ -141,20 +284,11 @@ export default function SiteHeader({
               depuis l'origine — il était inerte (§13.2, Résultat n°2). Un GET
               plutôt qu'un `router.push` pour que la recherche reste une URL
               partageable, indexable et rechargeable, et qu'elle fonctionne sans
-              JavaScript. `defaultValue` (et non `value`) : le champ reste libre
-              après le rendu serveur, sans état contrôlé à synchroniser. */}
-          <form className="nav-search" role="search" action="/recherche" method="get">
-            <input
-              type="search"
-              name="q"
-              defaultValue={valeurRecherche}
-              placeholder="Une Clio, un vinyle, un utilitaire…"
-              aria-label="Rechercher une annonce"
-            />
-            <button type="submit" className="nav-search-btn" aria-label="Rechercher">
-              ⌕
-            </button>
-          </form>
+              JavaScript. Le champ est passé en état **contrôlé** le 2026-08-30
+              (§14.10) : la barre de suggestions a besoin de la saisie en cours.
+              Le `<form>` reste un GET, donc la recherche fonctionne toujours
+              sans JavaScript — la barre, elle, disparaît simplement. */}
+          <BarreSuggestions valeurInitiale={valeurRecherche} />
           <nav className="nav-actions">
             <Link className="icon-link" href="/compte/messages">
               <span className="glyph">✉️</span>Messages<span className="dot" />

@@ -63,6 +63,14 @@ verifier(
   requeteSql.sql.includes("websearch_to_tsquery('french', $") &&
     requeteSql.params.includes("citroen c3 diesel")
 );
+// Depuis le 2026-08-30 (§14.10) la condition texte porte une seconde branche,
+// en `or`, pour la recherche par préfixe. Elle est contrôlée en détail par
+// scripts/verif-recherche-prefixe.ts ; ici on vérifie seulement que son ajout
+// n'a pas déplacé la branche exacte, qui est celle que l'index sert.
+verifier(
+  "la branche exacte de la §14.7 est intacte sous la branche préfixe de la §14.10",
+  requeteSql.params.includes("diesel:*") && / or \(/.test(requeteSql.sql)
+);
 
 // 3. Symétrie du pliage des accents (le défaut le plus coûteux : muet côté serveur)
 console.log("\n--- pliage des accents ---");
@@ -107,11 +115,19 @@ verifier(
   "contexte 3 (rayon seul) : distance par paliers de 30 km, puis prix",
   /greatest\(/.test(ordre(geo)) && /"prix_cents" asc/.test(ordre(geo))
 );
+// Marqueur du tri par distance : `acos(` n'apparaît que dans
+// `expressionDistanceKm`. Le contrôle testait auparavant l'absence de
+// `greatest(`, ce qui a cessé d'être un marqueur fiable le 2026-08-30 :
+// `palierPertinence` en émet un depuis l'ajout de la recherche par préfixe
+// (§14.10), pour départager les correspondances exactes des correspondances
+// obtenues par préfixe. Un contrôle dont le marqueur devient ambigu échoue sur
+// une fonctionnalité correcte — exactement ce qui s'est produit ici.
+const marqueurDistance = /acos\(/;
 verifier(
   "arbitrage §14.2 : texte + rayon → la pertinence gagne, la distance n'est plus qu'un filtre",
-  /ts_rank_cd/.test(ordre({ ...geo, q: "kangoo" })) && !/greatest\(/.test(ordre({ ...geo, q: "kangoo" }))
+  /ts_rank_cd/.test(ordre({ ...geo, q: "kangoo" })) && !marqueurDistance.test(ordre({ ...geo, q: "kangoo" }))
 );
-verifier("« distance » refusé sans coordonnées", !ordre({ tri: "distance" }).includes("greatest("));
+verifier("« distance » refusé sans coordonnées", !marqueurDistance.test(ordre({ tri: "distance" })));
 
 console.log(`\n${echecs === 0 ? "Tous les contrôles passent." : `${echecs} contrôle(s) en échec.`}`);
 process.exit(echecs === 0 ? 0 : 1);

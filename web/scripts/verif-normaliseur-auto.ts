@@ -180,6 +180,25 @@ const CAS_REGRESSION: Cas[] = [
     attendus: { modele: "A3", carburant: "Diesel", puissanceDin_min: "140", puissanceDin_max: "160", codePostal: "87" },
     residu: null,
   },
+
+  // --- troncatures (trouvées le 2026-08-30, §14.10 Résultat n°2) -----------
+  // Une troncature n'est pas une faute de frappe. Les 50 requêtes du jeu sont
+  // toutes des requêtes *terminées* : par construction, aucune ne pouvait
+  // montrer ces cas, qui se produisent pourtant à CHAQUE frappe de la barre de
+  // recherche. Mesuré avant correction : « megan » → `marque=MEGA` (un
+  // constructeur grec de microcars, donc une page vide), « kang » →
+  // `modele=Tang` (BYD). Attendu désormais : aucun filtre, le token part en
+  // résidu, et la recherche par préfixe de la §14.10 le retrouve dans le titre.
+  { q: "megan", interdits: ["marque", "modele"], residu: "megan" },
+  { q: "kang", interdits: ["marque", "modele"], residu: "kang" },
+  { q: "trafi", interdits: ["marque", "modele"], residu: "trafi" },
+  { q: "renaul", interdits: ["marque", "modele"], residu: "renaul" },
+  { q: "captu", interdits: ["marque", "modele"], residu: "captu" },
+  // Contre-épreuve : le garde-fou ne doit pas désarmer le correcteur sur de
+  // vraies fautes de frappe, qui ne sont préfixes de rien.
+  { q: "meganne", attendus: { modele: "Megane,Mégane" }, residu: null },
+  { q: "kangooo", attendus: { modele: "Kangoo" }, residu: null },
+  { q: "volkswagem", attendus: { marque: "VOLKSWAGEN" }, residu: null },
 ];
 
 console.log(`\n=== Normaliseur de requête auto — ${CAS.length} requêtes du jeu de l'action n°40 ===\n`);

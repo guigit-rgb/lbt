@@ -352,6 +352,27 @@ export const TAILLE_REFERENTIEL = () => ({
 });
 
 /**
+ * Référentiel de modèles à plat, pour les lecteurs qui n'ont pas besoin de
+ * normaliser une requête mais d'**énumérer** ce que le référentiel connaît.
+ * Premier usage : la barre de suggestions à la frappe (lib/suggestions-recherche.ts,
+ * §14.10) — un modèle du référentiel est exactement une suggestion que le
+ * normaliseur saura reconvertir en filtre au clic, ce qui est le critère
+ * d'admission de cette barre.
+ *
+ * Rendu en copie (`readonly` sur les objets ne suffirait pas : c'est la Map
+ * interne qu'il ne faut pas exposer) et **après élagage** des clés
+ * inadmissibles, donc sans les modèles purement numériques à un ou deux
+ * chiffres écartés par `cleModeleAdmissible`.
+ */
+export function listerModelesIndexes(): { cle: string; marque: string; valeur: string }[] {
+  const sortie: { cle: string; marque: string; valeur: string }[] = [];
+  for (const [cle, candidats] of MODELES_PAR_CLE) {
+    for (const c of candidats) sortie.push({ cle, marque: c.marque, valeur: c.valeur });
+  }
+  return sortie;
+}
+
+/**
  * Marques sous lesquelles une **valeur** de modèle est indexée (`"Duster"` →
  * `["DACIA", "RENAULT"]`, `"Classe C"` → `["MERCEDES-BENZ"]`).
  *
@@ -530,12 +551,68 @@ function plafondFlou(token: string): number | null {
  *  résidu, elle protège aussi le correcteur. */
 const JAMAIS_CORRIGES = new Set([...MOTS_VIDES, "auto", "autos"]);
 
+/**
+ * Préfixes stricts de toutes les clés du référentiel, marques et modèles
+ * confondus. Sert le quatrième garde-fou du rattrapage flou (voir
+ * `meilleureCorrection`) : un token qui figure ici est un **mot inachevé**, pas
+ * un mot mal écrit.
+ *
+ * Les deux familles sont dans le même ensemble, et c'est le point délicat : à
+ * l'étage 8a, le correcteur essaie les marques **avant** les modèles et
+ * consomme le token dès qu'il trouve. Un garde-fou limité aux clés de la
+ * famille en cours d'examen laissait donc passer le pire cas mesuré —
+ * « megan » n'est le préfixe d'aucune *marque*, la correction vers `MEGA`
+ * partait, et le token n'atteignait jamais l'étage des modèles où « megane »
+ * l'attendait.
+ *
+ * Seuil de 4 caractères : en dessous, `plafondFlou` refuse déjà toute
+ * correction, l'entrée serait inutile.
+ */
+const PREFIXES_REFERENTIEL = new Set<string>();
+for (const cle of [...MARQUES_LOOKUP.keys(), ...MODELES_PAR_CLE.keys()]) {
+  for (let n = 4; n < cle.length; n++) PREFIXES_REFERENTIEL.add(cle.slice(0, n));
+}
+
 function meilleureCorrection(token: string, cles: Iterable<string>): string | null {
   if (JAMAIS_CORRIGES.has(token)) return null;
+  if (PREFIXES_REFERENTIEL.has(token)) return null;
   const plafond = plafondFlou(token);
   if (plafond === null) return null;
   let meilleure: string | null = null;
   let meilleurScore = plafond + 1;
+  // Quatrième garde-fou, ajouté le 2026-08-30 (§14.10, Résultat n°2) — et il
+  // n'a été trouvé qu'en tapant des requêtes à la main, comme les cinq faux
+  // positifs du 2026-08-28 et les douze du 2026-08-29 :
+  //
+  //   **une troncature n'est pas une faute de frappe, et Levenshtein ne sait
+  //   pas les distinguer.**
+  //
+  // Mesuré : « megan » (quelqu'un qui tape « megane ») produisait
+  // `marque=MEGA` — une insertion, tout comme `Megane`, mais MEGA est un
+  // constructeur grec de microcars dont LBT n'aura jamais une annonce, donc une
+  // page vide ; « kang » produisait `modele=Tang` (une substitution, BYD Tang)
+  // au lieu de Kangoo. Les deux cas se produisent à chaque frappe de la barre
+  // de recherche, c'est-à-dire dans le cas le plus fréquent du site, et ils
+  // étaient invisibles pour le jeu de non-régression : ses 64 requêtes sont
+  // toutes des requêtes *terminées*.
+  //
+  // Le signal qui départage est net et ne coûte rien : si le token est un
+  // **préfixe strict** d'une clé du référentiel (`PREFIXES_REFERENTIEL`,
+  // marques et modèles confondus — voir le commentaire de cet ensemble, la
+  // portée globale n'est pas un détail), la lecture « mot inachevé » est plus
+  // probable que la lecture « mot mal écrit ». On renonce alors à corriger, et
+  // le token part en résidu — où la recherche par préfixe de la
+  // §14.10, livrée le même jour, le retrouve dans le titre des annonces
+  // (`megan:*` matche « Mégane »). C'est la règle n°1 du fichier appliquée
+  // telle quelle : un filtre manquant plutôt qu'un filtre faux, à ceci près
+  // qu'il existe désormais un filet sous le filtre manquant.
+  //
+  // Prix payé, mesuré et assumé : les troncatures que le correcteur devinait
+  // *juste* perdent leur filtre (« trafi » → `modele=Trafic`). Elles restent
+  // trouvées par la branche préfixe, sur le texte au lieu du champ. Compléter
+  // au lieu de renoncer serait mieux — mais c'est un arbitrage entre familles
+  // (« meg » est le préfixe de la marque MEGA *et* du modèle Megane), donc une
+  // action à part entière : action n°237.
   for (const cle of cles) {
     if (cle.includes(" ") || /\d/.test(cle) || cle.length < 4) continue;
     const d = levenshteinBorne(token, cle, plafond);

@@ -96,10 +96,54 @@
     flex-shrink: 0;
   }
   .wordmark, .wordmark .truc { color: var(--brand-red); }
-  .nav-search {
+  /* Enveloppe du champ de recherche : porte le positionnement de la barre de
+     suggestions (§14.10). C'est elle qui reçoit le `flex: 1` du champ, sans
+     quoi la liste absolue se dimensionnerait sur la page et non sur le champ. */
+  .nav-search-wrap {
+    position: relative;
     flex: 1;
     min-width: 0;
     max-width: 482px; /* 520px - 1cm (~38px) */
+    display: flex;
+  }
+  .nav-suggestions {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 60;
+    margin: 0;
+    padding: 0.25rem 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #e2e5e8;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+  .nav-suggestions li a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.9rem;
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  .nav-suggestions li.actif a,
+  .nav-suggestions li a:hover { background: #f2f4f6; }
+  .nav-suggestions .suggestion-label { font-weight: 600; }
+  .nav-suggestions .suggestion-contexte {
+    color: #6b7378;
+    font-size: 0.8rem;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  .nav-search {
+    flex: 1;
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -108,8 +152,18 @@
     border-radius: 999px;
     padding: 0.3rem 0.3rem 0.3rem 0.9rem;
   }
+  /* `min-width: 0` : correctif d'un débordement ANTÉRIEUR à la barre de
+     suggestions, mesuré au navigateur le 2026-08-30 sur le build d'avant et
+     d'après (geometrie identique, donc le défaut ne vient pas de la §14.10).
+     Un `<input type="search">` a une largeur intrinsèque par défaut (~297 px,
+     l'équivalent de `size="20"`), et `min-width: auto` empêche un élément
+     flexible de descendre en dessous : le champ débordait donc son conteneur
+     de 273 px et poussait le bouton loupe par-dessus le lien « Messages ». Le
+     `min-width: 0` déjà posé sur `.nav-search` ne suffisait pas — c'est
+     l'enfant qui refusait de rétrécir, pas le parent. */
   .nav-search input {
     border: none; background: transparent; flex: 1;
+    min-width: 0;
     font-size: 0.92rem; color: var(--ink); font-family: inherit;
   }
   .nav-search input:focus { outline: none; }
@@ -765,7 +819,7 @@
   @media (max-width: 900px) {
     .nav-actions .icon-link:nth-child(2),
     .nav-actions .icon-link:nth-child(3) { display: none; }
-    .nav-search { max-width: 280px; }
+    .nav-search-wrap { max-width: 280px; }
     .submenu.mega,
     .submenu.mega.cols-1,
     .submenu.mega.cols-2,
@@ -834,7 +888,7 @@
        et cet ordre, elle se compressait a quelques pixels et debordait la page) — elle
        passe donc sur sa propre ligne, pleine largeur. */
     .nav { flex-wrap: wrap; row-gap: 0.6rem; }
-    .nav-search { order: 3; flex: 1 1 100%; max-width: none; }
+    .nav-search-wrap { order: 3; flex: 1 1 100%; max-width: none; }
   }
 
   /* ---- aller-retour rapide accueil mobile (le detail complet viendra dans un passage dedie) ---- */

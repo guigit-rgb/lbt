@@ -34,10 +34,18 @@ import { sql, type AnyColumn, type SQL } from "drizzle-orm";
 //     fichier, jamais des données utilisateur — la requête de l'utilisateur, elle,
 //     reste toujours un paramètre lié (cf. `conditionTexte`).
 //
-// Ce que ce fichier ne fait PAS, et qui reste à faire (§14.3) : le normaliseur de
-// requête auto (reconnaissance marque/modèle/génération, chiffres romains, codes
-// commerciaux, seuils numériques, communes) qui transforme 82 % des requêtes auto
-// en filtres. Ici, « clio 3 essence » part intégralement en recherche texte.
+// Le normaliseur de requête auto de la §14.3 — qui transforme 82 % des requêtes
+// automobiles en *filtres* plutôt qu'en texte à scorer — existe depuis le
+// 2026-08-28 (lib/normaliseur-auto.ts, §14.8) et s'applique en amont, dans
+// `buildAnnonceConditions`. Ce fichier ne voit donc que le résidu textuel :
+// « clio 3 essence » lui arrive vidé de ses trois critères.
+//
+// Ajouté le 2026-08-30 (§14.10, action §17 n°222) : la **recherche par
+// préfixe** sur le dernier token, sans laquelle « cli » ne trouvait pas
+// « clio » et aucune suggestion à la frappe n'était possible. Voir le bloc de
+// commentaires devant `decouperPrefixe` — la décision structurante est que la
+// branche préfixe est *additive*, donc incapable de dégrader la recherche
+// existante.
 
 /** Caractères pliés à l'indexation ET à la requête. Doit rester synchronisé
  *  caractère par caractère avec `PLIAGE_CIBLE` (même longueur, même ordre).
@@ -115,8 +123,128 @@ export function colonnePliee(colonne: SQL | AnyColumn): SQL<string> {
   )}')`;
 }
 
+// ---------------------------------------------------------------------------
+// Recherche par préfixe (§14.10, action §17 n°222)
+// ---------------------------------------------------------------------------
+//
+// Le problème : « cli » ne trouve pas « clio ». `websearch_to_tsquery` ne
+// produit jamais l'opérateur `:*` de Postgres, et sans lui aucune suggestion à
+// la frappe n'est possible — le visiteur qui tape voit une page vide jusqu'au
+// dernier caractère du mot.
+//
+// Trois décisions gouvernent le dispositif ci-dessous, et la première est la
+// seule qui compte vraiment :
+//
+//  1. **La branche préfixe est ADDITIVE par construction.** La condition émise
+//     est `websearch(requête complète) OR (branche préfixe)`, jamais la seule
+//     branche préfixe. Conséquence : *aucun* défaut de la branche préfixe ne
+//     peut rendre la recherche pire qu'avant le 2026-08-30 — au pire elle
+//     n'ajoute rien. C'est ce qui permet de se passer de la liste de mots vides
+//     de Postgres : `to_tsquery('french', 'de:*')` rend une tsquery **vide**
+//     (les mots vides sont supprimés par le dictionnaire), et une tsquery vide
+//     ne matche rien ; en AND strict, « canapé de » serait passé de « des
+//     résultats » à « aucun résultat ». En OR additif, la branche meurt seule
+//     et la recherche d'hier répond. Le prix est un second parcours d'index
+//     par requête, non mesurable au volume du pilote.
+//
+//  2. **Le dernier token n'est préfixé que s'il est déjà purement
+//     alphanumérique** (`/^[\p{L}\p{N}]+$/u`). Motif : la tokenisation de
+//     Postgres n'est pas la nôtre. `cx-5` produit trois lexèmes (`cx-5`, `cx`,
+//     `5`), `id.3` en produit un ou deux selon l'analyseur — le reconstruire à
+//     la main, c'est risquer d'émettre un lexème qui n'existe dans aucun
+//     vecteur, donc de ne rien ajouter tout en croyant élargir. Sur un token
+//     ponctué, on laisse `websearch_to_tsquery` faire son travail (il applique
+//     exactement la tokenisation de `to_tsvector`) et on n'ajoute pas de
+//     préfixe. C'est un renoncement mesuré, pas un oubli.
+//
+//  3. **Un token purement numérique n'est jamais préfixé.** C'est la troisième
+//     apparition de la règle 2 de la §14.3 (« le nombre nu n'est pas un
+//     critère »), et le cas est cette fois-ci mesurable à la lecture :
+//     `renault 5` deviendrait `renault & 5:*` et ramènerait toute Renault dont
+//     la description contient « 50 000 km », « 5 portes » ou « 5 places » ;
+//     `clio 90000` matcherait `900000`. Le token doit contenir au moins une
+//     lettre.
+//
+// La sortie de `websearch_to_tsquery` est conservée telle quelle sur la requête
+// complète : les opérateurs de recherche web (`"expression exacte"`, `or`,
+// `-exclusion`) continuent donc de fonctionner exactement comme avant, sans que
+// ce fichier ait à les réimplémenter. Le guillemet est même l'échappatoire
+// documentée : une requête dont le dernier token porte un `"` n'est pas
+// préfixée — qui écrit `"audi a3"` demande une expression exacte.
+
+/** Opérateurs textuels de `websearch_to_tsquery` (et leurs équivalents
+ *  français, que Postgres ne connaît pas mais qu'un visiteur peut taper) : un
+ *  dernier token égal à l'un d'eux n'est pas un mot à préfixer. */
+const OPERATEURS_TEXTE = new Set(["or", "ou", "and", "et"]);
+
+/** Longueur minimale d'un token préfixable. À 1 caractère, `a:*` parcourt
+ *  l'essentiel de l'index pour n'apporter aucune information. */
+const LONGUEUR_MIN_PREFIXE = 2;
+
+export interface DecoupagePrefixe {
+  /** Tout ce qui précède le dernier token, tel quel — passé à
+   *  `websearch_to_tsquery` sans réinterprétation. Chaîne vide si la requête
+   *  n'a qu'un seul token. */
+  tete: string;
+  /** Lexème à préfixer, sans le `:*`, ou `null` si aucun préfixe ne doit être
+   *  émis (voir les trois règles ci-dessus). */
+  prefixe: string | null;
+}
+
+/**
+ * Découpe une requête déjà pliée (sortie de `requeteTexte`) en une tête à
+ * traiter en recherche exacte et un dernier token à traiter en préfixe.
+ * Fonction pure, sans réseau ni base : c'est elle qu'exerce
+ * scripts/verif-recherche-prefixe.ts.
+ */
+export function decouperPrefixe(requete: string): DecoupagePrefixe {
+  const tokens = requete.split(/\s+/).filter(Boolean);
+  const dernier = tokens[tokens.length - 1];
+  const tete = tokens.slice(0, -1).join(" ");
+  const refuser: DecoupagePrefixe = { tete: "", prefixe: null };
+  if (!dernier) return refuser;
+  // Négation (`-diesel`) : préfixer une exclusion l'élargirait, c'est-à-dire
+  // retirerait des résultats — l'inverse exact de ce que la branche additive
+  // garantit. Jamais.
+  if (dernier.startsWith("-")) return refuser;
+  // Expression exacte : le guillemet est l'échappatoire documentée.
+  if (dernier.includes('"')) return refuser;
+  if (OPERATEURS_TEXTE.has(dernier)) return refuser;
+  // Règle 2 : token déjà purement alphanumérique, sinon la tokenisation de
+  // Postgres et la nôtre divergent en silence.
+  if (!/^[\p{L}\p{N}]+$/u.test(dernier)) return refuser;
+  if (dernier.length < LONGUEUR_MIN_PREFIXE) return refuser;
+  // Règle 3 : au moins une lettre.
+  if (!/\p{L}/u.test(dernier)) return refuser;
+  return { tete, prefixe: dernier };
+}
+
+/** Opérande de préfixe, prêt pour `to_tsquery`. Le lexème est validé
+ *  alphanumérique par `decouperPrefixe`, donc syntaxiquement inoffensif pour
+ *  l'analyseur de tsquery — c'est la garantie qui remplace la gestion d'erreurs
+ *  que `websearch_to_tsquery` offrait gratuitement (`to_tsquery` **lève une
+ *  exception** sur une requête malformée, il ne rend pas un résultat vide). */
+function operandePrefixe(prefixe: string): string {
+  return `${prefixe}:*`;
+}
+
 export function conditionTexte(requete: string): SQL {
-  return sql`${sql.raw(EXPRESSION_VECTEUR)} @@ websearch_to_tsquery('${sql.raw(CONFIG)}', ${requete})`;
+  const exacte = sql`${sql.raw(EXPRESSION_VECTEUR)} @@ websearch_to_tsquery('${sql.raw(
+    CONFIG
+  )}', ${requete})`;
+  const { tete, prefixe } = decouperPrefixe(requete);
+  if (!prefixe) return exacte;
+  const surPrefixe = sql`${sql.raw(EXPRESSION_VECTEUR)} @@ to_tsquery('${sql.raw(
+    CONFIG
+  )}', ${operandePrefixe(prefixe)})`;
+  // Un seul token (« cli ») : la tête est vide, et `websearch_to_tsquery('')`
+  // rend une tsquery vide qui ne matche rien — la brancher en AND tuerait la
+  // branche préfixe, précisément dans le cas qui la justifie. D'où deux formes.
+  if (!tete) return sql`(${exacte} or ${surPrefixe})`;
+  const teteExacte = sql`${sql.raw(EXPRESSION_VECTEUR)} @@ websearch_to_tsquery('${sql.raw(
+    CONFIG
+  )}', ${tete})`;
+  return sql`(${exacte} or (${teteExacte} and ${surPrefixe}))`;
 }
 
 /**
@@ -140,8 +268,33 @@ export function conditionTexte(requete: string): SQL {
  *    (cf. « Limites » du cahier des charges §14.7) — c'est l'approximation la
  *    plus simple qui produise le comportement voulu.
  */
+/** Facteur de déclassement d'une correspondance obtenue par préfixe seul.
+ *  Une annonce trouvée parce que le visiteur n'avait pas fini de taper son mot
+ *  est une correspondance moins sûre qu'une correspondance exacte : sans ce
+ *  facteur, les lignes que seule la branche préfixe ramène auraient un rang de
+ *  0 (`ts_rank_cd` d'une tsquery qui ne les sélectionne pas) et tomberaient
+ *  toutes dans le même palier 0,00, où elles seraient classées par nombre de
+ *  vues — c'est-à-dire sans aucune pertinence. Le facteur les réordonne entre
+ *  elles tout en les maintenant, en règle générale, sous les correspondances
+ *  exactes. **Ce n'est pas une garantie d'ordre strict** : un préfixe très bien
+ *  placé (termes adjacents dans le titre) peut dépasser une correspondance
+ *  exacte très diffuse (termes éloignés dans une longue description), et c'est
+ *  assumé — dans ce cas de figure, la première est effectivement la meilleure. */
+const DECLASSEMENT_PREFIXE = 0.5;
+
 export function palierPertinence(requete: string): SQL<number> {
-  return sql<number>`round(ts_rank_cd(${sql.raw(EXPRESSION_VECTEUR)}, websearch_to_tsquery('${sql.raw(
+  const rangExact = sql<number>`ts_rank_cd(${sql.raw(EXPRESSION_VECTEUR)}, websearch_to_tsquery('${sql.raw(
     CONFIG
-  )}', ${requete}), 32)::numeric, 2)`;
+  )}', ${requete}), 32)`;
+  const { prefixe } = decouperPrefixe(requete);
+  if (!prefixe) return sql<number>`round(${rangExact}::numeric, 2)`;
+  // `to_tsquery` ici aussi, sur le même opérande validé alphanumérique. Une
+  // tsquery vide (mot vide) rend un rang de 0 : sans conséquence, on est dans
+  // le calcul du tri et non dans la sélection des lignes.
+  const rangPrefixe = sql<number>`ts_rank_cd(${sql.raw(EXPRESSION_VECTEUR)}, to_tsquery('${sql.raw(
+    CONFIG
+  )}', ${operandePrefixe(prefixe)}), 32)`;
+  return sql<number>`round(greatest(${rangExact}, ${rangPrefixe} * ${sql.raw(
+    String(DECLASSEMENT_PREFIXE)
+  )})::numeric, 2)`;
 }
