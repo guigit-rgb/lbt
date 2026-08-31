@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# aperçus d'e-mail générés (scripts/apercu-email.ts)
+/.apercu-email/

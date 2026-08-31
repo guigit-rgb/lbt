@@ -7,6 +7,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db/client";
 import { annonces, conversations, messages, users } from "@/lib/db/schema";
 import { enregistrerEvenementContact, identifierAcheteur } from "@/lib/contacts";
+import { envoyerEmailSansAttendre } from "@/lib/email/envoi";
+import { lienAbsolu } from "@/lib/email/lien";
+import { nouveauMessage } from "@/lib/email/messages";
 
 export type MessageActionResult = { error: string } | { success: true };
 
@@ -92,6 +95,86 @@ async function poserMessage(conversationId: string, senderId: string, body: stri
   await db.update(conversations).set({ lastMessageAt: new Date() }).where(eq(conversations.id, conversationId));
 }
 
+// Notification « nouveau message » — flux `contacts` du §6.4 (R6), le seul que
+// la §6.4 désigne comme ne devant jamais être dégradé : c'est lui qui rend un
+// contact VISIBLE par le vendeur, et la §5.3 n'autorise à compter (donc à
+// facturer) que ce que le garage peut voir et qualifier. Sans cet e-mail, un
+// contact journalisé le 2026-08-26 (§5.4) est un contact que le vendeur
+// découvre la prochaine fois qu'il pense à ouvrir le site.
+//
+// UNE SEULE RÈGLE D'ANTI-INONDATION, ET ELLE EST VOLONTAIREMENT MINIMALE :
+// pas de nouvel e-mail tant que le destinataire n'a pas lu le précédent dans
+// ce fil. Un acheteur qui écrit cinq lignes de suite produit une notification,
+// pas cinq. Le premier message n'est jamais retenu par cette règle — il n'y a
+// rien d'antérieur de non lu —, donc la garantie du §6.4 tient. C'est le
+// plafonnement le moins cher possible : une requête de comptage déjà indexée
+// (`messages_conversation_idx`), aucune table, aucun réglage.
+async function notifierNouveauMessage(
+  conversationId: string,
+  expediteurId: string,
+  corps: string
+): Promise<void> {
+  try {
+    const [conv] = await db
+      .select({
+        acheteurId: conversations.acheteurId,
+        vendeurId: conversations.vendeurId,
+        annonceTitre: annonces.titre,
+      })
+      .from(conversations)
+      .innerJoin(annonces, eq(annonces.id, conversations.annonceId))
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+    if (!conv) return;
+
+    const destinataireId = conv.acheteurId === expediteurId ? conv.vendeurId : conv.acheteurId;
+
+    // Un seul aller-retour pour les deux questions : combien de messages
+    // l'expéditeur a-t-il déjà écrits dans ce fil (pour distinguer une
+    // première prise de contact d'une réponse), et combien sont encore non
+    // lus. Le fil d'un pilote se compte en dizaines de lignes ; la même
+    // lecture complète est déjà faite par `chargerConversation`.
+    const duFil = await db
+      .select({ senderId: messages.senderId, readAt: messages.readAt })
+      .from(messages)
+      .where(eq(messages.conversationId, conversationId));
+
+    const siens = duFil.filter((m) => m.senderId === expediteurId);
+    const nonLus = siens.filter((m) => m.readAt == null).length;
+    // Plus d'un non lu = le destinataire a déjà été prévenu et n'est pas
+    // revenu ; un second e-mail ne lui apprendrait rien.
+    if (nonLus > 1) return;
+
+    const [destinataire] = await db
+      .select({ email: users.email, nom: users.displayName })
+      .from(users)
+      .where(eq(users.id, destinataireId))
+      .limit(1);
+    const [expediteur] = await db
+      .select({ nom: users.displayName })
+      .from(users)
+      .where(eq(users.id, expediteurId))
+      .limit(1);
+    if (!destinataire || !expediteur) return;
+
+    envoyerEmailSansAttendre({
+      destinataire: destinataire.email,
+      nomDestinataire: destinataire.nom,
+      message: nouveauMessage({
+        nomExpediteur: expediteur.nom,
+        titreAnnonce: conv.annonceTitre,
+        extrait: corps,
+        lien: lienAbsolu(`/compte/messages/${conversationId}`),
+        premierContact: siens.length === 1,
+      }),
+    });
+  } catch (err) {
+    // Une notification ratée ne doit jamais empêcher l'envoi du message
+    // lui-même : le message est déjà en base et visible sur le site.
+    console.error(`[messagerie] notification non envoyée : ${String(err)}`);
+  }
+}
+
 // Démarre une conversation depuis la page d'une annonce — ou réutilise celle
 // qui existe déjà pour ce couple annonce/acheteur (contrainte unique en
 // base : un acheteur n'a qu'un seul fil par annonce, comme sur leboncoin).
@@ -111,6 +194,7 @@ export async function demarrerConversation(formData: FormData): Promise<MessageA
   if ("error" in conv) return conv;
 
   await poserMessage(conv.id, session.user.id, body.trim());
+  await notifierNouveauMessage(conv.id, session.user.id, body.trim());
   // Seul le premier message du fil est une prise de contact (§5.3, Q1) ;
   // les suivants sont des échanges dans un contact déjà compté.
   if (conv.creee) {
@@ -132,7 +216,9 @@ export async function envoyerNotificationInteret(annonceId: string): Promise<Mes
   const conv = await trouverOuCreerConversation(annonceId, session.user.id);
   if ("error" in conv) return conv;
 
-  await poserMessage(conv.id, session.user.id, `${session.user.name} a manifesté un intérêt pour votre annonce.`);
+  const corpsInteret = `${session.user.name} a manifesté un intérêt pour votre annonce.`;
+  await poserMessage(conv.id, session.user.id, corpsInteret);
+  await notifierNouveauMessage(conv.id, session.user.id, corpsInteret);
   // Journalisé sous un événement distinct, et c'est le point à ne pas rater :
   // ce message est produit par un clic sur « prévenir le vendeur » après un
   // favori, pas par un acheteur qui écrit. Le confondre avec `premier_message`
@@ -165,8 +251,8 @@ export async function repondre(formData: FormData): Promise<MessageActionResult>
     return { error: "Conversation introuvable." };
   }
 
-  await db.insert(messages).values({ conversationId, senderId: session.user.id, body: body.trim() });
-  await db.update(conversations).set({ lastMessageAt: new Date() }).where(eq(conversations.id, conversationId));
+  await poserMessage(conversationId, session.user.id, body.trim());
+  await notifierNouveauMessage(conversationId, session.user.id, body.trim());
 
   revalidatePath(`/compte/messages/${conversationId}`);
   revalidatePath("/compte/messages");

@@ -50,8 +50,49 @@ export const users = pgTable("users", {
   // Facultatif — un vendeur sans numéro renseigné n'affiche simplement pas
   // le bouton "Voir le numéro" sur ses annonces (pas de valeur bidon).
   telephone: text("telephone"),
+  // Date à laquelle l'inscrit a cliqué le lien de confirmation envoyé à son
+  // adresse (§14.11, action §17 n°211). Nul = adresse non confirmée, ce qui
+  // est le cas de tous les comptes créés avant le 2026-08-31 : la colonne ne
+  // se rétro-remplit pas, faute de preuve. Ce qu'elle permet, et c'est le
+  // §6.4 (R7 obligation n°1) : ne pas adresser d'alerte à une boîte dont rien
+  // ne dit qu'elle appartient à l'inscrit — un canal de plainte gratuit
+  // contre notre propre domaine d'envoi.
+  emailVerifieA: timestamp("email_verifie_a", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// Jetons à usage unique envoyés par courriel — réinitialisation de mot de
+// passe et confirmation d'adresse (§14.11 Résultat n°8).
+//
+// LE JETON N'EST PAS STOCKÉ, SEULE SON EMPREINTE L'EST. Un jeton de
+// réinitialisation en clair dans une table, c'est un mot de passe en clair :
+// qui lit la base prend n'importe quel compte sans connaître aucun mot de
+// passe. L'empreinte SHA-256 suffit à vérifier un jeton présenté, et ne
+// permet pas d'en fabriquer un.
+//
+// Pas de poivre ici, contrairement à `evenement_contact` (§5.3) : un jeton
+// est 32 octets tirés au hasard, son espace n'est pas énumérable, alors que
+// l'espace des numéros mobiles français l'est (2 × 10⁸) et c'est ce qui rend
+// le poivre indispensable là-bas.
+export const jetonsEmail = pgTable(
+  "jetons_email",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    usage: text("usage", { enum: ["reinitialisation", "verification"] }).notNull(),
+    empreinte: text("empreinte").notNull().unique(),
+    expireA: timestamp("expire_a", { withTimezone: true }).notNull(),
+    // Renseignée au premier usage. Un jeton consommé n'est pas supprimé : la
+    // distinction « jeton inconnu » / « jeton déjà utilisé » est ce qui permet
+    // de dire à l'utilisateur pourquoi son lien ne marche pas, et c'est aussi
+    // une trace en cas de contestation d'une prise de contrôle de compte.
+    utiliseA: timestamp("utilise_a", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("jetons_email_user_usage_idx").on(table.userId, table.usage)]
+);
 
 export const invites = pgTable("invites", {
   code: text("code").primaryKey(),
@@ -423,6 +464,20 @@ export const recherchesSauvegardees = pgTable(
     // page catégorie sait déjà les réinterpréter.
     filtres: jsonb("filtres").notNull().default({}),
     tri: text("tri").notNull().default("pertinence"),
+    // Alerte par courriel (§6.4, §14.11 message n°3). Active par défaut :
+    // enregistrer une recherche, c'est demander à être tenu au courant — mais
+    // la §6.4 (R6 point 3) exige que le désabonnement soit granulaire, et
+    // c'est cette colonne qui le porte. Le lien « ne plus recevoir cette
+    // alerte » de l'e-mail la met à `false` et ne touche à rien d'autre :
+    // jamais le flux transactionnel, jamais la messagerie, jamais les autres
+    // alertes du même compte.
+    alerteActive: boolean("alerte_active").notNull().default(true),
+    // Filigrane du dernier lot envoyé (§6.4, appariement en lot). Nul = jamais
+    // envoyée : le premier lot part alors de `created_at`, ce qui évite
+    // d'inonder un nouvel abonné avec tout le stock correspondant à ses
+    // critères. Repère daté et non compteur : un compteur se désynchronise dès
+    // qu'une annonce est retirée entre deux passages.
+    dernierEnvoiA: timestamp("dernier_envoi_a", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("recherches_sauvegardees_user_idx").on(table.userId)]

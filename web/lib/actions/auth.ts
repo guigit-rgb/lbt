@@ -6,6 +6,7 @@ import { CredentialsSignin } from "next-auth";
 import { db } from "@/lib/db/client";
 import { users, invites } from "@/lib/db/schema";
 import { signIn } from "@/lib/auth";
+import { envoyerVerificationAdresse } from "@/lib/actions/mot-de-passe";
 
 export type AuthActionResult = { error: string } | { success: true };
 
@@ -51,11 +52,24 @@ export async function signup(formData: FormData): Promise<AuthActionResult> {
 
   const passwordHash = await hash(password, 12);
 
-  await db.insert(users).values({
-    email: email.trim(),
-    passwordHash,
-    displayName: displayName.trim(),
-  });
+  const [cree] = await db
+    .insert(users)
+    .values({
+      email: email.trim(),
+      passwordHash,
+      displayName: displayName.trim(),
+    })
+    .returning({ id: users.id });
+
+  // Confirmation d'adresse (§14.11, message n°4). Enveloppé : une inscription
+  // ne doit pas échouer parce que l'expéditeur d'e-mails est indisponible. Le
+  // compte existe déjà à ce stade, et l'écran de profil permet de redemander
+  // le message — perdre l'inscription serait sans commune mesure.
+  try {
+    await envoyerVerificationAdresse(cree.id, email.trim(), displayName.trim());
+  } catch (err) {
+    console.error(`[inscription] confirmation d'adresse non envoyée : ${String(err)}`);
+  }
 
   try {
     await signIn("credentials", {
