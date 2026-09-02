@@ -15,17 +15,14 @@
  * 8 avec génération, 7 avec finition, 5 références chiffrées proches, 5 fautes
  * de frappe, 5 langage naturel, 5 géolocalisées.
  *
- * Lancement exact, et il y a un piège : **`DATABASE_URL` doit être définie**,
- * même si le script n'ouvre aucune connexion — importer `lib/db/client.ts`
- * appelle `neon()`, qui refuse une chaîne vide au chargement du module. Une
- * valeur factice suffit :
- *
- *   DATABASE_URL="postgres://u:p@localhost/db" npx tsx scripts/verif-normaliseur-auto.ts
- *
- * (Même contrainte, non documentée jusqu'ici, pour `verif-recherche-sql.ts`.)
- * `tsx` n'est pas une dépendance déclarée du dépôt : il n'est présent que par
- * transitivité (`drizzle-kit`), donc `./node_modules/.bin/tsx` fonctionne
- * aujourd'hui sans garantie pour demain — à épingler avec la CI (action n°217).
+ * Lancement : `npm run verif` (les cinq contrôles), ou
+ * `./node_modules/.bin/tsx scripts/verif-normaliseur-auto.ts` pour celui-ci
+ * seul. **Le piège de la `DATABASE_URL` factice n'existe plus** depuis le
+ * 2026-09-02 (§14.12, action n°217) : l'import passe par `lib/db/sql-seul.ts`,
+ * une instance `drizzle.mock()` sans pilote, donc aucune variable
+ * d'environnement n'est requise et aucune connexion n'est possible. `tsx` est
+ * désormais une dépendance de développement **déclarée** — il ne l'était que
+ * par transitivité (`drizzle-kit`), et la CI de l'action n°217 en dépend.
  *
  * Le script ne se connecte à rien. Il vérifie trois familles de propriétés :
  *   1. les attentes par requête (filtres produits, filtres interdits) ;
@@ -34,7 +31,7 @@
  *   3. les indicateurs de la §14.3 (Résultat n°4), réimprimés pour comparaison.
  */
 import { and, eq } from "drizzle-orm";
-import { db } from "@/lib/db/client";
+import { dbSqlSeul as db } from "@/lib/db/sql-seul";
 import { annonces, users } from "@/lib/db/schema";
 import { buildAnnonceConditions, buildAnnonceOrderBy, normaliserTri } from "@/lib/annonce-filters";
 import {

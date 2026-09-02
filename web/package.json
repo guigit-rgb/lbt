@@ -7,6 +7,15 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "verif": "npm run verif:recherche-sql && npm run verif:recherche-prefixe && npm run verif:normaliseur-auto && npm run verif:deduction-vehicule && npm run verif:email",
+    "verif:recherche-sql": "tsx scripts/verif-recherche-sql.ts",
+    "verif:recherche-prefixe": "tsx scripts/verif-recherche-prefixe.ts",
+    "verif:normaliseur-auto": "tsx scripts/verif-normaliseur-auto.ts",
+    "verif:deduction-vehicule": "tsx scripts/verif-deduction-vehicule.ts",
+    "verif:email": "tsx scripts/verif-email.ts",
+    "mutation": "node scripts/mutation.mjs",
+    "apercu:email": "tsx scripts/apercu-email.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
@@ -37,6 +46,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "playwright": "^1.62.1",
+    "tsx": "^4.23.12",
     "typescript": "^5"
   }
 }

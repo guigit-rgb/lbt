@@ -1,0 +1,83 @@
+# Intégration continue de LBT — cahier des charges §14.12, action §17 n°217.
+#
+# Pourquoi elle existe : jusqu'au 2026-09-02, le dépôt n'avait ni CI, ni test,
+# ni `node_modules` installé une seule fois. Les cinq contrôles hors base de
+# `web/scripts/verif-*.ts` étaient lancés à la main par la session qui venait
+# de les écrire, puis plus jamais. Six sessions (n°33, 37, 43, 44, 46 et 48)
+# ont été des correctifs de bugs livrés par la session précédente : le taux
+# d'après-vente était déjà mesurable et il était élevé.
+#
+# Ce que cette CI garantit, et rien de plus : que le dépôt s'installe, se
+# compile, passe le linter et le vérificateur de types, et que les cinq
+# contrôles hors base restent verts. Elle ne touche **aucune base de données**
+# et ne demande **aucun secret** — c'est la condition posée le 2026-09-02 en
+# rendant `web/lib/db/client.ts` paresseux. Ce qu'elle ne voit pas est écrit
+# dans « Limites et incertitudes assumées » de la §14.12.
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/ci.yml"]
+  pull_request:
+    paths: ["web/**", ".github/workflows/ci.yml"]
+
+# Le cahier des charges est modifié tous les jours par la session automatisée,
+# et `paths` ci-dessus évite de lancer la CI pour un commit qui ne touche que
+# lui. Cette annulation-là couvre l'autre cas : deux poussées rapprochées sur
+# `web/`, dont seule la dernière compte.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verifier:
+    name: Installation, lint, types, contrôles, compilation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      # Version épinglée, et ce n'est pas un détail : `package-lock.json` a été
+      # écrit par un npm ≥ 11 (il porte des champs `libc`), alors que
+      # l'environnement des sessions automatisées porte npm 10.9.7, qui les
+      # retire dès le premier `npm install`. `npm ci` ne réécrit jamais le
+      # verrou, donc la CI est à l'abri ; une session qui ajoute une dépendance
+      # ne l'est pas (§14.12, Résultat n°5).
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Installation depuis le verrou
+        run: npm ci --no-audit --no-fund
+
+      # Ordre voulu : du moins cher au plus cher, et du plus lisible au moins
+      # lisible. Un échec de lint doit être connu en 20 s, pas après 2 min de
+      # compilation. Mesures du 2026-09-02 sur l'environnement des sessions
+      # automatisées : `npm ci` 15,2 s, lint 7,0 s, types 7,9 s, contrôles
+      # 3,6 s, compilation 20,0 s — soit ~54 s en tout, cache npm exclu.
+      - name: Lint (135 fichiers, dont scripts/)
+        run: npm run lint
+
+      - name: Vérificateur de types
+        run: npm run typecheck
+
+      # Les cinq contrôles hors base : forme du SQL émis, normaliseur de
+      # requête auto (50 requêtes), déduction marque/modèle (137 assertions),
+      # recherche par préfixe et suggestions, e-mails transactionnels.
+      # Aucune connexion possible : ils passent par `lib/db/sql-seul.ts`.
+      - name: Contrôles hors base (§14.7 à §14.11)
+        run: npm run verif
+
+      # En dernier, et sans aucune variable d'environnement : depuis le
+      # 2026-09-02, une compilation qui réclame une DATABASE_URL est un défaut.
+      - name: Compilation de production
+        run: npm run build

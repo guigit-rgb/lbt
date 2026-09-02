@@ -14,7 +14,7 @@
  */
 import { and, eq } from "drizzle-orm";
 import { readFileSync } from "node:fs";
-import { db } from "@/lib/db/client";
+import { dbSqlSeul as db } from "@/lib/db/sql-seul";
 import { annonces, users } from "@/lib/db/schema";
 import { buildAnnonceConditions, buildAnnonceOrderBy, normaliserTri } from "@/lib/annonce-filters";
 import { plierAccents, requeteTexte } from "@/lib/recherche-texte";

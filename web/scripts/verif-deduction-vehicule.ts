@@ -2,12 +2,10 @@
  * Jeu de non-régression de la déduction marque/modèle depuis un titre
  * (§14.9, action §17 n°226) — `npx tsx scripts/verif-deduction-vehicule.ts`.
  *
- * Ne se connecte à rien. Même contrainte que `verif-normaliseur-auto.ts` :
- * `DATABASE_URL` doit être **définie** (une valeur factice suffit), parce que
- * la chaîne d'imports passe par `lib/db/client.ts`, qui appelle `neon()` au
- * chargement du module :
- *
- *   DATABASE_URL="postgres://u:p@localhost/db" npx tsx scripts/verif-deduction-vehicule.ts
+ * Ne se connecte à rien, et depuis le 2026-09-02 (§14.12, action n°217) ne
+ * **peut** plus se connecter : l'import passe par `lib/db/sql-seul.ts`, une
+ * instance `drizzle.mock()` sans pilote. Aucune variable d'environnement n'est
+ * requise ; `npm run verif` lance ce contrôle avec les quatre autres.
  *
  * ## Pourquoi un jeu distinct de celui du normaliseur
  *
@@ -27,7 +25,7 @@
 import { deduireVehiculeDepuisTitre, completerVehicule } from "@/lib/deduction-vehicule";
 import { MARQUES_AUTRES, MARQUES_COURANTES } from "@/lib/marques";
 import { and } from "drizzle-orm";
-import { db } from "@/lib/db/client";
+import { dbSqlSeul as db } from "@/lib/db/sql-seul";
 import { annonces } from "@/lib/db/schema";
 import { buildAnnonceConditions } from "@/lib/annonce-filters";
 

@@ -16,7 +16,7 @@
  *     « début de mot » doit écarter.
  */
 import { and, eq } from "drizzle-orm";
-import { db } from "@/lib/db/client";
+import { dbSqlSeul as db } from "@/lib/db/sql-seul";
 import { annonces, users } from "@/lib/db/schema";
 import { buildAnnonceConditions, buildAnnonceOrderBy, normaliserTri } from "@/lib/annonce-filters";
 import { decouperPrefixe, requeteTexte } from "@/lib/recherche-texte";
