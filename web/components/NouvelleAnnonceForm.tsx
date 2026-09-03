@@ -481,8 +481,14 @@ export default function NouvelleAnnonceForm() {
                   </>
                 )}
 
+                {/* Le second lien n'est pas un ajout de confort : l'article 242 bis
+                    du CGI impose d'informer le vendeur de ses obligations fiscales et
+                    sociales, et le dépôt est le seul moment où LBT lui parle (§8.1,
+                    Résultat n°2 — LBT n'observe aucune transaction). */}
                 <p className="depot-legal" style={{ marginTop: "1.75rem" }}>
-                  <a href="#">En savoir plus</a> sur le traitement de vos données et exercer vos droits.
+                  <Link href="/confidentialite">En savoir plus</Link> sur le traitement de vos données et
+                  exercer vos droits. <Link href="/droits-et-obligations">Vos obligations</Link> de vendeur,
+                  en matière fiscale comme sur le contenu obligatoire d&apos;une annonce de véhicule.
                 </p>
               </section>
             )}

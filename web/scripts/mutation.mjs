@@ -129,6 +129,40 @@ const MUTANTS = [
     apres: "`to_tsvector('${CONFIG}', translate(lower(trim(` +",
     controles: ["verif:recherche-sql"],
   },
+
+  // --- §8.9, pages légales (2026-09-03) ----------------------------------
+  // Les trois mutants suivants portent sur les contrôles qui n'ont pas
+  // d'équivalent humain fiable : ce sont les interdits de rédaction du §8.8,
+  // ceux qu'une réécriture bien intentionnée du texte peut rouvrir sans que
+  // personne ne le remarque.
+  {
+    id: "M12",
+    intitule:
+      "la composante « contacts » revient dans la description publique de la popularité (§8.8 R4 ; action n°250)",
+    fichier: "lib/legal/classement.ts",
+    avant: "du nombre de photos, du remplissage de la fiche et de sa fraîcheur",
+    apres: "du nombre de contacts qu'elle a réellement générés, du nombre de photos et du remplissage de la fiche",
+    controles: ["verif:pages-legales"],
+  },
+  {
+    id: "M13",
+    intitule:
+      "le détecteur de messages-type est présenté comme une « amélioration du service » (bascule du III au IV de L. 32-3)",
+    fichier: "lib/legal/confidentialite.ts",
+    avant: '"**Sécurité : détecter des contenus non sollicités et des tentatives de fraude**"',
+    apres: '"Amélioration du service apporté à l\'utilisateur : détecter les messages-type"',
+    controles: ["verif:pages-legales"],
+  },
+  {
+    id: "M14",
+    intitule: "un lien du pied de page légal repasse à href=\"#\"",
+    fichier: "components/SiteFooter.tsx",
+    avant: "            <Link href={doc.chemin} key={doc.id}>",
+    apres: '            <Link href="#" key={doc.id}>',
+    // Le contrôle lit la **source** du composant, pas son rendu : c'est une
+    // limite assumée (§8.9, Limites), mais elle suffit pour ce mutant-ci.
+    controles: ["verif:pages-legales"],
+  },
 ];
 
 // Refus sur arbre sale : ce script écrit dans `lib/` et restaure depuis une

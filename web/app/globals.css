@@ -1593,3 +1593,60 @@
   .depot-sidebar { display: none; }
   .depot-card { padding: 1.5rem; width: 100%; }
 }
+
+/* ------------------------------------------------------------------ *
+ * Pages légales (§8.9) — colonne de lecture étroite, tableaux qui
+ * défilent seuls, et un surlignage pour les mentions restant à figer.
+ * Aucune couleur en dur : les variables du thème suivent le mode sombre.
+ * ------------------------------------------------------------------ */
+.legal-main { padding: 2.5rem 1.5rem 4rem; }
+.legal-page { max-width: 46rem; margin: 0 auto; line-height: 1.62; }
+.legal-page h1 { font-size: 2rem; line-height: 1.2; margin: 0 0 0.75rem; }
+.legal-page h2 { font-size: 1.22rem; margin: 2.4rem 0 0.85rem; scroll-margin-top: 5rem; }
+.legal-page h3 { font-size: 1rem; margin: 0 0 0.45rem; }
+.legal-page p { margin: 0 0 1rem; }
+.legal-fil { font-size: 0.86rem; color: var(--muted); margin-bottom: 1rem; }
+.legal-soustitre { font-size: 1.05rem; color: var(--muted); }
+.legal-meta { font-size: 0.9rem; font-weight: 600; }
+.legal-fondement {
+  list-style: none; margin: 0 0 1.5rem; padding: 0;
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+}
+.legal-fondement li {
+  font-size: 0.78rem; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.65rem;
+}
+.legal-entete { border-bottom: 1px solid var(--line); padding-bottom: 1.25rem; }
+.legal-sommaire { margin: 1.75rem 0 2.5rem; }
+.legal-sommaire ul { list-style: none; margin: 0; padding-left: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.legal-sommaire a { font-size: 0.94rem; }
+.legal-liste { margin: 0 0 1rem; padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.legal-encadre {
+  border-left: 3px solid var(--brand-red); background: var(--accent-ink);
+  padding: 1rem 1.1rem; margin: 1.25rem 0; border-radius: 0 6px 6px 0;
+}
+.legal-encadre p:last-child { margin-bottom: 0; }
+.legal-tableau-scroll { overflow-x: auto; margin: 1.25rem 0; }
+.legal-tableau { border-collapse: collapse; width: 100%; font-size: 0.9rem; min-width: 34rem; }
+.legal-tableau th, .legal-tableau td {
+  border: 1px solid var(--line); padding: 0.55rem 0.7rem; text-align: left; vertical-align: top;
+}
+.legal-tableau th { background: var(--accent-ink); font-weight: 700; }
+.legal-projet {
+  border: 1px solid var(--brand-red); border-radius: 6px;
+  padding: 0.9rem 1.1rem; margin: 1.5rem 0; font-size: 0.94rem;
+}
+.legal-afiger {
+  background: #fff2b0; color: #1c1b18; padding: 0 0.25rem; border-radius: 3px;
+  font-size: 0.88em; font-style: italic;
+}
+.legal-pied { margin-top: 3rem; padding-top: 1.25rem; border-top: 1px solid var(--line); font-size: 0.9rem; color: var(--muted); }
+.legal-index { list-style: none; margin: 2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1.75rem; }
+.legal-index-titre { font-size: 1.15rem; font-weight: 700; }
+.legal-index-soustitre { margin: 0.35rem 0 0.35rem; }
+.legal-index-meta { font-size: 0.86rem; color: var(--muted); margin: 0 0 0.5rem; }
+.legal-index-fondement { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.legal-index-fondement li {
+  font-size: 0.75rem; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 0.15rem 0.55rem;
+}
