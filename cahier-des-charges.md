@@ -4379,7 +4379,7 @@ L'action n°253 posait trois exigences. Les trois sont satisfaites, et la troisi
 | 1. Registre et routage | chaque document déclaré a une page ; chemins et identifiants uniques ; version, date ISO, fondement, ≥ 3 sections ; **aucun chemin ne masque une rubrique d'annonces** | oui, à la première visite |
 | 2. Pied de page | les liens sont rendus depuis le registre ; **plus aucun `href="#"` dans la barre légale** ; le classement y figure | oui |
 | 3. Balisage | l'analyseur fait ce qu'il dit ; aucun gras non refermé ; **aucun lien interne ne pointe vers une page inexistante** | non, pas de façon fiable sur 7 documents |
-| 4. Clauses obligatoires | 36 mentions dont l'absence est un manquement identifié au cahier des charges (« moyens automatisés », « accusé de réception », « 30 jours », « 2020-091 », « 242 bis », « Sponsorisé »…) | non, pas à chaque modification |
+| 4. Clauses obligatoires | **41** mentions dont l'absence est un manquement identifié au cahier des charges (« moyens automatisés », « accusé de réception », « 30 jours », « 2020-091 », « 242 bis », « Sponsorisé »…) | non, pas à chaque modification |
 | **5. Interdits de rédaction** | **les trois formulations que le §8.8 proscrit** | **non, et c'est le cœur du script** |
 | 6. Mentions à figer | toutes les mentions `[[…]]` sont bien formées ; le total est imprimé et listé | non |
 
